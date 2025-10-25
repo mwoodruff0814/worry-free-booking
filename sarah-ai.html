@@ -24,6 +24,11 @@
             padding: 0;
         }
 
+        /* Detect if loaded in iframe */
+        html.in-iframe body {
+            background: transparent;
+        }
+
         /* Chat Container */
         #wfm-chat-container {
             position: fixed;
@@ -36,6 +41,19 @@
             max-height: 100vh;
         }
 
+        /* When in iframe, fill the container instead of centering */
+        html.in-iframe #wfm-chat-container {
+            position: static;
+            transform: none;
+            max-width: 100%;
+            max-height: 100%;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
         #wfm-chat-widget {
             width: 456px;
             height: 624px;
@@ -46,6 +64,16 @@
             flex-direction: column;
             overflow: hidden;
             position: relative;
+        }
+
+        /* When in iframe, make widget responsive to container */
+        html.in-iframe #wfm-chat-widget {
+            width: 100%;
+            height: 100%;
+            max-width: 500px;
+            max-height: 100%;
+            border-radius: 0;
+            box-shadow: none;
         }
 
         #wfm-chat-header {
@@ -9468,6 +9496,11 @@ window.openWFMChat = function() {
         }
     }
 };
+
+        // Detect if loaded in iframe and add class to html element
+        if (window.self !== window.top) {
+            document.documentElement.classList.add('in-iframe');
+        }
 
         // Initialize when DOM is ready
         if (document.readyState === 'loading') {
