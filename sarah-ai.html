@@ -17,8 +17,10 @@
         }
 
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #ffffff;
             min-height: 100vh;
+            margin: 0;
+            padding: 0;
         }
 
         /* Chat Container */
@@ -28,8 +30,9 @@
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 9999;
-            display: block; /* STANDALONE MODE: Always visible for testing */
-            /* NOTE: For production deployment, change display to 'none' */
+            display: block !important; /* Always visible for direct access */
+            max-width: 100vw;
+            max-height: 100vh;
         }
 
         #wfm-chat-widget {
@@ -4447,22 +4450,14 @@ if (isMobile && send) {
         }
 
         function closeChat() {
-            widget.style.display = 'none';
-            toggle.style.display = 'none'; // Keep toggle hidden
-            container.style.display = 'none'; // Hide entire container
-            chatState.isOpen = false;
-            
-            // Restore body scroll on mobile
-            if (isMobile) {
-                const scrollY = document.body.style.top;
-                document.body.style.overflow = '';
-                document.body.style.position = '';
-                document.body.style.top = '';
-                document.body.style.width = '';
-                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            // For standalone mode (opened in new tab), close window or redirect
+            if (window.opener) {
+                // Opened from another window, try to close
+                window.close();
+            } else {
+                // Standalone navigation - redirect to main site
+                window.location.href = 'https://worryfreemovers.com';
             }
-            
-            saveSession();
         }
 
         function showTypingIndicator() {
