@@ -43,7 +43,7 @@
 
         /* When in iframe, fill the entire viewport */
         html.in-iframe #wfm-chat-container {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             right: 0;
@@ -53,6 +53,10 @@
             height: 100%;
             max-width: none;
             max-height: none;
+        }
+
+        html.in-iframe body {
+            overflow: hidden;
         }
 
         #wfm-chat-widget {
