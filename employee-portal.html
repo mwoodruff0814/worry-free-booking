@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Portal - Worry Free Moving</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-container {
+            max-width: 450px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .portal-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            display: none;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #1e3c72;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30,60,114,0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            height: fit-content;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            margin: 5px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .nav-item:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .profile-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .profile-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .profile-row:last-child {
+            border-bottom: none;
+        }
+
+        .profile-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .profile-value {
+            color: #1e3c72;
+            font-weight: 600;
+        }
+
+        .timeoff-request {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #1e3c72;
+        }
+
+        .timeoff-pending {
+            border-left-color: #ffc107;
+        }
+
+        .timeoff-approved {
+            border-left-color: #28a745;
+        }
+
+        .timeoff-denied {
+            border-left-color: #dc3545;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-denied {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .user-info {
+            text-align: center;
+            padding: 20px;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin: 0 auto 15px;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            width: 100%;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- LOGIN PAGE -->
+    <div id="loginContainer" class="login-container">
+        <div class="header">
+            <h1>👷 Employee Portal</h1>
+            <p>Worry Free Moving</p>
+        </div>
+        <div class="content">
+            <div id="loginError" class="alert alert-danger" style="display: none;"></div>
+
+            <form id="loginForm" onsubmit="login(event)">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" required placeholder="Enter your username">
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required placeholder="Enter your password">
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    🔐 Log In
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 20px; color: #666; font-size: 14px;">
+                <p>Need help? Contact your supervisor</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- EMPLOYEE PORTAL DASHBOARD -->
+    <div id="portalContainer" class="portal-container">
+        <div class="dashboard">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">D</div>
+                    <div style="font-weight: 600; font-size: 18px;" id="userName">Darrel</div>
+                    <div style="color: #666; font-size: 14px;" id="userRole">Crew Member</div>
+                </div>
+
+                <div class="nav-item active" onclick="showSection('profile')">
+                    👤 My Profile
+                </div>
+                <div class="nav-item" onclick="showSection('timeoff')">
+                    🗓️ Time-Off Requests
+                </div>
+                <div class="nav-item" onclick="showSection('password')">
+                    🔐 Change Password
+                </div>
+
+                <button class="btn btn-danger logout-btn" onclick="logout()">
+                    🚪 Log Out
+                </button>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Profile Section -->
+                <div id="profileSection" class="section active">
+                    <h2 style="margin-bottom: 20px; color: #1e3c72;">👤 My Profile</h2>
+
+                    <div class="profile-card">
+                        <h3 style="margin-bottom: 15px;">Personal Information</h3>
+                        <div class="profile-row">
+                            <span class="profile-label">Full Name:</span>
+                            <span class="profile-value" id="profileName">-</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Email:</span>
+                            <span class="profile-value" id="profileEmail">-</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Phone:</span>
+                            <span class="profile-value" id="profilePhone">-</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Team:</span>
+                            <span class="profile-value" id="profileTeam">-</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Hire Date:</span>
+                            <span class="profile-value" id="profileHireDate">-</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Status:</span>
+                            <span class="profile-value" id="profileStatus">-</span>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-success">
+                        <strong>✅ Active Employee</strong><br>
+                        Your profile is up to date. Contact HR if you need to update any information.
+                    </div>
+                </div>
+
+                <!-- Time-Off Section -->
+                <div id="timeoffSection" class="section">
+                    <h2 style="margin-bottom: 20px; color: #1e3c72;">🗓️ My Time-Off Requests</h2>
+
+                    <div style="margin-bottom: 20px;">
+                        <a href="crew-timeoff.html" class="btn btn-primary" style="text-decoration: none; display: inline-block; width: auto; padding: 12px 30px;">
+                            ➕ Submit New Request
+                        </a>
+                    </div>
+
+                    <div id="timeoffRequests">
+                        <p style="color: #666; text-align: center; padding: 40px;">
+                            Loading your time-off requests...
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Password Change Section -->
+                <div id="passwordSection" class="section">
+                    <h2 style="margin-bottom: 20px; color: #1e3c72;">🔐 Change Password</h2>
+
+                    <div id="passwordMessage" style="display: none;"></div>
+
+                    <form id="passwordForm" onsubmit="changePassword(event)">
+                        <div class="form-group">
+                            <label>Current Password</label>
+                            <input type="password" id="currentPassword" required placeholder="Enter current password">
+                        </div>
+
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <input type="password" id="newPassword" required placeholder="Enter new password" minlength="6">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Confirm New Password</label>
+                            <input type="password" id="confirmPassword" required placeholder="Confirm new password" minlength="6">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            🔐 Update Password
+                        </button>
+                    </form>
+
+                    <div class="alert alert-success" style="margin-top: 20px;">
+                        <strong>🛡️ Password Tips:</strong>
+                        <ul style="margin: 10px 0 0 20px;">
+                            <li>Use at least 6 characters</li>
+                            <li>Include numbers and letters</li>
+                            <li>Don't share your password</li>
+                            <li>Change it regularly</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+        let currentEmployee = null;
+
+        // Login function
+        async function login(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/api/employee/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Store session
+                    localStorage.setItem('employeeToken', data.token);
+                    localStorage.setItem('employeeData', JSON.stringify(data.employee));
+                    currentEmployee = data.employee;
+
+                    // Show portal
+                    showPortal();
+                } else {
+                    showError(data.error || 'Invalid username or password');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('Login failed. Please try again.');
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Show portal after login
+        function showPortal() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('portalContainer').style.display = 'block';
+
+            // Load employee data
+            loadEmployeeProfile();
+            loadTimeOffRequests();
+        }
+
+        // Load employee profile
+        function loadEmployeeProfile() {
+            const employee = JSON.parse(localStorage.getItem('employeeData'));
+
+            // Update UI
+            document.getElementById('userName').textContent = employee.firstName;
+            document.getElementById('userRole').textContent = employee.role === 'crew' ? 'Crew Member' : employee.role;
+            document.getElementById('userAvatar').textContent = employee.firstName.charAt(0).toUpperCase();
+
+            document.getElementById('profileName').textContent = `${employee.firstName} ${employee.lastName}`;
+            document.getElementById('profileEmail').textContent = employee.email;
+            document.getElementById('profilePhone').textContent = employee.phone;
+            document.getElementById('profileTeam').textContent = getTeamName(employee.team);
+            document.getElementById('profileHireDate').textContent = new Date(employee.hireDate).toLocaleDateString();
+            document.getElementById('profileStatus').textContent = employee.status.toUpperCase();
+        }
+
+        // Get team display name
+        function getTeamName(team) {
+            const teams = {
+                'crew-a': 'Crew A (Darrel\'s Team)',
+                'crew-b': 'Crew B (Zack\'s Team)',
+                'crew-c': 'Crew C (Quality Moving)'
+            };
+            return teams[team] || team;
+        }
+
+        // Load time-off requests
+        async function loadTimeOffRequests() {
+            const employee = JSON.parse(localStorage.getItem('employeeData'));
+
+            try {
+                const response = await fetch(`${API_URL}/api/employee/timeoff-requests?email=${encodeURIComponent(employee.email)}`);
+                const data = await response.json();
+
+                const container = document.getElementById('timeoffRequests');
+
+                if (data.success && data.requests.length > 0) {
+                    container.innerHTML = data.requests.map(request => `
+                        <div class="timeoff-request timeoff-${request.status}">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h3 style="margin: 0;">${request.requestType.charAt(0).toUpperCase() + request.requestType.slice(1)}</h3>
+                                <span class="status-badge status-${request.status}">${request.status.toUpperCase()}</span>
+                            </div>
+                            <p><strong>Start Date:</strong> ${new Date(request.startDate).toLocaleDateString()}</p>
+                            <p><strong>End Date:</strong> ${new Date(request.endDate).toLocaleDateString()}</p>
+                            <p><strong>Days:</strong> ${request.daysCount} day(s)</p>
+                            ${request.reason ? `<p><strong>Reason:</strong> ${request.reason}</p>` : ''}
+                            ${request.responseNote ? `<p style="margin-top: 10px; padding: 10px; background: #fff; border-radius: 5px;"><strong>Manager Note:</strong> ${request.responseNote}</p>` : ''}
+                            <p style="font-size: 12px; color: #666; margin-top: 10px;">Submitted: ${new Date(request.submittedDate).toLocaleString()}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #666;">
+                            <p style="font-size: 48px; margin-bottom: 20px;">📅</p>
+                            <p style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">No time-off requests yet</p>
+                            <p>Click "Submit New Request" above to request time off.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading time-off requests:', error);
+            }
+        }
+
+        // Change password
+        async function changePassword(event) {
+            event.preventDefault();
+
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                showPasswordMessage('New passwords do not match', 'danger');
+                return;
+            }
+
+            const employee = JSON.parse(localStorage.getItem('employeeData'));
+
+            try {
+                const response = await fetch(`${API_URL}/api/employee/change-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        employeeId: employee.id,
+                        currentPassword,
+                        newPassword
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showPasswordMessage('Password changed successfully!', 'success');
+                    document.getElementById('passwordForm').reset();
+                } else {
+                    showPasswordMessage(data.error || 'Failed to change password', 'danger');
+                }
+            } catch (error) {
+                console.error('Error changing password:', error);
+                showPasswordMessage('Error changing password. Please try again.', 'danger');
+            }
+        }
+
+        // Show password message
+        function showPasswordMessage(message, type) {
+            const messageDiv = document.getElementById('passwordMessage');
+            messageDiv.className = `alert alert-${type}`;
+            messageDiv.textContent = message;
+            messageDiv.style.display = 'block';
+
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Show section
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            // Show selected section
+            document.getElementById(`${section}Section`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('employeeToken');
+            localStorage.removeItem('employeeData');
+            currentEmployee = null;
+
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('portalContainer').style.display = 'none';
+            document.getElementById('loginForm').reset();
+        }
+
+        // Check if already logged in
+        window.onload = () => {
+            const token = localStorage.getItem('employeeToken');
+            const employeeData = localStorage.getItem('employeeData');
+
+            if (token && employeeData) {
+                currentEmployee = JSON.parse(employeeData);
+                showPortal();
+            }
+        };
+    </script>
+</body>
+</html>

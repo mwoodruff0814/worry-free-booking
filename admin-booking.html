@@ -1,0 +1,2931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Booking - Worry Free Moving</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAWGIVnh7-2sgDJin_2qgNvwh4JD9UgJDo&libraries=places"></script>
+    <script type="text/javascript" src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+        }
+
+        .admin-badge {
+            background: #ffc107;
+            color: #000;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .right-column {
+            position: sticky;
+            top: 20px;
+            align-self: start;
+        }
+
+        h2 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h3 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .section.admin-override {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 2px solid #ffc107;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #495057;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .label-with-tooltip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip-icon {
+            background: #6c757d;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: #555;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+            font-weight: normal;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #1e3c72;
+        }
+
+        input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .checkbox-item:hover {
+            border-color: #1e3c72;
+            background: #f0f4f8;
+        }
+
+        .checkbox-item.checked {
+            border-color: #1e3c72;
+            background: #e7f1ff;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        .pricing-display {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-radius: 15px;
+            padding: 25px;
+            border: 3px solid #28a745;
+            position: sticky;
+            top: 20px;
+        }
+
+        .pricing-display h2 {
+            color: #155724;
+            margin-bottom: 20px;
+        }
+
+        .price-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            font-size: 14px;
+        }
+
+        .price-line.total {
+            font-size: 24px;
+            font-weight: 700;
+            color: #155724;
+            border-bottom: none;
+            border-top: 3px solid #28a745;
+            padding-top: 15px;
+            margin-top: 10px;
+        }
+
+        .price-line.subtotal {
+            font-weight: 600;
+            border-top: 2px solid rgba(0,0,0,0.2);
+            padding-top: 10px;
+            margin-top: 5px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            width: 100%;
+            font-size: 18px;
+            padding: 18px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30,60,114,0.3);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+            width: 100%;
+            font-size: 18px;
+            padding: 18px;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Square Card Styles */
+        .card-container-wrapper {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        #card-container {
+            margin-bottom: 20px;
+            min-height: 100px;
+        }
+
+        .btn-save-card {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save-card:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30,60,114,0.3);
+        }
+
+        .btn-save-card:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #card-status-container {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        #card-status-container.show {
+            display: block;
+        }
+
+        #card-status-container.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        #card-status-container.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        #card-status-container.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .collapsible-header::before {
+            content: '▼';
+            transition: transform 0.3s;
+            font-size: 12px;
+        }
+
+        .collapsible-header.collapsed::before {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-content {
+            max-height: 2000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .collapsible-content.collapsed {
+            max-height: 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .location-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #dee2e6;
+        }
+
+        .calculation-note {
+            background: #e7f1ff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #004085;
+            margin-top: 10px;
+            border-left: 4px solid #1e3c72;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #28a745;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        .distance-display {
+            background: #e7f1ff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-weight: 600;
+            color: #004085;
+        }
+
+        @media (max-width: 1200px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .right-column {
+                position: static;
+            }
+        }
+
+        .small-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .price-breakdown-item {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 5px 0;
+        }
+
+        .company-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .company-card {
+            background: white;
+            border: 3px solid #dee2e6;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .company-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .company-card.selected {
+            border-color: #1e3c72;
+            background: linear-gradient(135deg, #e7f1ff 0%, #f0f4f8 100%);
+        }
+
+        .company-card.selected::before {
+            content: "✓";
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #28a745;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .company-card .icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .company-card h3 {
+            color: #1e3c72;
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+
+        .company-card p {
+            color: #6c757d;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 Admin Booking Portal</h1>
+            <div class="admin-badge">ADMIN ONLY</div>
+        </div>
+
+        <div class="content">
+            <!-- LEFT COLUMN: FORM SECTIONS -->
+            <div class="left-column">
+
+                <!-- COMPANY SELECTION -->
+                <div class="section">
+                    <h2>🏢 Select Company</h2>
+                    <p style="color: #6c757d; margin-bottom: 20px;">Choose which company this booking is for</p>
+
+                    <div class="company-selector">
+                        <div class="company-card selected" onclick="selectCompany('Worry Free Moving')" data-company="Worry Free Moving">
+                            <div class="icon">🚚</div>
+                            <h3>Worry Free Moving</h3>
+                            <p>Full-service moving company with trucks, equipment, and packing materials</p>
+                        </div>
+
+                        <div class="company-card" onclick="selectCompany('Quality Moving')" data-company="Quality Moving">
+                            <div class="icon">💼</div>
+                            <h3>Quality Moving</h3>
+                            <p>Labor-only services for MovingHelp marketplace customers</p>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="bookingCompany" value="Worry Free Moving">
+                </div>
+
+                <!-- SECTION 1: CUSTOMER INFORMATION -->
+                <div class="section">
+                    <h2>📋 Section 1: Customer Information</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="required">First Name</label>
+                            <input type="text" id="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="required">Last Name</label>
+                            <input type="text" id="lastName" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="required">Email</label>
+                            <input type="email" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="required">Phone</label>
+                            <input type="tel" id="phone" placeholder="(330) 435-8686" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Company Name (Optional)</label>
+                            <input type="text" id="companyName">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="required">Move Date</label>
+                            <input type="date" id="moveDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="required">Move Time (Arrival Window)</label>
+                            <select id="moveTime" required>
+                                <option value="">Select time...</option>
+                                <option value="08:00">7:00 AM - 8:00 AM</option>
+                                <option value="09:00">8:00 AM - 9:00 AM</option>
+                                <option value="10:00">9:00 AM - 10:00 AM</option>
+                                <option value="11:00">10:00 AM - 11:00 AM</option>
+                                <option value="12:00">11:00 AM - 12:00 PM</option>
+                                <option value="13:00">12:00 PM - 1:00 PM</option>
+                                <option value="14:00">1:00 PM - 2:00 PM</option>
+                                <option value="15:00">2:00 PM - 3:00 PM</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: SERVICE TYPE & ADDRESSES -->
+                <div class="section">
+                    <h2>🚚 Section 2: Service Type & Addresses</h2>
+                    <div class="form-group">
+                        <label class="required label-with-tooltip">
+                            Service Type
+                            <div class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">Moving includes truck. Labor Only is when customer has their own truck. Single Item is for moving one item only.</span>
+                            </div>
+                        </label>
+                        <select id="serviceType" required onchange="handleServiceTypeChange()">
+                            <option value="">Select service type...</option>
+                            <option value="moving">🚚 Full Service Moving (2-4 person crew)</option>
+                            <option value="labor">💪 Labor Only (customer provides truck)</option>
+                            <option value="single">📦 Single Item Move</option>
+                            <option value="junk">🗑️ Junk Removal</option>
+                            <option value="cleanout">🧹 Cleanout Service</option>
+                        </select>
+                    </div>
+
+                    <!-- CREW SIZE (for moving) -->
+                    <div class="form-group hidden" id="crewSizeGroup">
+                        <label class="required">Crew Size</label>
+                        <select id="crewSize" onchange="calculatePricing()">
+                            <option value="2">👥 2 Person Crew - Smaller moves, 1-2 bedrooms</option>
+                            <option value="3">👥👤 3 Person Crew - Medium moves, 2-3 bedrooms</option>
+                            <option value="4">👥👥 4 Person Crew - Larger moves, 3+ bedrooms</option>
+                        </select>
+                    </div>
+
+                    <!-- ADDRESSES -->
+                    <div id="addressesSection">
+                        <div class="form-group">
+                            <label class="required">Pickup Address (From)</label>
+                            <input type="text" id="pickupAddress" placeholder="Start typing address..." required>
+                            <span class="small-text">Google will autocomplete as you type</span>
+                        </div>
+
+                        <div class="form-group" id="deliveryAddressGroup">
+                            <label class="required">Delivery Address (To)</label>
+                            <input type="text" id="deliveryAddress" placeholder="Start typing address..." required>
+                            <span class="small-text">Google will autocomplete as you type</span>
+                        </div>
+
+                        <div class="form-group" id="thirdLocationCheckboxGroup">
+                            <label>
+                                <input type="checkbox" id="hasThirdLocation" onchange="toggleThirdLocation()">
+                                Add third location (e.g., storage unit, parent's house)
+                            </label>
+                        </div>
+
+                        <div class="form-group hidden" id="thirdAddressGroup">
+                            <label class="required">Third Location Address</label>
+                            <input type="text" id="thirdAddress" placeholder="Start typing address...">
+                            <span class="small-text">Google will autocomplete as you type</span>
+                        </div>
+
+                        <div class="form-group hidden" id="thirdLocationActionGroup">
+                            <label class="required">What will the crew do at the third location?</label>
+                            <select id="thirdLocationAction" onchange="calculatePricing()">
+                                <option value="">Select action...</option>
+                                <option value="drop_only">Drop off items only</option>
+                                <option value="pick_only">Pick up items only</option>
+                                <option value="both">Both pick up and drop off</option>
+                            </select>
+                        </div>
+
+                        <div id="distanceDisplay" class="distance-display hidden">
+                            Calculating distances...
+                        </div>
+                    </div>
+
+                    <!-- LABOR ONLY SPECIFIC FIELDS -->
+                    <div id="laborOnlyFields" class="hidden">
+                        <h3 style="margin-top: 20px;">Labor Only Details</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="required">Number of Crew Members</label>
+                                <select id="laborCrewSize" onchange="calculatePricing()">
+                                    <option value="2">2 movers</option>
+                                    <option value="3">3 movers</option>
+                                    <option value="4">4 movers</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="required">Estimated Hours Needed</label>
+                                <input type="number" id="laborHours" min="2" step="0.5" value="2" onchange="calculatePricing()">
+                                <span class="small-text">Minimum 2 hours</span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Customer's Truck Size</label>
+                                <input type="text" id="customerTruckSize" placeholder="e.g., 26ft U-Haul">
+                            </div>
+                            <div class="form-group">
+                                <label>Provide Moving Blankets?</label>
+                                <select id="provideBlankets">
+                                    <option value="no">No - Customer has own</option>
+                                    <option value="yes">Yes - Charge for blankets</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SINGLE ITEM FIELDS -->
+                    <div id="singleItemFields" class="hidden">
+                        <h3 style="margin-top: 20px;">Single Item Details</h3>
+                        <div class="form-group">
+                            <label class="required">Item Description</label>
+                            <input type="text" id="itemDescription" placeholder="e.g., King size mattress, Pool table, Gun safe">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Estimated Weight (lbs)</label>
+                                <input type="number" id="itemWeight" min="0" placeholder="e.g., 500" onchange="calculatePricing()">
+                                <span class="small-text">300+ lbs adds heavy item fee</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Required Crew Size</label>
+                                <select id="singleItemCrew" onchange="calculatePricing()">
+                                    <option value="2">2 movers</option>
+                                    <option value="3">3 movers</option>
+                                    <option value="4">4 movers</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: LOCATION DETAILS -->
+                <div class="section" id="locationDetailsSection">
+                    <h2>🏠 Section 3: Location Details</h2>
+                    <p class="small-text" style="margin-bottom: 15px;">Provide details about each location</p>
+
+                    <!-- LOCATION 1 -->
+                    <div class="location-section">
+                        <h3>Location 1 (Pickup)</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="required">Home Type</label>
+                                <select id="location1HomeType" onchange="calculatePricing()">
+                                    <option value="">Select...</option>
+                                    <option value="house">🏠 House</option>
+                                    <option value="apartment">🏢 Apartment</option>
+                                    <option value="condo">🏢 Condo</option>
+                                    <option value="storage">📦 Storage Unit</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="required label-with-tooltip">
+                                    Bedrooms
+                                    <div class="tooltip">
+                                        <span class="tooltip-icon">?</span>
+                                        <span class="tooltip-text">Number of bedrooms affects loading time estimate. Studios count as 1 bedroom.</span>
+                                    </div>
+                                </label>
+                                <select id="location1Bedrooms" onchange="calculatePricing()">
+                                    <option value="1">Studio / 1 bedroom</option>
+                                    <option value="2">2 bedrooms</option>
+                                    <option value="3">3 bedrooms</option>
+                                    <option value="4">4 bedrooms</option>
+                                    <option value="5">5+ bedrooms</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="label-with-tooltip">
+                                    Flights of Stairs
+                                    <div class="tooltip">
+                                        <span class="tooltip-icon">?</span>
+                                        <span class="tooltip-text">Each flight = 12-16 steps. Apartments charge $35/flight, houses $25/flight due to building restrictions.</span>
+                                    </div>
+                                </label>
+                                <input type="number" id="location1Stairs" min="0" value="0" onchange="calculatePricing()">
+                            </div>
+                            <div class="form-group">
+                                <label>Which Floor?</label>
+                                <select id="location1Floor">
+                                    <option value="ground">Ground floor</option>
+                                    <option value="1">1st floor</option>
+                                    <option value="2">2nd floor</option>
+                                    <option value="3">3rd floor</option>
+                                    <option value="4">4th floor+</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Elevator Available?</label>
+                                <select id="location1Elevator">
+                                    <option value="no">No elevator</option>
+                                    <option value="yes">Yes - working elevator</option>
+                                    <option value="slow">Yes - but slow/small</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="label-with-tooltip">
+                                    Long Carry Distance?
+                                    <div class="tooltip">
+                                        <span class="tooltip-icon">?</span>
+                                        <span class="tooltip-text">Long hallways, driveways, or walking distance from parking to door adds time.</span>
+                                    </div>
+                                </label>
+                                <select id="location1LongCarry" onchange="calculatePricing()">
+                                    <option value="no">No</option>
+                                    <option value="yes">Yes - adds time</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LOCATION 2 -->
+                    <div class="location-section" id="location2Section">
+                        <h3>Location 2 (Delivery)</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="required">Home Type</label>
+                                <select id="location2HomeType" onchange="calculatePricing()">
+                                    <option value="">Select...</option>
+                                    <option value="house">🏠 House</option>
+                                    <option value="apartment">🏢 Apartment</option>
+                                    <option value="condo">🏢 Condo</option>
+                                    <option value="storage">📦 Storage Unit</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="required">Bedrooms</label>
+                                <select id="location2Bedrooms" onchange="calculatePricing()">
+                                    <option value="1">Studio / 1 bedroom</option>
+                                    <option value="2">2 bedrooms</option>
+                                    <option value="3">3 bedrooms</option>
+                                    <option value="4">4 bedrooms</option>
+                                    <option value="5">5+ bedrooms</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Flights of Stairs</label>
+                                <input type="number" id="location2Stairs" min="0" value="0" onchange="calculatePricing()">
+                            </div>
+                            <div class="form-group">
+                                <label>Which Floor?</label>
+                                <select id="location2Floor">
+                                    <option value="ground">Ground floor</option>
+                                    <option value="1">1st floor</option>
+                                    <option value="2">2nd floor</option>
+                                    <option value="3">3rd floor</option>
+                                    <option value="4">4th floor+</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Elevator Available?</label>
+                                <select id="location2Elevator">
+                                    <option value="no">No elevator</option>
+                                    <option value="yes">Yes - working elevator</option>
+                                    <option value="slow">Yes - but slow/small</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Long Carry Distance?</label>
+                                <select id="location2LongCarry" onchange="calculatePricing()">
+                                    <option value="no">No</option>
+                                    <option value="yes">Yes - adds time</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LOCATION 3 (if applicable) -->
+                    <div class="location-section hidden" id="location3Section">
+                        <h3>Location 3 (Third Location)</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Home Type</label>
+                                <select id="location3HomeType" onchange="calculatePricing()">
+                                    <option value="">Select...</option>
+                                    <option value="house">🏠 House</option>
+                                    <option value="apartment">🏢 Apartment</option>
+                                    <option value="condo">🏢 Condo</option>
+                                    <option value="storage">📦 Storage Unit</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Bedrooms</label>
+                                <select id="location3Bedrooms" onchange="calculatePricing()">
+                                    <option value="1">Studio / 1 bedroom</option>
+                                    <option value="2">2 bedrooms</option>
+                                    <option value="3">3 bedrooms</option>
+                                    <option value="4">4 bedrooms</option>
+                                    <option value="5">5+ bedrooms</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Flights of Stairs</label>
+                                <input type="number" id="location3Stairs" min="0" value="0" onchange="calculatePricing()">
+                            </div>
+                            <div class="form-group">
+                                <label>Long Carry Distance?</label>
+                                <select id="location3LongCarry" onchange="calculatePricing()">
+                                    <option value="no">No</option>
+                                    <option value="yes">Yes - adds time</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 4: PROPERTY CHARACTERISTICS -->
+                <div class="section" id="propertyCharacteristicsSection">
+                    <h2>🏘️ Section 4: Property Characteristics</h2>
+                    <div class="form-group">
+                        <label class="label-with-tooltip">
+                            Large Home (2,600+ sq ft)?
+                            <div class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">Homes larger than 2,600 sq ft take longer to move, even with same bedroom count.</span>
+                            </div>
+                        </label>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="largeHomeLocation1" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Location 1 is large</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="largeHomeLocation2" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Location 2 is large</span>
+                            </label>
+                            <label class="checkbox-item" id="largeHomeLocation3Checkbox" class="hidden">
+                                <input type="checkbox" id="largeHomeLocation3" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Location 3 is large</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label-with-tooltip">
+                            Access Challenges?
+                            <div class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">Long hallways, driveways, walks, or slow elevators add 10-15 minutes per location.</span>
+                            </div>
+                        </label>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="challengeLocation1" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Location 1 has challenges</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="challengeLocation2" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Location 2 has challenges</span>
+                            </label>
+                            <label class="checkbox-item" id="challengeLocation3Checkbox" class="hidden">
+                                <input type="checkbox" id="challengeLocation3" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Location 3 has challenges</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 5: INVENTORY & ITEMS -->
+                <div class="section" id="inventorySection">
+                    <h2>📦 Section 5: Inventory & Special Items</h2>
+
+                    <!-- TVs -->
+                    <div class="form-group">
+                        <label class="label-with-tooltip">
+                            TV Handling
+                            <div class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">TVs 50"+ require special handling and boxes for protection. Adds time and material costs.</span>
+                            </div>
+                        </label>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="tv50" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>50"-59" TV (adds 10 min, $25 box)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="tv60" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>60"-69" TV (adds 15 min, $35 box)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="tv70" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>70"+ TV (adds 20 min, $50 box)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Appliances -->
+                    <div class="form-group">
+                        <label class="label-with-tooltip">
+                            Appliances to Move
+                            <div class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">Each appliance requires disconnection/reconnection time. We only disconnect - customer responsible for hookup at destination.</span>
+                            </div>
+                        </label>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="washer" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Washer (adds 15 min)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="dryer" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Dryer (adds 15 min)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="refrigerator" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Refrigerator (adds 20 min)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="stove" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Stove/Range (adds 20 min)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="dishwasher" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Dishwasher (adds 20 min)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Shop Equipment -->
+                    <div class="form-group">
+                        <label class="label-with-tooltip">
+                            Shop / Garage Equipment
+                            <div class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">Heavy equipment requires extra time and may need additional crew members. 300+ lbs items add $50 fee.</span>
+                            </div>
+                        </label>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="toolbox" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Large toolbox (300+ lbs, adds 30 min, $50)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="workbench" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Workbench (300+ lbs, adds 25 min, $50)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="machinery" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Heavy machinery (300+ lbs, adds 40 min, $50)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Oversized Furniture -->
+                    <div class="form-group">
+                        <label class="label-with-tooltip">
+                            Oversized Furniture
+                            <div class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">These items require extra care, protection, and time. Some may need doorway removal or special rigging.</span>
+                            </div>
+                        </label>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="sectional" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Large sectional (300+ lbs, adds 25 min, $50)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="wardrobe" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Wardrobe/Armoire (300+ lbs, adds 25 min, $50)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="entertainment" onchange="handleCheckboxToggle(this); calculatePricing()">
+                                <span>Large entertainment center (300+ lbs, adds 30 min, $50)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Special Items -->
+                    <div class="form-group">
+                        <label class="label-with-tooltip">
+                            Special Items (Select One Maximum)
+                            <div class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">These items require specialized equipment and expertise. Additional fees apply for safety and liability.</span>
+                            </div>
+                        </label>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="radio" name="specialItem" id="piano" value="piano" onchange="calculatePricing()">
+                                <span>Piano (2 hrs, $200-400)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="radio" name="specialItem" id="safe" value="safe" onchange="calculatePricing()">
+                                <span>Gun Safe (1.5 hrs, $150-300)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="radio" name="specialItem" id="poolTable" value="pool_table" onchange="calculatePricing()">
+                                <span>Pool Table (3 hrs, $350+)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="radio" name="specialItem" id="hotTub" value="hot_tub" onchange="calculatePricing()">
+                                <span>Hot Tub (2 hrs, $300)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 6: SERVICES -->
+                <div class="section" id="servicesSection">
+                    <h2>🛠️ Section 6: Additional Services</h2>
+
+                    <div class="form-group">
+                        <label class="label-with-tooltip">
+                            Packing Service
+                            <div class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">Full packing includes all items. Partial is for fragile/difficult items only. Charged at $110/hour/person.</span>
+                            </div>
+                        </label>
+                        <select id="packingService" onchange="calculatePricing()">
+                            <option value="no">No packing service needed</option>
+                            <option value="partial">Partial packing (fragile items only)</option>
+                            <option value="full">Full packing service</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="needsPackingMaterials" onchange="handleCheckboxToggle(this); calculatePricing()">
+                            Customer needs packing materials (boxes, tape, paper)
+                        </label>
+                        <span class="small-text">We'll calculate materials based on home size</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="needsPhotos" onchange="handleCheckboxToggle(this)">
+                            Take before/after photos for insurance documentation
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label-with-tooltip">
+                            Moving Blankets
+                            <div class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">Standard moves include blankets. Labor-only can purchase blankets separately.</span>
+                            </div>
+                        </label>
+                        <select id="blanketsNeeded">
+                            <option value="included">Included (standard for moving)</option>
+                            <option value="purchase">Purchase blankets ($15 each)</option>
+                            <option value="customer">Customer provides own</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- SECTION 7: CREW & TIME ESTIMATE -->
+                <div class="section" id="crewTimeSection">
+                    <h2>⏱️ Section 7: Crew & Time Estimate</h2>
+                    <div class="calculation-note">
+                        <strong>Note:</strong> Time and crew size are calculated automatically based on your inputs above. You can override these in Section 9.
+                    </div>
+
+                    <div class="form-row" style="margin-top: 15px;">
+                        <div class="form-group">
+                            <label>Recommended Minimum Crew Size</label>
+                            <input type="text" id="recommendedCrew" readonly style="background: #e9ecef;">
+                        </div>
+                        <div class="form-group">
+                            <label>Estimated Total Time</label>
+                            <input type="text" id="estimatedTime" readonly style="background: #e9ecef;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Estimated Loading/Unloading Time</label>
+                            <input type="text" id="loadingTime" readonly style="background: #e9ecef;">
+                        </div>
+                        <div class="form-group">
+                            <label>Estimated Drive Time</label>
+                            <input type="text" id="driveTime" readonly style="background: #e9ecef;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 9: ADMIN OVERRIDE CONTROLS -->
+                <div class="section admin-override">
+                    <h2>⚡ Section 9: Admin Override Controls</h2>
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Admin Only:</strong> These controls override automatic pricing. Use with caution.
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="manualPricing" onchange="toggleManualPricing()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            Enable Manual Pricing (disables automatic calculation)
+                        </label>
+                    </div>
+
+                    <div id="manualPricingFields" class="hidden">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Manual Hourly Rate</label>
+                                <input type="number" id="manualHourlyRate" step="0.01" placeholder="e.g., 192.50">
+                            </div>
+                            <div class="form-group">
+                                <label>Manual Total Hours</label>
+                                <input type="number" id="manualTotalHours" step="0.5" placeholder="e.g., 6.5">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Manual Total Price</label>
+                            <input type="number" id="manualTotalPrice" step="0.01" placeholder="Enter total price" onchange="updateManualPrice()">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Discount Type</label>
+                            <select id="discountType" onchange="calculatePricing()">
+                                <option value="none">No discount</option>
+                                <option value="percentage">Percentage (%)</option>
+                                <option value="dollar">Dollar Amount ($)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Discount Amount</label>
+                            <input type="number" id="discountAmount" step="0.01" value="0" onchange="calculatePricing()">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Custom Fee Name</label>
+                            <input type="text" id="customFeeName" placeholder="e.g., Rush service, Weekend fee">
+                        </div>
+                        <div class="form-group">
+                            <label>Custom Fee Amount</label>
+                            <input type="number" id="customFeeAmount" step="0.01" value="0" onchange="calculatePricing()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Admin Pricing Notes</label>
+                        <textarea id="adminPricingNotes" rows="3" placeholder="Internal notes about pricing adjustments..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="lockPrice">
+                            Lock Price (prevent changes during checkout)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SECTION 10: FVP INSURANCE -->
+                <div class="section" id="fvpSection">
+                    <h2>🛡️ Section 10: Full Value Protection (FVP) Insurance</h2>
+                    <div class="alert alert-info">
+                        Basic coverage ($0.60/lb) included free. FVP provides full replacement value protection.
+                    </div>
+
+                    <div class="form-group">
+                        <label>Coverage Option</label>
+                        <select id="fvpOption" onchange="calculatePricing()">
+                            <option value="basic">Basic Coverage (Free - $0.60/lb)</option>
+                            <option value="fvp">Full Value Protection (Recommended)</option>
+                        </select>
+                    </div>
+
+                    <div id="fvpFields" class="hidden">
+                        <div class="form-group">
+                            <label class="label-with-tooltip">
+                                Estimated Total Value of Items
+                                <div class="tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">Estimate replacement cost of all items being moved. FVP cost: $1.30 per $100 for local moves, $1.00 per $100 for 50+ miles.</span>
+                                </div>
+                            </label>
+                            <input type="number" id="fvpValue" step="100" placeholder="e.g., 50000" onchange="calculatePricing()">
+                        </div>
+                        <div id="fvpCostDisplay" class="calculation-note hidden"></div>
+                    </div>
+                </div>
+
+                <!-- SECTION 11: PAYMENT & NOTES -->
+                <div class="section">
+                    <h2>💳 Section 11: Payment & Booking Notes</h2>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Payment Method</label>
+                            <select id="paymentMethod">
+                                <option value="pending">To be determined</option>
+                                <option value="cash">Cash on completion</option>
+                                <option value="check">Check on completion</option>
+                                <option value="card-onsite">Credit card on-site</option>
+                                <option value="card-file">Square card-on-file</option>
+                                <option value="invoice">Invoice/bill later</option>
+                                <option value="prepaid">Prepaid (MovingHelp, etc.)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Payment Status</label>
+                            <select id="paymentStatus">
+                                <option value="pending">Pending</option>
+                                <option value="deposit">Deposit received</option>
+                                <option value="paid">Paid in full</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- CARD ON FILE SECTION (Hidden by default) -->
+                    <div id="cardOnFileSection" style="display: none;">
+                        <div class="card-container-wrapper">
+                            <div style="margin-bottom: 15px;">
+                                <strong style="color: #004085;">Card Information</strong>
+                                <div style="font-size: 13px; color: #666; margin-top: 5px;">
+                                    Secured by Square - PCI Compliant
+                                </div>
+                            </div>
+
+                            <div id="card-container"></div>
+
+                            <button id="save-card-button" type="button" class="btn-save-card">
+                                Save Card Securely
+                            </button>
+
+                            <div id="card-status-container"></div>
+
+                            <div style="margin-top: 16px; font-size: 12px; color: #718096; text-align: center;">
+                                No card data stored on our servers - Payment due after move completion
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Crew Assignment</label>
+                            <select id="crewAssignment">
+                                <option value="">Assign later</option>
+                                <option value="crew-a">Crew A</option>
+                                <option value="crew-b">Crew B</option>
+                                <option value="crew-c">Crew C</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Priority Level</label>
+                            <select id="priorityLevel">
+                                <option value="normal">Normal</option>
+                                <option value="high">High Priority</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Customer Notes / Special Instructions</label>
+                        <textarea id="customerNotes" rows="4" placeholder="Any special instructions, access codes, parking info, etc."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Internal Admin Notes</label>
+                        <textarea id="internalNotes" rows="3" placeholder="Internal notes not visible to customer..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="sendConfirmation" checked>
+                            Send confirmation email and SMS to customer
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SUBMIT BUTTON -->
+                <div style="margin-top: 30px;">
+                    <button class="btn btn-success" onclick="submitBooking()">
+                        Create Booking
+                    </button>
+                </div>
+
+                <!-- SUCCESS MESSAGE -->
+                <div id="successMessage" class="alert alert-success hidden" style="margin-top: 20px;">
+                    <strong>✅ Booking Created Successfully!</strong>
+                    <p id="bookingIdDisplay"></p>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: PRICING DISPLAY -->
+            <div class="right-column">
+                <div class="pricing-display">
+                    <h2>💰 Automatic Pricing</h2>
+                    <div class="calculation-note" style="background: white; margin-bottom: 15px;">
+                        Prices update in real-time as you fill out the form
+                    </div>
+
+                    <div id="pricingBreakdown">
+                        <!-- Service Info -->
+                        <div class="price-breakdown-item">
+                            <strong>Service Type:</strong>
+                            <div id="displayServiceType">Not selected</div>
+                        </div>
+
+                        <div class="price-breakdown-item">
+                            <strong>Route:</strong>
+                            <div id="displayRoute">No addresses yet</div>
+                        </div>
+
+                        <div class="price-breakdown-item">
+                            <strong>Distance:</strong>
+                            <div id="displayDistance">Calculating...</div>
+                        </div>
+
+                        <div class="price-breakdown-item">
+                            <strong>Crew & Rate:</strong>
+                            <div id="displayCrew">Not calculated</div>
+                        </div>
+
+                        <div class="price-breakdown-item">
+                            <strong>Time Estimate:</strong>
+                            <div id="displayTime">Not calculated</div>
+                        </div>
+
+                        <hr style="margin: 15px 0;">
+
+                        <!-- Pricing Lines -->
+                        <div id="pricingLines">
+                            <div class="price-line">
+                                <span>Base Service:</span>
+                                <span id="priceBase">$0.00</span>
+                            </div>
+                            <div class="price-line hidden" id="priceStairLine">
+                                <span id="priceStairLabel">Stairs:</span>
+                                <span id="priceStairs">$0.00</span>
+                            </div>
+                            <div class="price-line hidden" id="priceSpecialLine">
+                                <span id="priceSpecialLabel">Special Items:</span>
+                                <span id="priceSpecial">$0.00</span>
+                            </div>
+                            <div class="price-line hidden" id="priceHeavyLine">
+                                <span>Heavy Items:</span>
+                                <span id="priceHeavy">$0.00</span>
+                            </div>
+                            <div class="price-line hidden" id="priceTVLine">
+                                <span>TV Boxes:</span>
+                                <span id="priceTV">$0.00</span>
+                            </div>
+                            <div class="price-line hidden" id="pricePackingLine">
+                                <span>Packing Service:</span>
+                                <span id="pricePacking">$0.00</span>
+                            </div>
+                            <div class="price-line hidden" id="priceMaterialsLine">
+                                <span>Packing Materials:</span>
+                                <span id="priceMaterials">$0.00</span>
+                            </div>
+                            <div class="price-line hidden" id="priceTollsLine">
+                                <span>Estimated Tolls:</span>
+                                <span id="priceTolls">$0.00</span>
+                            </div>
+                            <div class="price-line hidden" id="priceFVPLine">
+                                <span>FVP Insurance:</span>
+                                <span id="priceFVP">$0.00</span>
+                            </div>
+                            <div class="price-line subtotal">
+                                <span>Subtotal:</span>
+                                <span id="priceSubtotal">$0.00</span>
+                            </div>
+                            <div class="price-line">
+                                <span id="serviceChargeLabel">Service Charge (14%):</span>
+                                <span id="priceServiceCharge">$0.00</span>
+                            </div>
+                            <div class="price-line hidden" id="priceSameDayLine">
+                                <span>Same-Day Fee (10%):</span>
+                                <span id="priceSameDay">$0.00</span>
+                            </div>
+                            <div class="price-line hidden" id="priceDiscountLine">
+                                <span id="priceDiscountLabel">Discount:</span>
+                                <span id="priceDiscount">-$0.00</span>
+                            </div>
+                            <div class="price-line hidden" id="priceCustomFeeLine">
+                                <span id="priceCustomFeeLabel">Custom Fee:</span>
+                                <span id="priceCustomFee">$0.00</span>
+                            </div>
+                        </div>
+
+                        <div class="price-line total">
+                            <span>TOTAL:</span>
+                            <span id="priceTotal">$0.00</span>
+                        </div>
+
+                        <div class="calculation-note" style="background: white; margin-top: 15px; font-size: 11px;">
+                            ⚠️ If actual time exceeds estimate, additional hours charged at hourly rate
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_URL = 'http://localhost:3001';
+        const BASE_ADDRESS = '1890 Triplett Blvd, Akron, OH 44312';
+
+        // Square Configuration (same as sarah-ai.html)
+        const CONFIG = {
+            phone: "330-435-8686",
+            square: {
+                applicationId: "sq0idp-7GJn4RN8zcdsw3S1kJaNOA",
+                locationId: "L6WP06SMJKJSB",
+                environment: "production",
+                apiUrl: "https://worry-free-chatbot-git-master-matt-5184s-projects.vercel.app/api/square-customer"
+            }
+        };
+
+        // Global variables
+        let servicesConfig = null;
+        let directionsService = null;
+        let geocoder = null;
+        let squarePayments = null;
+        let squareCard = null;
+        let cardTokenData = null;
+        let distanceData = {
+            fromDistance: 0,
+            fromDuration: 0,
+            tripDistance: 0,
+            tripDuration: 0,
+            thirdDistance: 0,
+            thirdDuration: 0,
+            totalDistance: 0,
+            hasTolls: false
+        };
+
+        // Company Selection Function
+        function selectCompany(companyName) {
+            // Remove selected class from all cards
+            document.querySelectorAll('.company-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Add selected class to clicked card
+            const selectedCard = document.querySelector(`[data-company="${companyName}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+
+            // Update hidden input
+            document.getElementById('bookingCompany').value = companyName;
+
+            console.log('Company selected:', companyName);
+        }
+
+        // Initialize on page load
+        window.onload = async function() {
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('moveDate').min = today;
+
+            // Initialize Google Maps services
+            directionsService = new google.maps.DirectionsService();
+            geocoder = new google.maps.Geocoder();
+
+            // Load services configuration
+            await loadServicesConfig();
+
+            // Setup autocomplete for addresses
+            setupAddressAutocomplete('pickupAddress');
+            setupAddressAutocomplete('deliveryAddress');
+            setupAddressAutocomplete('thirdAddress');
+
+            // Setup payment method listener
+            setupPaymentMethodListener();
+
+            // Initial calculation
+            calculatePricing();
+        };
+
+        // Setup Payment Method Listener
+        function setupPaymentMethodListener() {
+            const paymentMethodSelect = document.getElementById('paymentMethod');
+            const cardSection = document.getElementById('cardOnFileSection');
+
+            paymentMethodSelect.addEventListener('change', async function() {
+                if (this.value === 'card-file') {
+                    // Show card section
+                    cardSection.style.display = 'block';
+
+                    // Initialize Square if not already done
+                    if (!squarePayments) {
+                        await initializeSquarePayments();
+                    }
+                } else {
+                    // Hide card section
+                    cardSection.style.display = 'none';
+                }
+            });
+        }
+
+        // Initialize Square Payments
+        async function initializeSquarePayments() {
+            try {
+                // Wait for Square SDK to load (with timeout)
+                let attempts = 0;
+                while (!window.Square && attempts < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
+
+                if (!window.Square) {
+                    throw new Error('Square SDK not loaded after waiting');
+                }
+
+                console.log('Square SDK loaded successfully');
+
+                // Check if we're on HTTPS or localhost (Square Web SDK requirement)
+                // Explicitly exclude file:// protocol which is not secure
+                const isSecureContext = window.location.protocol !== 'file:' &&
+                                       (window.isSecureContext ||
+                                        window.location.protocol === 'https:' ||
+                                        window.location.hostname === 'localhost');
+
+                if (!isSecureContext) {
+                    console.warn('Square Web SDK requires HTTPS. Skipping payment card initialization for non-secure context.');
+                    // Hide payment form, show alternative message
+                    const cardContainer = document.getElementById('card-container');
+                    if (cardContainer) {
+                        cardContainer.innerHTML = `
+                            <div style="padding: 20px; background: #fff3cd; border-radius: 8px; text-align: center;">
+                                <p style="margin: 0 0 10px 0; color: #856404;">Card saving requires HTTPS. Skip for now or contact customer later.</p>
+                                <p style="margin: 0; color: #856404; font-size: 14px;">Customer can be contacted at: <strong>${CONFIG.phone}</strong></p>
+                            </div>
+                        `;
+                    }
+                    const saveButton = document.getElementById('save-card-button');
+                    if (saveButton) {
+                        saveButton.style.display = 'none';
+                    }
+                    return; // Skip Square initialization
+                }
+
+                // Initialize Square Payments
+                squarePayments = window.Square.payments(
+                    CONFIG.square.applicationId,
+                    CONFIG.square.locationId
+                );
+
+                // Initialize card payment method with styling
+                squareCard = await squarePayments.card({
+                    style: {
+                        input: {
+                            fontSize: '16px'
+                        },
+                        '.input-container': {
+                            borderColor: '#e2e8f0',
+                            borderRadius: '8px'
+                        }
+                    },
+                    includeInputLabels: true
+                });
+
+                await squareCard.attach('#card-container');
+                console.log('Square Card form attached');
+
+                // Setup payment button (only add listener once)
+                const cardButton = document.getElementById('save-card-button');
+                if (cardButton && !cardButton.dataset.listenerAdded) {
+                    cardButton.addEventListener('click', handleCardSave);
+                    cardButton.dataset.listenerAdded = 'true';
+                }
+
+            } catch (error) {
+                console.error('Failed to initialize Square Payments:', error);
+
+                // Check if it's the HTTPS error specifically
+                if (error.message && error.message.includes('secure context')) {
+                    showCardStatus('Card payment requires HTTPS. Please call us at ' + CONFIG.phone + ' to complete booking.', 'error');
+                } else {
+                    showCardStatus('Failed to load payment system. Please try again or contact us at ' + CONFIG.phone, 'error');
+                }
+            }
+        }
+
+        // Handle Card Save
+        async function handleCardSave() {
+            const cardButton = document.getElementById('save-card-button');
+            const statusContainer = document.getElementById('card-status-container');
+
+            try {
+                // Validate customer info first
+                const email = document.getElementById('email').value;
+                const phone = document.getElementById('phone').value;
+                const firstName = document.getElementById('firstName').value;
+                const lastName = document.getElementById('lastName').value;
+
+                if (!email || !phone || !firstName || !lastName) {
+                    showCardStatus('Please fill in customer name, email, and phone before saving card.', 'error');
+                    return;
+                }
+
+                // Disable button
+                cardButton.disabled = true;
+                cardButton.textContent = 'Processing...';
+                statusContainer.style.display = 'none';
+
+                // Tokenize card details
+                console.log('Tokenizing card...');
+                const result = await squareCard.tokenize();
+
+                if (result.status === 'OK') {
+                    console.log('Card tokenized successfully');
+                    // Send token to backend to store card on file
+                    await processCardToken(result.token, result.details);
+                } else {
+                    console.error('Tokenization failed:', result.errors);
+                    let errorMessage = 'Card validation failed. Please check your card details.';
+                    if (result.errors && result.errors.length > 0) {
+                        errorMessage = result.errors.map(e => e.message).join(', ');
+                    }
+                    showCardStatus(errorMessage, 'error');
+                    cardButton.disabled = false;
+                    cardButton.textContent = 'Save Card Securely';
+                }
+            } catch (error) {
+                console.error('Payment error:', error);
+                showCardStatus('An error occurred. Please try again.', 'error');
+                cardButton.disabled = false;
+                cardButton.textContent = 'Save Card Securely';
+            }
+        }
+
+        // Process Card Token
+        async function processCardToken(token, cardDetails) {
+            const customerEmail = document.getElementById('email').value;
+            const customerPhone = document.getElementById('phone').value;
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const moveDate = document.getElementById('moveDate').value;
+
+            try {
+                console.log('Sending card to backend to store on file...');
+                console.log('API URL:', CONFIG.square.apiUrl);
+
+                const requestBody = {
+                    customerData: {
+                        firstName: firstName,
+                        lastName: lastName,
+                        email: customerEmail,
+                        phone: customerPhone,
+                        movingDate: moveDate
+                    },
+                    cardToken: token,
+                    estimate: document.getElementById('priceTotal').textContent
+                };
+
+                console.log('Request payload:', JSON.stringify(requestBody, null, 2));
+
+                // Call the backend API to create Square customer and store card
+                const response = await fetch(CONFIG.square.apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                console.log('Response status:', response.status);
+
+                const responseText = await response.text();
+                console.log('Response body (raw):', responseText);
+
+                if (!response.ok) {
+                    let errorData;
+                    try {
+                        errorData = JSON.parse(responseText);
+                    } catch {
+                        errorData = { error: 'Server error' };
+                    }
+                    throw new Error(errorData.error || 'Failed to save card');
+                }
+
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch {
+                    throw new Error('Invalid response from server');
+                }
+
+                console.log('Response data:', data);
+
+                if (data.success) {
+                    // Store card data for booking submission
+                    cardTokenData = {
+                        customerId: data.customerId,
+                        cardId: data.cardId,
+                        lastFourDigits: cardDetails.card?.last4 || 'XXXX',
+                        cardBrand: cardDetails.card?.brand || 'Card'
+                    };
+
+                    showCardStatus(`Card saved successfully! ${cardTokenData.cardBrand} ending in ${cardTokenData.lastFourDigits}`, 'success');
+
+                    // Disable the save button and card input
+                    const cardButton = document.getElementById('save-card-button');
+                    cardButton.disabled = true;
+                    cardButton.textContent = 'Card Saved';
+
+                    console.log('Card stored successfully:', cardTokenData);
+                } else {
+                    throw new Error(data.error || 'Failed to save card');
+                }
+
+            } catch (error) {
+                console.error('Error storing card:', error);
+                showCardStatus('Failed to save card: ' + error.message, 'error');
+
+                // Re-enable button
+                const cardButton = document.getElementById('save-card-button');
+                cardButton.disabled = false;
+                cardButton.textContent = 'Save Card Securely';
+            }
+        }
+
+        // Show Card Status
+        function showCardStatus(message, type) {
+            const statusContainer = document.getElementById('card-status-container');
+            statusContainer.textContent = message;
+            statusContainer.className = 'show ' + type;
+            statusContainer.style.display = 'block';
+        }
+
+        // Load services configuration from API
+        async function loadServicesConfig() {
+            try {
+                const response = await fetch(`${API_URL}/api/services`);
+                const data = await response.json();
+                if (data.success && data.services) {
+                    servicesConfig = data.services;
+                    console.log('Services config loaded:', servicesConfig);
+                } else {
+                    console.error('Failed to load services config');
+                    // Use fallback defaults
+                    servicesConfig = getFallbackConfig();
+                }
+            } catch (error) {
+                console.error('Error loading services config:', error);
+                servicesConfig = getFallbackConfig();
+            }
+        }
+
+        // Fallback configuration if API fails
+        function getFallbackConfig() {
+            return {
+                movingServices: {
+                    '2-person-crew': { baseRate: 192.50, serviceCharge: 0.14, distanceAdjustment: 0.75 },
+                    '3-person-crew': { baseRate: 247.50, serviceCharge: 0.14, distanceAdjustment: 0.75 },
+                    '4-person-crew': { baseRate: 302.50, serviceCharge: 0.14, distanceAdjustment: 0.75 }
+                },
+                laborOnly: { baseRate: 115, crewAddRate: 55, travelRate: 1.60, serviceCharge: 0.08 },
+                singleItem: { baseRate: 249, crewRates: { 2: 167, 3: 222, 4: 277 } },
+                fees: { stairs: { apartment: 35, house: 25 } }
+            };
+        }
+
+        // Setup Google Maps autocomplete for address fields
+        function setupAddressAutocomplete(fieldId) {
+            const input = document.getElementById(fieldId);
+            const autocomplete = new google.maps.places.Autocomplete(input, {
+                componentRestrictions: { country: 'us' }
+            });
+
+            autocomplete.addListener('place_changed', function() {
+                const place = autocomplete.getPlace();
+                if (place.geometry) {
+                    // Address selected, trigger distance calculation
+                    setTimeout(calculateDistances, 500);
+                }
+            });
+        }
+
+        // Handle service type change
+        function handleServiceTypeChange() {
+            const serviceType = document.getElementById('serviceType').value;
+
+            // Hide all optional sections first
+            document.getElementById('crewSizeGroup').classList.add('hidden');
+            document.getElementById('laborOnlyFields').classList.add('hidden');
+            document.getElementById('singleItemFields').classList.add('hidden');
+            document.getElementById('locationDetailsSection').classList.add('hidden');
+            document.getElementById('propertyCharacteristicsSection').classList.add('hidden');
+            document.getElementById('inventorySection').classList.add('hidden');
+            document.getElementById('servicesSection').classList.add('hidden');
+            document.getElementById('crewTimeSection').classList.add('hidden');
+            document.getElementById('fvpSection').classList.add('hidden');
+
+            // Show relevant sections based on service type
+            if (serviceType === 'moving') {
+                document.getElementById('crewSizeGroup').classList.remove('hidden');
+                document.getElementById('deliveryAddressGroup').classList.remove('hidden');
+                document.getElementById('thirdLocationCheckboxGroup').classList.remove('hidden');
+                document.getElementById('locationDetailsSection').classList.remove('hidden');
+                document.getElementById('propertyCharacteristicsSection').classList.remove('hidden');
+                document.getElementById('inventorySection').classList.remove('hidden');
+                document.getElementById('servicesSection').classList.remove('hidden');
+                document.getElementById('crewTimeSection').classList.remove('hidden');
+                document.getElementById('fvpSection').classList.remove('hidden');
+            } else if (serviceType === 'labor') {
+                document.getElementById('laborOnlyFields').classList.remove('hidden');
+                document.getElementById('locationDetailsSection').classList.remove('hidden');
+                document.getElementById('inventorySection').classList.remove('hidden');
+                document.getElementById('crewTimeSection').classList.remove('hidden');
+                document.getElementById('deliveryAddressGroup').classList.add('hidden');
+                document.getElementById('thirdLocationCheckboxGroup').classList.add('hidden');
+            } else if (serviceType === 'single') {
+                document.getElementById('singleItemFields').classList.remove('hidden');
+                document.getElementById('deliveryAddressGroup').classList.remove('hidden');
+                document.getElementById('crewTimeSection').classList.remove('hidden');
+                document.getElementById('thirdLocationCheckboxGroup').classList.add('hidden');
+            }
+
+            calculatePricing();
+        }
+
+        // Toggle third location
+        function toggleThirdLocation() {
+            const hasThird = document.getElementById('hasThirdLocation').checked;
+            document.getElementById('thirdAddressGroup').classList.toggle('hidden', !hasThird);
+            document.getElementById('thirdLocationActionGroup').classList.toggle('hidden', !hasThird);
+            document.getElementById('location3Section').classList.toggle('hidden', !hasThird);
+            document.getElementById('largeHomeLocation3Checkbox').classList.toggle('hidden', !hasThird);
+            document.getElementById('challengeLocation3Checkbox').classList.toggle('hidden', !hasThird);
+
+            if (hasThird) {
+                setTimeout(calculateDistances, 500);
+            } else {
+                calculatePricing();
+            }
+        }
+
+        // Calculate distances using Google Maps
+        async function calculateDistances() {
+            const pickup = document.getElementById('pickupAddress').value;
+            const delivery = document.getElementById('deliveryAddress').value;
+            const hasThird = document.getElementById('hasThirdLocation').checked;
+            const third = hasThird ? document.getElementById('thirdAddress').value : '';
+
+            if (!pickup) return;
+
+            let distanceHtml = '<strong>Distances:</strong><br>';
+
+            try {
+                // Calculate base to pickup
+                const baseToPickup = await getDirections(BASE_ADDRESS, pickup);
+                distanceData.fromDistance = parseFloat(baseToPickup.distance);
+                distanceData.fromDuration = parseFloat(baseToPickup.duration);
+                distanceHtml += `Base to Pickup: ${baseToPickup.distance} mi (${baseToPickup.duration} hrs)<br>`;
+
+                // Calculate pickup to delivery
+                if (delivery) {
+                    const pickupToDelivery = await getDirections(pickup, delivery);
+                    distanceData.tripDistance = parseFloat(pickupToDelivery.distance);
+                    distanceData.tripDuration = parseFloat(pickupToDelivery.duration);
+                    distanceHtml += `Pickup to Delivery: ${pickupToDelivery.distance} mi (${pickupToDelivery.duration} hrs)<br>`;
+
+                    // Calculate third location if applicable
+                    if (hasThird && third) {
+                        const deliveryToThird = await getDirections(delivery, third);
+                        distanceData.thirdDistance = parseFloat(deliveryToThird.distance);
+                        distanceData.thirdDuration = parseFloat(deliveryToThird.duration);
+                        distanceHtml += `Delivery to Third: ${deliveryToThird.distance} mi (${deliveryToThird.duration} hrs)<br>`;
+
+                        const thirdToBase = await getDirections(third, BASE_ADDRESS);
+                        distanceHtml += `Third to Base: ${thirdToBase.distance} mi (return)<br>`;
+                    } else {
+                        // Calculate delivery back to base
+                        const deliveryToBase = await getDirections(delivery, BASE_ADDRESS);
+                        const returnDistance = parseFloat(deliveryToBase.distance);
+                        if (returnDistance > 85) {
+                            distanceHtml += `Return Trip: ${(returnDistance / 2).toFixed(1)} mi (half charged for 85+ mi)<br>`;
+                        }
+                    }
+                }
+
+                distanceData.totalDistance = distanceData.fromDistance + distanceData.tripDistance + distanceData.thirdDistance;
+                distanceHtml += `<br><strong>Total Distance: ${distanceData.totalDistance.toFixed(1)} miles</strong>`;
+
+                document.getElementById('distanceDisplay').innerHTML = distanceHtml;
+                document.getElementById('distanceDisplay').classList.remove('hidden');
+
+                // Recalculate pricing with new distances
+                calculatePricing();
+            } catch (error) {
+                console.error('Error calculating distances:', error);
+                document.getElementById('distanceDisplay').innerHTML = 'Error calculating distances. Please check addresses.';
+            }
+        }
+
+        // Get directions between two addresses
+        function getDirections(origin, destination) {
+            return new Promise((resolve, reject) => {
+                directionsService.route({
+                    origin: origin,
+                    destination: destination,
+                    travelMode: google.maps.TravelMode.DRIVING
+                }, (result, status) => {
+                    if (status === 'OK') {
+                        const leg = result.routes[0].legs[0];
+                        const distance = (leg.distance.value / 1609.34).toFixed(1); // meters to miles
+                        const duration = (leg.duration.value / 3600).toFixed(2); // seconds to hours
+                        resolve({ distance, duration });
+                    } else {
+                        reject(new Error('Directions request failed: ' + status));
+                    }
+                });
+            });
+        }
+
+        // Handle checkbox styling
+        function handleCheckboxToggle(checkbox) {
+            const item = checkbox.closest('.checkbox-item');
+            if (checkbox.checked) {
+                item.classList.add('checked');
+            } else {
+                item.classList.remove('checked');
+            }
+        }
+
+        // Toggle manual pricing
+        function toggleManualPricing() {
+            const manual = document.getElementById('manualPricing').checked;
+            document.getElementById('manualPricingFields').classList.toggle('hidden', !manual);
+            if (manual) {
+                // Disable automatic calculations
+                document.getElementById('pricingBreakdown').style.opacity = '0.5';
+            } else {
+                document.getElementById('pricingBreakdown').style.opacity = '1';
+                calculatePricing();
+            }
+        }
+
+        // Update manual price
+        function updateManualPrice() {
+            const manual = document.getElementById('manualPricing').checked;
+            if (!manual) return;
+
+            const manualPrice = parseFloat(document.getElementById('manualTotalPrice').value) || 0;
+            document.getElementById('priceTotal').textContent = '$' + manualPrice.toFixed(2);
+        }
+
+        // MAIN PRICING CALCULATION ENGINE
+        function calculatePricing() {
+            const manual = document.getElementById('manualPricing').checked;
+            if (manual) {
+                updateManualPrice();
+                return;
+            }
+
+            const serviceType = document.getElementById('serviceType').value;
+
+            // Update display
+            updateServiceTypeDisplay(serviceType);
+
+            if (!serviceType) {
+                resetPricingDisplay();
+                return;
+            }
+
+            if (serviceType === 'moving') {
+                calculateMovingPricing();
+            } else if (serviceType === 'labor') {
+                calculateLaborPricing();
+            } else if (serviceType === 'single') {
+                calculateSingleItemPricing();
+            }
+        }
+
+        // Calculate pricing for full service moving
+        function calculateMovingPricing() {
+            if (!servicesConfig) return;
+
+            // Get crew size
+            const crewSize = parseInt(document.getElementById('crewSize').value) || 2;
+
+            // Get distance (from distanceData or fallback to 30)
+            const fromDistance = distanceData.fromDistance || 30;
+
+            // Calculate base hourly rate with distance adjustment
+            const crewKey = crewSize + '-person-crew';
+            const baseRate = servicesConfig.movingServices[crewKey]?.baseRate || 192.50;
+            const distanceAdj = servicesConfig.movingServices[crewKey]?.distanceAdjustment || 0.75;
+            const serviceChargeRate = servicesConfig.movingServices[crewKey]?.serviceCharge || 0.14;
+
+            const hourlyRate = baseRate + (fromDistance * distanceAdj);
+
+            // Calculate loading/unloading time based on bedrooms
+            const bedrooms = parseInt(document.getElementById('location1Bedrooms').value) || 2;
+            let loadingHours = 0.75 + (bedrooms * 0.45);
+
+            // Adjust for large homes
+            if (document.getElementById('largeHomeLocation1').checked) loadingHours *= 1.25;
+            if (document.getElementById('largeHomeLocation2').checked) loadingHours *= 1.25;
+            if (document.getElementById('largeHomeLocation3').checked) loadingHours *= 1.25;
+
+            // Adjust for access challenges
+            let accessMultiplier = 1.0;
+            if (document.getElementById('challengeLocation1').checked) accessMultiplier += 0.1;
+            if (document.getElementById('challengeLocation2').checked) accessMultiplier += 0.1;
+            if (document.getElementById('challengeLocation3').checked) accessMultiplier += 0.1;
+            loadingHours *= accessMultiplier;
+
+            // Add time for third location
+            if (document.getElementById('hasThirdLocation').checked) {
+                loadingHours *= 2.5;
+            } else {
+                loadingHours *= 2; // Double for loading AND unloading
+            }
+
+            // Add time for appliances
+            if (document.getElementById('washer').checked) loadingHours += 0.25;
+            if (document.getElementById('dryer').checked) loadingHours += 0.25;
+            if (document.getElementById('refrigerator').checked) loadingHours += 0.33;
+            if (document.getElementById('stove').checked) loadingHours += 0.33;
+            if (document.getElementById('dishwasher').checked) loadingHours += 0.33;
+
+            // Add time for TVs
+            if (document.getElementById('tv50').checked) loadingHours += 0.17;
+            if (document.getElementById('tv60').checked) loadingHours += 0.25;
+            if (document.getElementById('tv70').checked) loadingHours += 0.33;
+
+            // Add time for shop equipment
+            if (document.getElementById('toolbox').checked) loadingHours += 0.5;
+            if (document.getElementById('workbench').checked) loadingHours += 0.42;
+            if (document.getElementById('machinery').checked) loadingHours += 0.67;
+
+            // Add time for oversized furniture
+            if (document.getElementById('sectional').checked) loadingHours += 0.42;
+            if (document.getElementById('wardrobe').checked) loadingHours += 0.42;
+            if (document.getElementById('entertainment').checked) loadingHours += 0.5;
+
+            // Add time for special items
+            const specialItem = document.querySelector('input[name="specialItem"]:checked');
+            if (specialItem) {
+                const specialTimes = { piano: 2, safe: 1.5, pool_table: 3, hot_tub: 2 };
+                loadingHours += specialTimes[specialItem.value] || 0;
+            }
+
+            // Calculate drive time
+            let driveHours = (distanceData.fromDuration || 0) + (distanceData.tripDuration || 0);
+            if (document.getElementById('hasThirdLocation').checked) {
+                driveHours += (distanceData.thirdDuration || 0);
+            }
+
+            // Apply crew efficiency (more crew = faster)
+            const totalHours = (loadingHours + driveHours) * (1 - ((crewSize - 2) * 0.175));
+
+            // Calculate base cost
+            const baseCost = totalHours * hourlyRate;
+
+            // Calculate fees
+            let stairFee = 0;
+            const loc1HomeType = document.getElementById('location1HomeType').value;
+            const loc2HomeType = document.getElementById('location2HomeType').value;
+            const loc1Stairs = parseInt(document.getElementById('location1Stairs').value) || 0;
+            const loc2Stairs = parseInt(document.getElementById('location2Stairs').value) || 0;
+
+            const stairRate1 = (loc1HomeType === 'apartment' ? servicesConfig.fees?.stairs?.apartment : servicesConfig.fees?.stairs?.house) || 35;
+            const stairRate2 = (loc2HomeType === 'apartment' ? servicesConfig.fees?.stairs?.apartment : servicesConfig.fees?.stairs?.house) || 35;
+            stairFee = (loc1Stairs * stairRate1) + (loc2Stairs * stairRate2);
+
+            // Heavy item fees (300+ lbs items)
+            let heavyItemFees = 0;
+            if (document.getElementById('toolbox').checked) heavyItemFees += 50;
+            if (document.getElementById('workbench').checked) heavyItemFees += 50;
+            if (document.getElementById('machinery').checked) heavyItemFees += 50;
+            if (document.getElementById('sectional').checked) heavyItemFees += 50;
+            if (document.getElementById('wardrobe').checked) heavyItemFees += 50;
+            if (document.getElementById('entertainment').checked) heavyItemFees += 50;
+
+            // TV box fees
+            let tvBoxFees = 0;
+            if (document.getElementById('tv50').checked) tvBoxFees += 25;
+            if (document.getElementById('tv60').checked) tvBoxFees += 35;
+            if (document.getElementById('tv70').checked) tvBoxFees += 50;
+
+            // Special item fees
+            let specialItemFee = 0;
+            if (specialItem) {
+                const specialFees = { piano: 300, safe: 200, pool_table: 350, hot_tub: 300 };
+                specialItemFee = specialFees[specialItem.value] || 0;
+            }
+
+            // Packing costs
+            let packingCost = 0;
+            let packingMaterialsCost = 0;
+            const packingService = document.getElementById('packingService').value;
+            if (packingService === 'full') {
+                packingCost = loadingHours * 1.75 * 110; // $110/hr/person
+            } else if (packingService === 'partial') {
+                packingCost = loadingHours * 0.75 * 110;
+            }
+
+            if (document.getElementById('needsPackingMaterials').checked) {
+                // Estimate materials based on bedrooms
+                const materialEstimates = { 1: 150, 2: 250, 3: 350, 4: 450, 5: 550 };
+                packingMaterialsCost = materialEstimates[bedrooms] || 350;
+            }
+
+            // Toll estimate
+            let tollCost = distanceData.totalDistance > 50 ? Math.max(10, distanceData.totalDistance * 0.15) : 0;
+
+            // FVP Insurance
+            let fvpCost = 0;
+            if (document.getElementById('fvpOption').value === 'fvp') {
+                const fvpValue = parseFloat(document.getElementById('fvpValue').value) || 0;
+                const fvpRate = fromDistance > 50 ? 0.01 : 0.013; // $1.00 or $1.30 per $100
+                fvpCost = fvpValue * fvpRate;
+            }
+
+            // Calculate subtotal before service charge
+            const subtotal = baseCost + stairFee + heavyItemFees + tvBoxFees + specialItemFee + packingCost + tollCost;
+
+            // Service charge (14% for moving)
+            const serviceCharge = subtotal * serviceChargeRate;
+
+            // Same-day fee check
+            let sameDayFee = 0;
+            const moveDate = document.getElementById('moveDate').value;
+            if (moveDate) {
+                const today = new Date().toISOString().split('T')[0];
+                if (moveDate === today) {
+                    sameDayFee = (subtotal + serviceCharge + packingMaterialsCost + fvpCost) * 0.10;
+                }
+            }
+
+            // Apply discounts
+            let discountAmount = 0;
+            const discountType = document.getElementById('discountType').value;
+            const discountValue = parseFloat(document.getElementById('discountAmount').value) || 0;
+            if (discountType === 'percentage') {
+                discountAmount = (subtotal + serviceCharge + packingMaterialsCost + fvpCost) * (discountValue / 100);
+            } else if (discountType === 'dollar') {
+                discountAmount = discountValue;
+            }
+
+            // Custom fee
+            const customFee = parseFloat(document.getElementById('customFeeAmount').value) || 0;
+
+            // Calculate total
+            const total = subtotal + serviceCharge + packingMaterialsCost + fvpCost + sameDayFee - discountAmount + customFee;
+
+            // Update display
+            updatePricingDisplay({
+                baseCost,
+                stairFee,
+                heavyItemFees,
+                tvBoxFees,
+                specialItemFee,
+                packingCost,
+                packingMaterialsCost,
+                tollCost,
+                fvpCost,
+                subtotal,
+                serviceCharge,
+                sameDayFee,
+                discountAmount,
+                customFee,
+                total,
+                hourlyRate,
+                totalHours,
+                loadingHours,
+                driveHours,
+                crewSize
+            });
+
+            // Update crew & time section
+            document.getElementById('recommendedCrew').value = crewSize + ' movers';
+            document.getElementById('estimatedTime').value = totalHours.toFixed(1) + ' hours';
+            document.getElementById('loadingTime').value = loadingHours.toFixed(1) + ' hours';
+            document.getElementById('driveTime').value = driveHours.toFixed(1) + ' hours';
+        }
+
+        // Calculate pricing for labor only service
+        function calculateLaborPricing() {
+            if (!servicesConfig) return;
+
+            const crew = parseInt(document.getElementById('laborCrewSize').value) || 2;
+            const hours = parseFloat(document.getElementById('laborHours').value) || 2;
+            const fromDistance = distanceData.fromDistance || 30;
+
+            const baseRate = servicesConfig.laborOnly.baseRate || 115;
+            const crewAddRate = servicesConfig.laborOnly.crewAddRate || 55;
+            const travelRate = servicesConfig.laborOnly.travelRate || 1.60;
+            const serviceChargeRate = servicesConfig.laborOnly.serviceCharge || 0.08;
+
+            const hourlyRate = baseRate + ((crew - 2) * crewAddRate) + (fromDistance * 0.50);
+            const laborCost = hours * hourlyRate;
+            const travelCost = fromDistance * 2 * travelRate;
+
+            // Stairs (most labor jobs are apartments)
+            const stairs = parseInt(document.getElementById('location1Stairs').value) || 0;
+            const stairFee = stairs * (servicesConfig.fees?.stairs?.apartment || 35);
+
+            // Heavy items from inventory
+            let heavyItemFees = 0;
+            if (document.getElementById('toolbox').checked) heavyItemFees += 50;
+            if (document.getElementById('workbench').checked) heavyItemFees += 50;
+            if (document.getElementById('machinery').checked) heavyItemFees += 50;
+            if (document.getElementById('sectional').checked) heavyItemFees += 50;
+            if (document.getElementById('wardrobe').checked) heavyItemFees += 50;
+            if (document.getElementById('entertainment').checked) heavyItemFees += 50;
+
+            const subtotal = laborCost + travelCost + stairFee + heavyItemFees;
+            const serviceCharge = subtotal * serviceChargeRate;
+
+            // Same-day fee
+            let sameDayFee = 0;
+            const moveDate = document.getElementById('moveDate').value;
+            if (moveDate) {
+                const today = new Date().toISOString().split('T')[0];
+                if (moveDate === today) {
+                    sameDayFee = (subtotal + serviceCharge) * 0.10;
+                }
+            }
+
+            // Discounts
+            let discountAmount = 0;
+            const discountType = document.getElementById('discountType').value;
+            const discountValue = parseFloat(document.getElementById('discountAmount').value) || 0;
+            if (discountType === 'percentage') {
+                discountAmount = (subtotal + serviceCharge) * (discountValue / 100);
+            } else if (discountType === 'dollar') {
+                discountAmount = discountValue;
+            }
+
+            const customFee = parseFloat(document.getElementById('customFeeAmount').value) || 0;
+            const total = subtotal + serviceCharge + sameDayFee - discountAmount + customFee;
+
+            // Update display
+            document.getElementById('serviceChargeLabel').textContent = 'Service Charge (8%):';
+            updatePricingDisplay({
+                baseCost: laborCost,
+                travelCost: travelCost,
+                stairFee,
+                heavyItemFees,
+                subtotal,
+                serviceCharge,
+                sameDayFee,
+                discountAmount,
+                customFee,
+                total,
+                hourlyRate,
+                totalHours: hours,
+                crewSize: crew
+            });
+
+            document.getElementById('recommendedCrew').value = crew + ' movers';
+            document.getElementById('estimatedTime').value = hours + ' hours (labor only)';
+            document.getElementById('loadingTime').value = hours + ' hours';
+            document.getElementById('driveTime').value = ((fromDistance * 2) / 45).toFixed(1) + ' hours (travel)';
+        }
+
+        // Calculate pricing for single item move
+        function calculateSingleItemPricing() {
+            if (!servicesConfig) return;
+
+            const crewSize = parseInt(document.getElementById('singleItemCrew').value) || 2;
+            const itemWeight = parseInt(document.getElementById('itemWeight').value) || 0;
+
+            const fromDistance = distanceData.fromDistance || 30;
+            const tripDistance = distanceData.tripDistance || 30;
+            const totalDistance = fromDistance + tripDistance;
+
+            const driveHours = (distanceData.fromDuration || 0) + (distanceData.tripDuration || 0) || (totalDistance / 45);
+            const driveMinutes = Math.ceil(driveHours * 60);
+            const totalMinutes = Math.max(driveMinutes + 30, 60); // Minimum 60 minutes
+
+            const baseRate = servicesConfig.singleItem?.baseRate || 249;
+            const crewRates = servicesConfig.singleItem?.crewRates || { 2: 167, 3: 222, 4: 277 };
+            const hourlyRate = crewRates[crewSize] || 167;
+
+            let baseCost = baseRate; // First hour
+            if (totalMinutes > 60) {
+                const additionalHours = (totalMinutes - 60) / 60;
+                baseCost += additionalHours * hourlyRate;
+            }
+
+            const distanceCost = totalDistance * 1.50;
+
+            // Stairs
+            const pickupStairs = parseInt(document.getElementById('location1Stairs').value) || 0;
+            const deliveryStairs = parseInt(document.getElementById('location2Stairs').value) || 0;
+            const stairFee = (pickupStairs + deliveryStairs) * 35;
+
+            // Heavy item fee for 300+ lbs
+            const heavyItemFee = itemWeight >= 300 ? 50 : 0;
+
+            // Same-day fee
+            let sameDayFee = 0;
+            const moveDate = document.getElementById('moveDate').value;
+            if (moveDate) {
+                const today = new Date().toISOString().split('T')[0];
+                if (moveDate === today) {
+                    sameDayFee = (baseCost + distanceCost + stairFee + heavyItemFee) * 0.10;
+                }
+            }
+
+            // Discounts
+            let discountAmount = 0;
+            const discountType = document.getElementById('discountType').value;
+            const discountValue = parseFloat(document.getElementById('discountAmount').value) || 0;
+            if (discountType === 'percentage') {
+                discountAmount = (baseCost + distanceCost + stairFee + heavyItemFee) * (discountValue / 100);
+            } else if (discountType === 'dollar') {
+                discountAmount = discountValue;
+            }
+
+            const customFee = parseFloat(document.getElementById('customFeeAmount').value) || 0;
+            const total = baseCost + distanceCost + stairFee + heavyItemFee + sameDayFee - discountAmount + customFee;
+
+            // Update display (no service charge for single item)
+            document.getElementById('serviceChargeLabel').textContent = 'Service Charge:';
+            updatePricingDisplay({
+                baseCost,
+                distanceCost,
+                stairFee,
+                heavyItemFees: heavyItemFee,
+                subtotal: baseCost + distanceCost,
+                serviceCharge: 0,
+                sameDayFee,
+                discountAmount,
+                customFee,
+                total,
+                hourlyRate,
+                totalHours: (totalMinutes / 60).toFixed(1),
+                crewSize
+            });
+
+            document.getElementById('recommendedCrew').value = crewSize + ' movers';
+            document.getElementById('estimatedTime').value = Math.ceil(totalMinutes) + ' minutes';
+            document.getElementById('loadingTime').value = '30 minutes (est.)';
+            document.getElementById('driveTime').value = driveMinutes + ' minutes';
+        }
+
+        // Update pricing display with calculated values
+        function updatePricingDisplay(prices) {
+            // Base cost
+            document.getElementById('priceBase').textContent = '$' + (prices.baseCost || 0).toFixed(2);
+
+            // Travel (for labor only)
+            if (prices.travelCost) {
+                document.getElementById('priceStairLabel').textContent = 'Travel:';
+                document.getElementById('priceStairs').textContent = '$' + prices.travelCost.toFixed(2);
+                document.getElementById('priceStairLine').classList.remove('hidden');
+            }
+
+            // Distance (for single item)
+            if (prices.distanceCost) {
+                document.getElementById('priceSpecialLabel').textContent = 'Distance:';
+                document.getElementById('priceSpecial').textContent = '$' + prices.distanceCost.toFixed(2);
+                document.getElementById('priceSpecialLine').classList.remove('hidden');
+            }
+
+            // Stairs
+            if (prices.stairFee > 0) {
+                document.getElementById('priceStairLabel').textContent = 'Stairs:';
+                document.getElementById('priceStairs').textContent = '$' + prices.stairFee.toFixed(2);
+                document.getElementById('priceStairLine').classList.remove('hidden');
+            } else {
+                document.getElementById('priceStairLine').classList.add('hidden');
+            }
+
+            // Special items
+            if (prices.specialItemFee > 0) {
+                document.getElementById('priceSpecialLabel').textContent = 'Special Item:';
+                document.getElementById('priceSpecial').textContent = '$' + prices.specialItemFee.toFixed(2);
+                document.getElementById('priceSpecialLine').classList.remove('hidden');
+            } else if (!prices.distanceCost) {
+                document.getElementById('priceSpecialLine').classList.add('hidden');
+            }
+
+            // Heavy items
+            if (prices.heavyItemFees > 0) {
+                document.getElementById('priceHeavy').textContent = '$' + prices.heavyItemFees.toFixed(2);
+                document.getElementById('priceHeavyLine').classList.remove('hidden');
+            } else {
+                document.getElementById('priceHeavyLine').classList.add('hidden');
+            }
+
+            // TV boxes
+            if (prices.tvBoxFees > 0) {
+                document.getElementById('priceTV').textContent = '$' + prices.tvBoxFees.toFixed(2);
+                document.getElementById('priceTVLine').classList.remove('hidden');
+            } else {
+                document.getElementById('priceTVLine').classList.add('hidden');
+            }
+
+            // Packing
+            if (prices.packingCost > 0) {
+                document.getElementById('pricePacking').textContent = '$' + prices.packingCost.toFixed(2);
+                document.getElementById('pricePackingLine').classList.remove('hidden');
+            } else {
+                document.getElementById('pricePackingLine').classList.add('hidden');
+            }
+
+            // Materials
+            if (prices.packingMaterialsCost > 0) {
+                document.getElementById('priceMaterials').textContent = '$' + prices.packingMaterialsCost.toFixed(2);
+                document.getElementById('priceMaterialsLine').classList.remove('hidden');
+            } else {
+                document.getElementById('priceMaterialsLine').classList.add('hidden');
+            }
+
+            // Tolls
+            if (prices.tollCost > 0) {
+                document.getElementById('priceTolls').textContent = '$' + prices.tollCost.toFixed(2);
+                document.getElementById('priceTollsLine').classList.remove('hidden');
+            } else {
+                document.getElementById('priceTollsLine').classList.add('hidden');
+            }
+
+            // FVP
+            if (prices.fvpCost > 0) {
+                document.getElementById('priceFVP').textContent = '$' + prices.fvpCost.toFixed(2);
+                document.getElementById('priceFVPLine').classList.remove('hidden');
+            } else {
+                document.getElementById('priceFVPLine').classList.add('hidden');
+            }
+
+            // Subtotal
+            document.getElementById('priceSubtotal').textContent = '$' + (prices.subtotal || 0).toFixed(2);
+
+            // Service charge
+            document.getElementById('priceServiceCharge').textContent = '$' + (prices.serviceCharge || 0).toFixed(2);
+
+            // Same-day fee
+            if (prices.sameDayFee > 0) {
+                document.getElementById('priceSameDay').textContent = '$' + prices.sameDayFee.toFixed(2);
+                document.getElementById('priceSameDayLine').classList.remove('hidden');
+            } else {
+                document.getElementById('priceSameDayLine').classList.add('hidden');
+            }
+
+            // Discount
+            if (prices.discountAmount > 0) {
+                document.getElementById('priceDiscountLabel').textContent = 'Discount:';
+                document.getElementById('priceDiscount').textContent = '-$' + prices.discountAmount.toFixed(2);
+                document.getElementById('priceDiscountLine').classList.remove('hidden');
+            } else {
+                document.getElementById('priceDiscountLine').classList.add('hidden');
+            }
+
+            // Custom fee
+            const customFeeName = document.getElementById('customFeeName').value;
+            if (prices.customFee > 0) {
+                document.getElementById('priceCustomFeeLabel').textContent = customFeeName || 'Custom Fee:';
+                document.getElementById('priceCustomFee').textContent = '$' + prices.customFee.toFixed(2);
+                document.getElementById('priceCustomFeeLine').classList.remove('hidden');
+            } else {
+                document.getElementById('priceCustomFeeLine').classList.add('hidden');
+            }
+
+            // Total
+            document.getElementById('priceTotal').textContent = '$' + (prices.total || 0).toFixed(2);
+
+            // Update crew & rate display
+            document.getElementById('displayCrew').textContent =
+                `${prices.crewSize} movers @ $${(prices.hourlyRate || 0).toFixed(2)}/hour`;
+
+            document.getElementById('displayTime').textContent =
+                `${prices.totalHours || 0} hours total`;
+
+            if (prices.loadingHours !== undefined) {
+                document.getElementById('displayTime').textContent +=
+                    ` (${prices.loadingHours.toFixed(1)} loading, ${(prices.driveHours || 0).toFixed(1)} drive)`;
+            }
+        }
+
+        // Update service type display
+        function updateServiceTypeDisplay(serviceType) {
+            const displayMap = {
+                'moving': '🚚 Full Service Moving',
+                'labor': '💪 Labor Only',
+                'single': '📦 Single Item Move',
+                'junk': '🗑️ Junk Removal',
+                'cleanout': '🧹 Cleanout Service'
+            };
+            document.getElementById('displayServiceType').textContent = displayMap[serviceType] || 'Not selected';
+
+            // Update route
+            const pickup = document.getElementById('pickupAddress').value || '(pickup)';
+            const delivery = document.getElementById('deliveryAddress').value || '(delivery)';
+            const hasThird = document.getElementById('hasThirdLocation').checked;
+            const third = hasThird ? document.getElementById('thirdAddress').value : '';
+
+            let route = pickup;
+            if (serviceType === 'moving' || serviceType === 'single') {
+                route += ' → ' + delivery;
+                if (hasThird && third) {
+                    route += ' → ' + third;
+                }
+            }
+            document.getElementById('displayRoute').textContent = route;
+
+            // Update distance
+            if (distanceData.totalDistance > 0) {
+                document.getElementById('displayDistance').textContent =
+                    distanceData.totalDistance.toFixed(1) + ' miles total';
+            } else {
+                document.getElementById('displayDistance').textContent = 'Calculating...';
+            }
+        }
+
+        // Reset pricing display
+        function resetPricingDisplay() {
+            document.getElementById('priceBase').textContent = '$0.00';
+            document.getElementById('priceSubtotal').textContent = '$0.00';
+            document.getElementById('priceServiceCharge').textContent = '$0.00';
+            document.getElementById('priceTotal').textContent = '$0.00';
+            document.getElementById('displayCrew').textContent = 'Not calculated';
+            document.getElementById('displayTime').textContent = 'Not calculated';
+
+            // Hide all optional lines
+            document.querySelectorAll('.price-line.hidden').forEach(el => el.classList.add('hidden'));
+        }
+
+        // Submit booking
+        async function submitBooking() {
+            // Validate required fields
+            const requiredFields = [
+                'firstName', 'lastName', 'email', 'phone', 'moveDate', 'moveTime',
+                'serviceType', 'pickupAddress'
+            ];
+
+            for (const fieldId of requiredFields) {
+                const field = document.getElementById(fieldId);
+                if (!field.value.trim()) {
+                    alert(`Please fill in: ${field.previousElementSibling.textContent}`);
+                    field.focus();
+                    return;
+                }
+            }
+
+            // Validate service-specific requirements
+            const serviceType = document.getElementById('serviceType').value;
+            if ((serviceType === 'moving' || serviceType === 'single') && !document.getElementById('deliveryAddress').value) {
+                alert('Please enter a delivery address');
+                document.getElementById('deliveryAddress').focus();
+                return;
+            }
+
+            // Validate card on file if selected
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            if (paymentMethod === 'card-file' && !cardTokenData) {
+                alert('Please save the customer card before submitting the booking.');
+                document.getElementById('save-card-button').focus();
+                return;
+            }
+
+            // Compile all data
+            const bookingData = {
+                // Booking company selection
+                company: document.getElementById('bookingCompany').value,
+
+                // Customer info
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                companyName: document.getElementById('companyName').value,
+
+                // Service details
+                serviceType: serviceType,
+                date: document.getElementById('moveDate').value,
+                time: document.getElementById('moveTime').value,
+
+                // Addresses
+                pickupAddress: document.getElementById('pickupAddress').value,
+                deliveryAddress: document.getElementById('deliveryAddress').value,
+                hasThirdLocation: document.getElementById('hasThirdLocation').checked,
+                thirdAddress: document.getElementById('thirdAddress').value,
+                thirdLocationAction: document.getElementById('thirdLocationAction').value,
+
+                // Distance data
+                distanceData: distanceData,
+
+                // Location details
+                location1: {
+                    homeType: document.getElementById('location1HomeType').value,
+                    bedrooms: document.getElementById('location1Bedrooms').value,
+                    stairs: document.getElementById('location1Stairs').value,
+                    floor: document.getElementById('location1Floor').value,
+                    elevator: document.getElementById('location1Elevator').value,
+                    longCarry: document.getElementById('location1LongCarry').value
+                },
+                location2: {
+                    homeType: document.getElementById('location2HomeType').value,
+                    bedrooms: document.getElementById('location2Bedrooms').value,
+                    stairs: document.getElementById('location2Stairs').value,
+                    floor: document.getElementById('location2Floor').value,
+                    elevator: document.getElementById('location2Elevator').value,
+                    longCarry: document.getElementById('location2LongCarry').value
+                },
+
+                // Property characteristics
+                largeHomes: {
+                    location1: document.getElementById('largeHomeLocation1').checked,
+                    location2: document.getElementById('largeHomeLocation2').checked,
+                    location3: document.getElementById('largeHomeLocation3').checked
+                },
+                accessChallenges: {
+                    location1: document.getElementById('challengeLocation1').checked,
+                    location2: document.getElementById('challengeLocation2').checked,
+                    location3: document.getElementById('challengeLocation3').checked
+                },
+
+                // Inventory
+                tvs: {
+                    tv50: document.getElementById('tv50').checked,
+                    tv60: document.getElementById('tv60').checked,
+                    tv70: document.getElementById('tv70').checked
+                },
+                appliances: {
+                    washer: document.getElementById('washer').checked,
+                    dryer: document.getElementById('dryer').checked,
+                    refrigerator: document.getElementById('refrigerator').checked,
+                    stove: document.getElementById('stove').checked,
+                    dishwasher: document.getElementById('dishwasher').checked
+                },
+                shopEquipment: {
+                    toolbox: document.getElementById('toolbox').checked,
+                    workbench: document.getElementById('workbench').checked,
+                    machinery: document.getElementById('machinery').checked
+                },
+                oversizedFurniture: {
+                    sectional: document.getElementById('sectional').checked,
+                    wardrobe: document.getElementById('wardrobe').checked,
+                    entertainment: document.getElementById('entertainment').checked
+                },
+                specialItem: document.querySelector('input[name="specialItem"]:checked')?.value || null,
+
+                // Services
+                packingService: document.getElementById('packingService').value,
+                needsPackingMaterials: document.getElementById('needsPackingMaterials').checked,
+                needsPhotos: document.getElementById('needsPhotos').checked,
+                blanketsNeeded: document.getElementById('blanketsNeeded').value,
+
+                // Pricing
+                estimatedTotal: document.getElementById('priceTotal').textContent.replace('$', ''),
+                manualPricing: document.getElementById('manualPricing').checked,
+                manualTotalPrice: document.getElementById('manualTotalPrice').value,
+                discountType: document.getElementById('discountType').value,
+                discountAmount: document.getElementById('discountAmount').value,
+                customFeeName: document.getElementById('customFeeName').value,
+                customFeeAmount: document.getElementById('customFeeAmount').value,
+
+                // FVP
+                fvpOption: document.getElementById('fvpOption').value,
+                fvpValue: document.getElementById('fvpValue').value,
+
+                // Payment
+                paymentMethod: document.getElementById('paymentMethod').value,
+                paymentStatus: document.getElementById('paymentStatus').value,
+
+                // Square Card on File (if applicable)
+                cardOnFile: cardTokenData,
+
+                // Admin
+                crewAssignment: document.getElementById('crewAssignment').value,
+                priorityLevel: document.getElementById('priorityLevel').value,
+                customerNotes: document.getElementById('customerNotes').value,
+                internalNotes: document.getElementById('internalNotes').value,
+                adminPricingNotes: document.getElementById('adminPricingNotes').value,
+                sendConfirmation: document.getElementById('sendConfirmation').checked,
+                lockPrice: document.getElementById('lockPrice').checked
+            };
+
+            // Add service-specific fields
+            if (serviceType === 'moving') {
+                bookingData.crewSize = document.getElementById('crewSize').value;
+            } else if (serviceType === 'labor') {
+                bookingData.laborCrewSize = document.getElementById('laborCrewSize').value;
+                bookingData.laborHours = document.getElementById('laborHours').value;
+                bookingData.customerTruckSize = document.getElementById('customerTruckSize').value;
+                bookingData.provideBlankets = document.getElementById('provideBlankets').value;
+            } else if (serviceType === 'single') {
+                bookingData.itemDescription = document.getElementById('itemDescription').value;
+                bookingData.itemWeight = document.getElementById('itemWeight').value;
+                bookingData.singleItemCrew = document.getElementById('singleItemCrew').value;
+            }
+
+            console.log('Sending booking data:', bookingData);
+
+            try {
+                const response = await fetch(`${API_URL}/api/book-appointment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bookingData)
+                });
+
+                const result = await response.json();
+
+                console.log('Booking API Response:', result);
+                console.log('Response status:', response.status);
+
+                if (result.success) {
+                    document.getElementById('bookingIdDisplay').textContent =
+                        `Booking ID: ${result.bookingId}`;
+                    document.getElementById('successMessage').classList.remove('hidden');
+
+                    // Scroll to success message
+                    document.getElementById('successMessage').scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                } else {
+                    console.error('Booking failed:', result);
+                    const errorMsg = result.message || result.error || 'Unknown error. Check console for details.';
+                    alert('Booking failed: ' + errorMsg);
+                }
+            } catch (error) {
+                console.error('Error submitting booking:', error);
+                alert('Error submitting booking. Please check console for details.');
+            }
+        }
+
+        // Handle FVP option change
+        document.getElementById('fvpOption').addEventListener('change', function() {
+            const fvpFields = document.getElementById('fvpFields');
+            if (this.value === 'fvp') {
+                fvpFields.classList.remove('hidden');
+            } else {
+                fvpFields.classList.add('hidden');
+            }
+        });
+
+    </script>
+</body>
+</html>

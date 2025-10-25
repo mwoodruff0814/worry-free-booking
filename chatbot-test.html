@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sarah AI Chatbot Tester - Worry Free Moving</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 50px 40px;
+        }
+
+        .test-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border-left: 5px solid #667eea;
+        }
+
+        .test-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .test-section p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-right: 15px;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            margin-right: 15px;
+            margin-bottom: 15px;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-3px);
+        }
+
+        .info-box {
+            background: #d1ecf1;
+            border: 2px solid #bee5eb;
+            color: #0c5460;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h3 {
+            margin: 0 0 10px 0;
+        }
+
+        .info-box ul {
+            margin: 10px 0 0 20px;
+        }
+
+        .info-box li {
+            margin: 5px 0;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Sarah AI Chatbot Tester</h1>
+            <p>Offline Testing Environment for Worry Free Moving</p>
+        </div>
+
+        <div class="content">
+            <div class="test-section">
+                <h2>🚀 Launch Chatbot</h2>
+                <p>Click the button below to open Sarah AI in a new window for testing. The chatbot is fully functional and connects to your local API for pricing and services.</p>
+
+                <button class="btn btn-primary" onclick="openChatbot()">
+                    💬 Open Sarah AI Chatbot
+                </button>
+
+                <button class="btn btn-secondary" onclick="openChatbotNewTab()">
+                    🔗 Open in New Tab
+                </button>
+            </div>
+
+            <div class="info-box">
+                <h3>ℹ️ Testing Information</h3>
+                <ul>
+                    <li><strong>Chatbot File:</strong> sarah-ai.html</li>
+                    <li><strong>API URL:</strong> http://localhost:3001</li>
+                    <li><strong>Status:</strong> <span id="serverStatus">Checking...</span></li>
+                    <li><strong>Services:</strong> <span id="servicesStatus">Checking...</span></li>
+                </ul>
+            </div>
+
+            <div class="test-section">
+                <h2>📋 Quick Links</h2>
+                <div class="button-grid">
+                    <button class="btn btn-secondary" onclick="window.open('admin-portal.html', '_blank')">
+                        🔒 Admin Portal
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.open('admin-booking.html', '_blank')">
+                        📝 Admin Booking
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.open('customer-booking.html', '_blank')">
+                        👥 Customer Booking
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.open('public-booking.html', '_blank')">
+                        🌐 Public Booking
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.open('services-manager.html', '_blank')">
+                        💰 Services Manager
+                    </button>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h2>📊 System Status</h2>
+                <div class="button-grid">
+                    <div class="stat-box">
+                        <div class="stat-value" id="apiStatus">⏳</div>
+                        <div class="stat-label">API Server</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="servicesCount">-</div>
+                        <div class="stat-label">Services Available</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="timestamp">-</div>
+                        <div class="stat-label">Last Check</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+
+        // Open chatbot in popup window
+        function openChatbot() {
+            const width = 420;
+            const height = 700;
+            const left = window.screen.width - width - 20;
+            const top = (window.screen.height - height) / 2;
+
+            window.open(
+                'sarah-ai.html',
+                'Sarah AI Chatbot',
+                `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+            );
+        }
+
+        // Open chatbot in new tab
+        function openChatbotNewTab() {
+            window.open('sarah-ai.html', '_blank');
+        }
+
+        // Check server status
+        async function checkServerStatus() {
+            try {
+                const timestamp = new Date().toLocaleTimeString();
+                document.getElementById('timestamp').textContent = timestamp;
+
+                // Check API health
+                const response = await fetch(`${API_URL}/api/services`);
+                const data = await response.json();
+
+                if (data.success && data.services) {
+                    document.getElementById('serverStatus').innerHTML = '<strong style="color: #28a745;">✅ Online</strong>';
+                    document.getElementById('apiStatus').textContent = '✅';
+                    document.getElementById('apiStatus').style.color = '#28a745';
+
+                    // Count services
+                    let count = 0;
+                    if (data.services.movingServices) count += Object.keys(data.services.movingServices).length;
+                    if (data.services.laborOnly) count++;
+                    if (data.services.singleItem) count++;
+
+                    document.getElementById('servicesStatus').innerHTML = `<strong style="color: #28a745;">✅ ${count} services loaded</strong>`;
+                    document.getElementById('servicesCount').textContent = count;
+                    document.getElementById('servicesCount').style.color = '#28a745';
+                } else {
+                    throw new Error('Invalid response from server');
+                }
+            } catch (error) {
+                console.error('Server check failed:', error);
+                document.getElementById('serverStatus').innerHTML = '<strong style="color: #dc3545;">❌ Offline</strong>';
+                document.getElementById('apiStatus').textContent = '❌';
+                document.getElementById('apiStatus').style.color = '#dc3545';
+                document.getElementById('servicesStatus').innerHTML = '<strong style="color: #dc3545;">❌ Not available</strong>';
+                document.getElementById('servicesCount').textContent = '0';
+                document.getElementById('servicesCount').style.color = '#dc3545';
+            }
+        }
+
+        // Check status on load
+        checkServerStatus();
+
+        // Auto-refresh status every 10 seconds
+        setInterval(checkServerStatus, 10000);
+    </script>
+</body>
+</html>

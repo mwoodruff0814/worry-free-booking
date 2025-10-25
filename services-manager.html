@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Services & Pricing Manager - Worry Free Moving</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .success-banner {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .success-banner h3 {
+            margin: 0 0 10px 0;
+        }
+
+        .content-box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-right: 10px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .service-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .service-card h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .service-card p {
+            margin: 0 0 15px 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .price-box {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .price-box .amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .price-box .details {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .debug-output {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .debug-output pre {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+        }
+
+        .loading-spinner {
+            font-size: 48px;
+            margin-bottom: 15px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-box {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .error-box h3 {
+            margin: 0 0 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Services & Pricing Manager</h1>
+            <p>Centralized pricing configuration for your entire booking system</p>
+            <p style="margin-top: 10px; font-size: 12px; color: #999;">
+                <strong>Loaded:</strong> <span id="loadTime"></span>
+            </p>
+        </div>
+
+        <div class="success-banner">
+            <h3>✅ Standalone Page Loaded Successfully!</h3>
+            <p>This is a completely separate page with no cache conflicts. All changes here will sync to your booking pages and chatbot.</p>
+        </div>
+
+        <div class="content-box">
+            <h2 style="margin-bottom: 20px;">🚚 Your Services</h2>
+
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="loadServices()">🔄 Load Services from API</button>
+                <button class="btn btn-secondary" onclick="testAPI()">🔧 Test API Connection</button>
+            </div>
+
+            <div id="servicesContainer">
+                <div class="loading">
+                    <div class="loading-spinner">⏳</div>
+                    <p>Click "Load Services from API" to fetch your pricing data</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="debugOutput" class="debug-output">
+            <h3 style="margin-bottom: 15px;">🔍 Debug Output</h3>
+            <pre id="debugText"></pre>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001/api';
+
+        // Set load time
+        document.getElementById('loadTime').textContent = new Date().toLocaleString();
+
+        // Test API Connection
+        async function testAPI() {
+            const debugDiv = document.getElementById('debugOutput');
+            const debugText = document.getElementById('debugText');
+
+            debugDiv.style.display = 'block';
+            debugText.textContent = 'Testing API connection...\n\n';
+
+            try {
+                const timestamp = new Date().getTime();
+                const url = `${API_URL}/services?_t=${timestamp}`;
+
+                debugText.textContent += `Fetching: ${url}\n\n`;
+
+                const response = await fetch(url, {
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
+
+                debugText.textContent += `Status: ${response.status} ${response.statusText}\n`;
+                debugText.textContent += `OK: ${response.ok ? '✅ YES' : '❌ NO'}\n\n`;
+
+                const data = await response.json();
+                debugText.textContent += 'Response Data:\n' + JSON.stringify(data, null, 2);
+
+                if (data.success && data.services) {
+                    const movingCount = Object.keys(data.services.movingServices || {}).length;
+                    debugText.textContent += `\n\n✅ API is working!\n`;
+                    debugText.textContent += `Found ${movingCount} moving services\n`;
+                    debugText.textContent += `Labor Only: ${data.services.laborOnly ? 'Yes' : 'No'}\n`;
+                    debugText.textContent += `Single Item: ${data.services.singleItem ? 'Yes' : 'No'}`;
+                } else {
+                    debugText.textContent += '\n\n❌ API returned data but format is unexpected';
+                }
+            } catch (error) {
+                debugText.textContent += `\n\n❌ ERROR: ${error.message}\n`;
+                debugText.textContent += `\nStack:\n${error.stack}`;
+            }
+        }
+
+        // Load Services
+        async function loadServices() {
+            const container = document.getElementById('servicesContainer');
+
+            container.innerHTML = '<div class="loading"><div class="loading-spinner">⏳</div><p>Loading services from API...</p></div>';
+
+            try {
+                const timestamp = new Date().getTime();
+                const response = await fetch(`${API_URL}/services?_t=${timestamp}`, {
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                if (!data.success || !data.services) {
+                    throw new Error('Invalid data format received from server');
+                }
+
+                displayServices(data.services);
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="error-box">
+                        <h3>❌ Failed to Load Services</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p style="margin-top: 10px;">Troubleshooting steps:</p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>Make sure the server is running on port 3001</li>
+                            <li>Check that data/services.json exists</li>
+                            <li>Click "Test API Connection" for more details</li>
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        // Display Services
+        function displayServices(services) {
+            const container = document.getElementById('servicesContainer');
+            let html = '';
+
+            // Moving Services
+            if (services.movingServices) {
+                html += '<h3 style="color: #667eea; margin-bottom: 15px;">🚚 Moving Services (Full Service)</h3>';
+                html += '<div class="service-grid">';
+
+                for (const [key, service] of Object.entries(services.movingServices)) {
+                    html += `
+                        <div class="service-card">
+                            <h4>${service.icon || '🚚'} ${service.name}</h4>
+                            <p>${service.description || ''}</p>
+                            ${service.features ? `
+                                <ul style="font-size: 13px; margin-left: 20px; color: #666;">
+                                    ${service.features.map(f => `<li>${f}</li>`).join('')}
+                                </ul>
+                            ` : ''}
+                            <div class="price-box">
+                                <div class="amount">$${service.baseRate}/hr</div>
+                                <div class="details">
+                                    Service Charge: ${(service.serviceCharge * 100).toFixed(0)}% |
+                                    Distance: $${service.distanceAdjustment}/mi
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                html += '</div>';
+            }
+
+            // Labor Only
+            if (services.laborOnly) {
+                html += '<h3 style="color: #28a745; margin: 30px 0 15px 0;">💪 Labor Only</h3>';
+                html += '<div class="service-grid">';
+                const s = services.laborOnly;
+                html += `
+                    <div class="service-card" style="border-left-color: #28a745;">
+                        <h4>${s.icon || '💪'} ${s.name}</h4>
+                        <p>${s.description || ''}</p>
+                        <div class="price-box">
+                            <div class="amount">$${s.baseRate}/hr</div>
+                            <div class="details">Min: ${s.minimumHours}hrs | Service Charge: ${(s.serviceCharge * 100)}%</div>
+                        </div>
+                    </div>
+                `;
+                html += '</div>';
+            }
+
+            // Single Item
+            if (services.singleItem) {
+                html += '<h3 style="color: #ffc107; margin: 30px 0 15px 0;">📦 Single Item Move</h3>';
+                html += '<div class="service-grid">';
+                const s = services.singleItem;
+                html += `
+                    <div class="service-card" style="border-left-color: #ffc107;">
+                        <h4>${s.icon || '📦'} ${s.name}</h4>
+                        <p>${s.description || ''}</p>
+                        <div class="price-box">
+                            <div class="amount">$${s.baseRate} base</div>
+                            <div class="details">
+                                $${s.distanceRate}/mi | $${s.perMinuteRate}/min
+                            </div>
+                        </div>
+                    </div>
+                `;
+                html += '</div>';
+            }
+
+            // Success message
+            html += `
+                <div style="margin-top: 30px; padding: 20px; background: #d1ecf1; border-radius: 8px; border-left: 4px solid #17a2b8; color: #0c5460;">
+                    <strong>✅ Services loaded successfully!</strong> This data is live from your server at ${new Date().toLocaleTimeString()}.
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // Auto-load on page load (optional)
+        // Uncomment the line below to automatically load services when the page opens
+        // window.addEventListener('load', loadServices);
+    </script>
+</body>
+</html>

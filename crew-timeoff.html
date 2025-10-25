@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crew Time Off Request - Worry Free Moving</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #1e3c72;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30,60,114,0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .date-range {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .success-message {
+            text-align: center;
+            padding: 40px 20px;
+            display: none;
+        }
+
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .success-message h2 {
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+
+        .request-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #1e3c72;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .summary-value {
+            color: #1e3c72;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗓️ Crew Time Off Request</h1>
+            <p>Submit your time off request for management approval</p>
+        </div>
+
+        <div class="content">
+            <div id="requestForm">
+                <div class="alert alert-info">
+                    📋 <strong>Please Note:</strong> Time off requests must be submitted at least 2 days (48 hours) in advance. For last-minute call-offs, please call directly.
+                </div>
+
+                <!-- Last Minute Call-Off Alert (Hidden by default) -->
+                <div id="lastMinuteAlert" class="alert alert-danger" style="display: none;">
+                    🚨 <strong>Too Soon!</strong> Requests less than 2 days out require a phone call.<br><br>
+                    <a href="tel:3304358686" style="display: inline-block; background: #dc3545; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 10px;">
+                        📞 Call Now: 330-435-8686
+                    </a>
+                </div>
+
+                <div class="form-group">
+                    <label>Your Name *</label>
+                    <input type="text" id="crewName" required placeholder="Full Name">
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address *</label>
+                    <input type="email" id="crewEmail" required placeholder="your.email@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label>Phone Number *</label>
+                    <input type="tel" id="crewPhone" required placeholder="(330) 435-8686">
+                </div>
+
+                <div class="form-group">
+                    <label>Type of Request *</label>
+                    <select id="requestType">
+                        <option value="vacation">Vacation</option>
+                        <option value="sick">Sick Day</option>
+                        <option value="personal">Personal Day</option>
+                        <option value="emergency">Emergency/Family</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Time Off Period *</label>
+                    <div class="date-range">
+                        <div>
+                            <label style="font-size: 14px; margin-bottom: 5px;">Start Date</label>
+                            <input type="date" id="startDate" required>
+                        </div>
+                        <div>
+                            <label style="font-size: 14px; margin-bottom: 5px;">End Date</label>
+                            <input type="date" id="endDate" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Number of Days Off *</label>
+                    <input type="number" id="daysCount" min="1" max="30" value="1" required>
+                    <small style="color: #666; display: block; margin-top: 5px;">This will be calculated automatically based on your date range</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Reason for Request (Optional)</label>
+                    <textarea id="reason" rows="4" placeholder="Provide any additional details about your time off request..."></textarea>
+                </div>
+
+                <div class="alert alert-warning">
+                    ⚠️ <strong>Coverage Note:</strong> Please coordinate with your team to ensure coverage during your absence.
+                </div>
+
+                <button class="btn btn-primary" onclick="submitRequest()">
+                    📤 Submit Time Off Request
+                </button>
+            </div>
+
+            <div id="successMessage" class="success-message">
+                <div class="success-icon">✅</div>
+                <h2>Request Submitted Successfully!</h2>
+                <p>Your time off request has been sent to management for review.</p>
+
+                <div class="request-summary" id="summary"></div>
+
+                <div class="alert alert-success">
+                    <p><strong>What's Next?</strong></p>
+                    <p>You will receive an email confirmation at <strong id="confirmEmail"></strong> once your request is approved or denied.</p>
+                    <p style="margin-top: 10px;">This typically takes 24-48 hours.</p>
+                </div>
+
+                <button class="btn btn-primary" onclick="location.reload()" style="max-width: 300px; margin: 20px auto 0;">
+                    Submit Another Request
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+
+        // Set minimum date to 2 days from now
+        window.onload = () => {
+            const twoDaysFromNow = new Date();
+            twoDaysFromNow.setDate(twoDaysFromNow.getDate() + 2);
+            const minDate = twoDaysFromNow.toISOString().split('T')[0];
+
+            document.getElementById('startDate').min = minDate;
+            document.getElementById('endDate').min = minDate;
+
+            // Auto-calculate days when dates change
+            document.getElementById('startDate').addEventListener('change', checkMinimumNotice);
+            document.getElementById('endDate').addEventListener('change', calculateDays);
+            document.getElementById('startDate').addEventListener('change', calculateDays);
+        };
+
+        function checkMinimumNotice() {
+            const startDate = new Date(document.getElementById('startDate').value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            startDate.setHours(0, 0, 0, 0);
+
+            const diffTime = startDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            const lastMinuteAlert = document.getElementById('lastMinuteAlert');
+            const submitButton = document.querySelector('.btn-primary');
+
+            if (diffDays < 2) {
+                // Show alert and disable submit
+                lastMinuteAlert.style.display = 'block';
+                submitButton.disabled = true;
+                submitButton.style.opacity = '0.5';
+                submitButton.textContent = '⚠️ Call Required for Last-Minute Requests';
+            } else {
+                // Hide alert and enable submit
+                lastMinuteAlert.style.display = 'none';
+                submitButton.disabled = false;
+                submitButton.style.opacity = '1';
+                submitButton.textContent = '📤 Submit Time Off Request';
+            }
+        }
+
+        function calculateDays() {
+            const startDate = new Date(document.getElementById('startDate').value);
+            const endDate = new Date(document.getElementById('endDate').value);
+
+            if (startDate && endDate && endDate >= startDate) {
+                const diffTime = Math.abs(endDate - startDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+                document.getElementById('daysCount').value = diffDays;
+            }
+        }
+
+        async function submitRequest() {
+            // Validate required fields
+            const required = ['crewName', 'crewEmail', 'crewPhone', 'startDate', 'endDate'];
+            for (let field of required) {
+                if (!document.getElementById(field).value.trim()) {
+                    alert(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+                    document.getElementById(field).focus();
+                    return;
+                }
+            }
+
+            // Validate date range
+            const startDate = new Date(document.getElementById('startDate').value);
+            const endDate = new Date(document.getElementById('endDate').value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (endDate < startDate) {
+                alert('End date cannot be before start date');
+                document.getElementById('endDate').focus();
+                return;
+            }
+
+            // Double-check 2-day minimum
+            const diffTime = startDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 2) {
+                alert('Time off requests must be submitted at least 2 days in advance. Please call 330-435-8686 for last-minute requests.');
+                return;
+            }
+
+            // Build request data
+            const requestData = {
+                crewName: document.getElementById('crewName').value,
+                crewEmail: document.getElementById('crewEmail').value,
+                crewPhone: document.getElementById('crewPhone').value,
+                requestType: document.getElementById('requestType').value,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                daysCount: document.getElementById('daysCount').value,
+                reason: document.getElementById('reason').value,
+                submittedDate: new Date().toISOString()
+            };
+
+            try {
+                // Submit to server
+                const response = await fetch(`${API_URL}/api/crew-timeoff`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show success message
+                    showSuccess(requestData);
+                } else {
+                    alert('Failed to submit request: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error submitting request:', error);
+                alert('Error submitting request. The server may be offline. Please contact your manager directly.');
+            }
+        }
+
+        function showSuccess(requestData) {
+            // Build summary
+            const requestTypeName = document.getElementById('requestType').selectedOptions[0].text;
+
+            const summaryHTML = `
+                <div class="summary-item">
+                    <span class="summary-label">Name:</span>
+                    <span class="summary-value">${requestData.crewName}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Request Type:</span>
+                    <span class="summary-value">${requestTypeName}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Start Date:</span>
+                    <span class="summary-value">${new Date(requestData.startDate).toLocaleDateString()}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">End Date:</span>
+                    <span class="summary-value">${new Date(requestData.endDate).toLocaleDateString()}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Total Days:</span>
+                    <span class="summary-value">${requestData.daysCount} day(s)</span>
+                </div>
+            `;
+
+            document.getElementById('summary').innerHTML = summaryHTML;
+            document.getElementById('confirmEmail').textContent = requestData.crewEmail;
+
+            // Hide form, show success
+            document.getElementById('requestForm').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

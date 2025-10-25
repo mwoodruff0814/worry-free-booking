@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Your Move - Worry Free Moving</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e9ecef;
+            z-index: 0;
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+
+        .step.active .step-number {
+            background: #004085;
+            color: white;
+        }
+
+        .step.completed .step-number {
+            background: #28a745;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .step.active .step-label {
+            color: #004085;
+            font-weight: 600;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            color: #004085;
+            margin-bottom: 25px;
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #004085;
+        }
+
+        .service-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .service-card {
+            border: 3px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .service-card:hover {
+            border-color: #004085;
+            background: #f8f9fa;
+            transform: translateY(-3px);
+        }
+
+        .service-card.selected {
+            border-color: #004085;
+            background: #004085;
+            color: white;
+        }
+
+        .service-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .service-name {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .checkbox-item:hover {
+            border-color: #004085;
+            background: #f8f9fa;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+
+        .checkbox-item.checked {
+            border-color: #004085;
+            background: #e7f3ff;
+        }
+
+        .radio-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .radio-item:hover {
+            border-color: #004085;
+            background: #f8f9fa;
+        }
+
+        .radio-item input[type="radio"] {
+            margin-right: 10px;
+        }
+
+        .radio-item.selected {
+            border-color: #004085;
+            background: #004085;
+            color: white;
+        }
+
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .time-slot {
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .time-slot:hover:not(.unavailable) {
+            border-color: #004085;
+            background: #f8f9fa;
+        }
+
+        .time-slot.selected {
+            background: #004085;
+            color: white;
+            border-color: #004085;
+        }
+
+        .time-slot.unavailable {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,64,133,0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .summary-box {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .summary-value {
+            color: #004085;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .success-message {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .success-message h2 {
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+
+        .booking-id {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #ffc107;
+            color: #000;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+    </style>
+
+    <!-- Google Places Autocomplete API -->
+    <!-- IMPORTANT: Replace 'AIzaSyAWGIVnh7-2sgDJin_2qgNvwh4JD9UgJDo' with your actual API key -->
+    <!-- Get your API key from: https://console.cloud.google.com/apis/credentials -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAWGIVnh7-2sgDJin_2qgNvwh4JD9UgJDo&libraries=places&callback=initAutocomplete" async defer></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚚 Book Your Move</h1>
+            <p>Quick & Easy Online Booking <span class="badge">1-HOUR WINDOWS</span></p>
+        </div>
+
+        <div class="content">
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step active" id="step-1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Service</div>
+                </div>
+                <div class="step" id="step-2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Details</div>
+                </div>
+                <div class="step" id="step-3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Your Info</div>
+                </div>
+                <div class="step" id="step-4">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Date & Time</div>
+                </div>
+                <div class="step" id="step-5">
+                    <div class="step-number">5</div>
+                    <div class="step-label">Confirm</div>
+                </div>
+            </div>
+
+            <!-- Step 1: Select Service -->
+            <div class="form-section active" id="section-1">
+                <h2>What service do you need?</h2>
+
+                <div class="alert alert-info" style="margin-bottom: 20px;">
+                    💡 Services and pricing loaded from our live system - always up to date!
+                </div>
+
+                <div class="service-cards" id="serviceCardsContainer">
+                    <div style="text-align: center; padding: 40px; grid-column: 1 / -1;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">⏳</div>
+                        <p>Loading available services...</p>
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-primary" id="nextFromService" onclick="nextStep(1)" disabled>Continue →</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Service-Specific Questions -->
+            <div class="form-section" id="section-2">
+                <h2>Tell us more about your move</h2>
+
+                <!-- Common Questions for All Services -->
+                <div id="commonQuestions"></div>
+
+                <!-- Service-Specific Questions -->
+                <div id="serviceSpecificQuestions"></div>
+
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep(2)">← Back</button>
+                    <button class="btn-primary" onclick="nextStep(2)">Continue →</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Customer Information & Addresses -->
+            <div class="form-section" id="section-3">
+                <h2>Your Contact Information</h2>
+
+                <div class="form-group">
+                    <label>First Name *</label>
+                    <input type="text" id="firstName" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Last Name *</label>
+                    <input type="text" id="lastName" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Phone *</label>
+                    <input type="tel" id="phone" placeholder="(330) 435-8686" required>
+                </div>
+
+                <h2 style="margin-top: 40px;">Move Locations</h2>
+
+                <div class="form-group">
+                    <label>Pickup Address *</label>
+                    <input type="text" id="pickupAddress" placeholder="123 Main St, Akron OH 44301" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Dropoff Address *</label>
+                    <input type="text" id="dropoffAddress" placeholder="456 Oak Ave, Canton OH 44702" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Additional Notes (Optional)</label>
+                    <textarea id="notes" rows="3" placeholder="Any special requirements or additional information?"></textarea>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep(3)">← Back</button>
+                    <button class="btn-primary" onclick="nextStep(3)">Continue to Date Selection →</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Date & Time Selection -->
+            <div class="form-section" id="section-4">
+                <h2>When do you need service?</h2>
+
+                <div class="alert alert-info">
+                    📅 Select a date, then choose your preferred 1-hour arrival window.
+                </div>
+
+                <div class="form-group">
+                    <label>Choose Date *</label>
+                    <input type="date" id="selectedDate" onchange="loadTimeSlots()">
+                </div>
+
+                <div class="alert alert-warning" id="timeSlotInfo" style="display: none;">
+                    ⏰ We provide 1-hour arrival windows. Our crew will arrive within your selected window.
+                </div>
+
+                <div id="timeSlots" class="loading">Select a date to see available time windows...</div>
+
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep(4)">← Back</button>
+                    <button class="btn-primary" id="nextFromTime" onclick="nextStep(4)" disabled>Review Booking →</button>
+                </div>
+            </div>
+
+            <!-- Step 5: Review & Confirm -->
+            <div class="form-section" id="section-5">
+                <h2>Review & Confirm Your Booking</h2>
+
+                <div class="summary-box" id="summary">
+                    <!-- Summary will be populated here -->
+                </div>
+
+                <div class="alert alert-info">
+                    By confirming, you agree to our terms of service. You will receive a confirmation email with all details including your 1-hour arrival window.
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep(5)">← Back</button>
+                    <button class="btn-primary" onclick="confirmBooking()">✓ Confirm Booking</button>
+                </div>
+            </div>
+
+            <!-- Success Message -->
+            <div class="form-section" id="section-success">
+                <div class="success-message">
+                    <div class="success-icon">✅</div>
+                    <h2>Booking Confirmed!</h2>
+                    <p>Your appointment has been successfully scheduled.</p>
+                    <div class="booking-id" id="bookingIdDisplay"></div>
+                    <p>We've sent a confirmation email to <strong id="confirmEmail"></strong> with all the details including your 1-hour arrival window.</p>
+                    <p style="margin-top: 20px; font-weight: 600;">We'll call you 24 hours before your appointment to confirm.</p>
+                    <p style="margin-top: 10px; color: #666;">Questions? Call us at (330) 435-8686</p>
+                    <button class="btn-primary" onclick="location.reload()" style="margin-top: 30px; max-width: 300px;">Book Another Appointment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+        let servicesConfig = null;
+
+        let bookingData = {
+            serviceType: '',
+            selectedDate: '',
+            selectedTime: '',
+            selectedTimeLabel: '',
+            specialItems: {
+                hasSafe: false,
+                hasPiano: false,
+                hasHeavyItems: false
+            },
+            stairFlights: 0,
+            packingMaterials: {},
+            laborOnly: {
+                truckSize: '',
+                needsMovingPads: false
+            },
+            singleItem: {
+                itemType: ''
+            }
+        };
+
+        // Google Places Autocomplete initialization
+        let pickupAutocomplete, dropoffAutocomplete;
+
+        function initAutocomplete() {
+            // Initialize autocomplete for pickup address
+            const pickupInput = document.getElementById('pickupAddress');
+            const dropoffInput = document.getElementById('dropoffAddress');
+
+            if (pickupInput && typeof google !== 'undefined' && google.maps && google.maps.places) {
+                pickupAutocomplete = new google.maps.places.Autocomplete(pickupInput, {
+                    componentRestrictions: { country: 'us' },  // Restrict to US addresses
+                    fields: ['formatted_address', 'address_components', 'geometry'],
+                    types: ['address']
+                });
+
+                // Listen for place selection
+                pickupAutocomplete.addListener('place_changed', function() {
+                    const place = pickupAutocomplete.getPlace();
+                    if (place.formatted_address) {
+                        pickupInput.value = place.formatted_address;
+                    }
+                });
+            }
+
+            if (dropoffInput && typeof google !== 'undefined' && google.maps && google.maps.places) {
+                dropoffAutocomplete = new google.maps.places.Autocomplete(dropoffInput, {
+                    componentRestrictions: { country: 'us' },  // Restrict to US addresses
+                    fields: ['formatted_address', 'address_components', 'geometry'],
+                    types: ['address']
+                });
+
+                // Listen for place selection
+                dropoffAutocomplete.addListener('place_changed', function() {
+                    const place = dropoffAutocomplete.getPlace();
+                    if (place.formatted_address) {
+                        dropoffInput.value = place.formatted_address;
+                    }
+                });
+            }
+
+            console.log('Google Places Autocomplete initialized');
+        }
+
+        // Fallback if Google Maps fails to load
+        window.initAutocomplete = window.initAutocomplete || function() {
+            console.warn('Google Maps API not loaded. Address autocomplete will not be available.');
+        };
+
+        // Parse URL parameters for chatbot integration
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                firstName: params.get('firstName') || params.get('first_name'),
+                lastName: params.get('lastName') || params.get('last_name'),
+                email: params.get('email'),
+                phone: params.get('phone'),
+                from: params.get('from') || params.get('pickupAddress'),
+                to: params.get('to') || params.get('dropoffAddress'),
+                serviceType: params.get('serviceType') || params.get('service'),
+                crew: params.get('crew'),
+                stairFlights: params.get('stairs') || params.get('stairFlights'),
+                notes: params.get('notes')
+            };
+        }
+
+        // Autofill form from URL parameters (chatbot integration)
+        function autofillFromChatbot() {
+            const params = getUrlParams();
+
+            if (params.firstName) document.getElementById('firstName').value = params.firstName;
+            if (params.lastName) document.getElementById('lastName').value = params.lastName;
+            if (params.email) document.getElementById('email').value = params.email;
+            if (params.phone) document.getElementById('phone').value = params.phone;
+            if (params.from) document.getElementById('pickupAddress').value = params.from;
+            if (params.to) document.getElementById('dropoffAddress').value = params.to;
+            if (params.notes) document.getElementById('notes').value = params.notes;
+
+            // Auto-select service if provided
+            if (params.serviceType) {
+                bookingData.serviceType = params.serviceType;
+                // Will be selected visually when step 1 is shown
+            }
+
+            // Store stairs count if provided
+            if (params.stairFlights) {
+                bookingData.stairFlights = parseInt(params.stairFlights) || 0;
+            }
+        }
+
+        // Set minimum date to tomorrow and load services
+        window.onload = async () => {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const minDate = tomorrow.toISOString().split('T')[0];
+            document.getElementById('selectedDate').min = minDate;
+
+            // Load services configuration and populate service cards
+            try {
+                const response = await fetch(`${API_URL}/api/services`);
+                const data = await response.json();
+                if (data.success) {
+                    servicesConfig = data.services;
+                    populateServiceCards(data.services);
+                } else {
+                    loadFallbackServices();
+                }
+            } catch (error) {
+                console.error('Failed to load services configuration:', error);
+                loadFallbackServices();
+            }
+
+            // Autofill from chatbot if URL params present
+            autofillFromChatbot();
+        };
+
+        // Populate service cards from API data
+        function populateServiceCards(services) {
+            const container = document.getElementById('serviceCardsContainer');
+            let html = '';
+
+            // Add moving services (2, 3, 4 person crews)
+            if (services.movingServices) {
+                for (const [key, service] of Object.entries(services.movingServices)) {
+                    const minRate = service.baseRate;
+                    const maxRate = service.baseRate + (service.distanceAdjustment * 50); // Estimate for ~50 miles
+                    html += `
+                        <div class="service-card" onclick="selectService('${service.name}')" data-service-key="${key}">
+                            <div class="service-icon">${service.icon}</div>
+                            <div class="service-name">${service.name}</div>
+                            <div style="font-size: 12px; color: #666; margin-top: 5px;">$${minRate.toFixed(2)}-$${maxRate.toFixed(2)}/hour</div>
+                        </div>
+                    `;
+                }
+            }
+
+            // Add labor only
+            if (services.laborOnly) {
+                const s = services.laborOnly;
+                html += `
+                    <div class="service-card" onclick="selectService('${s.name}')">
+                        <div class="service-icon">${s.icon}</div>
+                        <div class="service-name">${s.name}</div>
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">I have my own truck</div>
+                    </div>
+                `;
+            }
+
+            // Add single item
+            if (services.singleItem) {
+                const s = services.singleItem;
+                html += `
+                    <div class="service-card" onclick="selectService('${s.name}')">
+                        <div class="service-icon">${s.icon}</div>
+                        <div class="service-name">${s.name}</div>
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">Starting at $${s.baseRate}</div>
+                    </div>
+                `;
+            }
+
+            // Add other services if they exist
+            const otherServices = [
+                { name: 'Junk Removal', icon: '🗑️', desc: 'Starting at $250' },
+                { name: 'Cleanout', icon: '🧹', desc: '$219.99/hour' }
+            ];
+
+            otherServices.forEach(service => {
+                html += `
+                    <div class="service-card" onclick="selectService('${service.name}')">
+                        <div class="service-icon">${service.icon}</div>
+                        <div class="service-name">${service.name}</div>
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">${service.desc}</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Fallback services if API fails
+        function loadFallbackServices() {
+            const container = document.getElementById('serviceCardsContainer');
+            container.innerHTML = `
+                <div class="service-card" onclick="selectService('2 Person Crew')">
+                    <div class="service-icon">👥</div>
+                    <div class="service-name">2 Person Crew</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">$192.50-$258.50/hour</div>
+                </div>
+                <div class="service-card" onclick="selectService('3 Person Crew')">
+                    <div class="service-icon">👥👤</div>
+                    <div class="service-name">3 Person Crew</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">$247.50-$313.50/hour</div>
+                </div>
+                <div class="service-card" onclick="selectService('4 Person Crew')">
+                    <div class="service-icon">👥👥</div>
+                    <div class="service-name">4 Person Crew</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">$302.50-$368.50/hour</div>
+                </div>
+                <div class="service-card" onclick="selectService('Labor Only')">
+                    <div class="service-icon">💪</div>
+                    <div class="service-name">Labor Only</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">I have my own truck</div>
+                </div>
+                <div class="service-card" onclick="selectService('Single Item')">
+                    <div class="service-icon">📦</div>
+                    <div class="service-name">Single Item Move</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">Starting at $249</div>
+                </div>
+                <div class="service-card" onclick="selectService('Junk Removal')">
+                    <div class="service-icon">🗑️</div>
+                    <div class="service-name">Junk Removal</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">Starting at $250</div>
+                </div>
+                <div class="service-card" onclick="selectService('Cleanout')">
+                    <div class="service-icon">🧹</div>
+                    <div class="service-name">Cleanout Service</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">$219.99/hour</div>
+                </div>
+            `;
+        }
+
+        function selectService(service) {
+            // Remove previous selection
+            document.querySelectorAll('.service-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Add selection
+            event.target.closest('.service-card').classList.add('selected');
+            bookingData.serviceType = service;
+            document.getElementById('nextFromService').disabled = false;
+        }
+
+        function nextStep(current) {
+            // Validate current step
+            if (current === 1 && !bookingData.serviceType) {
+                alert('Please select a service type');
+                return;
+            }
+            if (current === 3 && !validateStep3()) return;
+            if (current === 4 && !bookingData.selectedTime) {
+                alert('Please select a time window');
+                return;
+            }
+
+            // If moving from step 1, build questions for step 2
+            if (current === 1) {
+                buildServiceQuestions();
+            }
+
+            // Update step indicator
+            document.getElementById(`step-${current}`).classList.remove('active');
+            document.getElementById(`step-${current}`).classList.add('completed');
+            document.getElementById(`step-${current + 1}`).classList.add('active');
+
+            // Show next section
+            document.getElementById(`section-${current}`).classList.remove('active');
+            document.getElementById(`section-${current + 1}`).classList.add('active');
+
+            // If moving to step 5, show summary
+            if (current === 4) {
+                showSummary();
+            }
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        function prevStep(current) {
+            // Update step indicator
+            document.getElementById(`step-${current}`).classList.remove('active');
+            document.getElementById(`step-${current - 1}`).classList.remove('completed');
+            document.getElementById(`step-${current - 1}`).classList.add('active');
+
+            // Show previous section
+            document.getElementById(`section-${current}`).classList.remove('active');
+            document.getElementById(`section-${current - 1}`).classList.add('active');
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        function buildPackingMaterialsSection() {
+            if (!servicesConfig || !servicesConfig.packingMaterials) {
+                return '';
+            }
+
+            let html = `
+                <div class="form-group" style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #e9ecef;">
+                    <h3 style="color: #004085; margin-bottom: 15px;">📦 Packing Materials (Optional)</h3>
+                    <p style="color: #666; margin-bottom: 15px;">Need packing supplies? Select the materials you'd like to add to your order.</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px;">
+            `;
+
+            for (const [key, material] of Object.entries(servicesConfig.packingMaterials)) {
+                if (material.enabled) {
+                    html += `
+                        <div style="display: flex; align-items: center; padding: 10px; border: 2px solid #e9ecef; border-radius: 8px;">
+                            <input type="number" id="material_${key}" min="0" max="100" value="0"
+                                   onchange="updatePackingMaterial('${key}', this.value)"
+                                   style="width: 70px; margin-right: 10px; padding: 8px;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #333;">${material.name}</div>
+                                <div style="font-size: 13px; color: #666;">$${material.price.toFixed(2)} each</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            return html;
+        }
+
+        function updatePackingMaterial(key, quantity) {
+            const qty = parseInt(quantity) || 0;
+            if (qty > 0) {
+                bookingData.packingMaterials[key] = qty;
+            } else {
+                delete bookingData.packingMaterials[key];
+            }
+        }
+
+        function buildServiceQuestions() {
+            const commonQuestionsDiv = document.getElementById('commonQuestions');
+            const specificQuestionsDiv = document.getElementById('serviceSpecificQuestions');
+
+            // Services that include packing materials option (ONLY moving crew services)
+            const packingMaterialServices = ['2 Person Crew', '3 Person Crew', '4 Person Crew'];
+            const hasPackingMaterials = packingMaterialServices.includes(bookingData.serviceType);
+
+            // Services that have special items questions (crew services and single item)
+            const specialItemServices = ['2 Person Crew', '3 Person Crew', '4 Person Crew', 'Single Item'];
+            const hasSpecialItems = specialItemServices.includes(bookingData.serviceType);
+
+            // Common questions for crew services and single item
+            if (hasSpecialItems) {
+                commonQuestionsDiv.innerHTML = `
+                    <div class="form-group">
+                        <label>Do you have any of the following special items? (Check all that apply)</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="hasSafe" onchange="updateSpecialItem('hasSafe')">
+                                <span>🔒 Safe</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="hasPiano" onchange="updateSpecialItem('hasPiano')">
+                                <span>🎹 Piano</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="hasHeavyItems" onchange="updateSpecialItem('hasHeavyItems')">
+                                <span>🏋️ Heavy Items (500+ lbs)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>How many flights of stairs? <span style="font-size: 13px; color: #666;">($25 per flight)</span></label>
+                        <input type="number" id="stairFlights" min="0" max="20" value="0" placeholder="0"
+                               onchange="bookingData.stairFlights = parseInt(this.value) || 0"
+                               style="max-width: 200px;">
+                        <small style="color: #666; display: block; margin-top: 5px;">Enter 0 if no stairs</small>
+                    </div>
+                `;
+
+                // Add packing materials section ONLY for 2/3/4 Person Crew services
+                if (hasPackingMaterials) {
+                    commonQuestionsDiv.innerHTML += buildPackingMaterialsSection();
+                }
+            }
+
+            // Labor Only specific questions
+            if (bookingData.serviceType === 'Labor Only') {
+                specificQuestionsDiv.innerHTML = `
+                    <div class="form-group">
+                        <label>What size truck will you be using?</label>
+                        <select id="truckSize" onchange="bookingData.laborOnly.truckSize = this.value">
+                            <option value="">Select truck size...</option>
+                            <option value="10ft">10 ft Truck</option>
+                            <option value="15ft">15 ft Truck</option>
+                            <option value="17ft">17 ft Truck</option>
+                            <option value="20ft">20 ft Truck</option>
+                            <option value="26ft">26 ft Truck</option>
+                            <option value="other">Other / Not Sure</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Do you need moving pads/blankets?</label>
+                        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 15px; border-radius: 8px;">
+                            <p style="margin: 0 0 10px 0; font-weight: 600; color: #856404;">We strongly encourage you to provide your own MOVING QUALITY BLANKETS.</p>
+                            <p style="margin: 0; font-size: 14px; color: #856404;">
+                                If we provide blankets: <strong>$20 fee applies</strong> for up to 12 blankets.<br>
+                                <strong>$20 per blanket not returned.</strong>
+                            </p>
+                        </div>
+                        <div class="radio-group">
+                            <label class="radio-item">
+                                <input type="radio" name="pads" value="no" onchange="bookingData.laborOnly.needsMovingPads = false" checked>
+                                <span>No, I'll provide my own moving blankets (Recommended)</span>
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="pads" value="yes" onchange="bookingData.laborOnly.needsMovingPads = true">
+                                <span>Yes, please provide blankets (+$20, up to 12 blankets)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Special items to move? (Check all that apply)</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="hasSafe" onchange="updateSpecialItem('hasSafe')">
+                                <span>🔒 Safe</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="hasPiano" onchange="updateSpecialItem('hasPiano')">
+                                <span>🎹 Piano</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="hasHeavyItems" onchange="updateSpecialItem('hasHeavyItems')">
+                                <span>🏋️ Heavy Items (500+ lbs)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>How many flights of stairs? <span style="font-size: 13px; color: #666;">($25 per flight)</span></label>
+                        <input type="number" id="stairFlights" min="0" max="20" value="0" placeholder="0"
+                               onchange="bookingData.stairFlights = parseInt(this.value) || 0"
+                               style="max-width: 200px;">
+                        <small style="color: #666; display: block; margin-top: 5px;">Enter 0 if no stairs</small>
+                    </div>
+                `;
+            }
+
+            // Single Item specific questions
+            if (bookingData.serviceType === 'Single Item') {
+                specificQuestionsDiv.innerHTML = `
+                    <div class="form-group">
+                        <label>What type of item are you moving?</label>
+                        <input type="text" id="itemType" placeholder="e.g., Piano, Couch, Refrigerator" onchange="bookingData.singleItem.itemType = this.value">
+                    </div>
+                `;
+            }
+
+            // Packing Service specific questions
+            if (bookingData.serviceType === 'Packing Service') {
+                commonQuestionsDiv.innerHTML = `
+                    <div class="form-group">
+                        <label>What needs to be packed?</label>
+                        <select id="packingScope">
+                            <option value="full">Full Home/Office</option>
+                            <option value="partial">Partial (specific rooms)</option>
+                            <option value="fragile">Fragile Items Only</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Approximate number of rooms:</label>
+                        <input type="number" id="roomCount" min="1" max="20" placeholder="Number of rooms">
+                    </div>
+                `;
+                specificQuestionsDiv.innerHTML = '';
+            }
+        }
+
+        function updateSpecialItem(item) {
+            const checkbox = document.getElementById(item);
+            bookingData.specialItems[item] = checkbox.checked;
+            checkbox.parentElement.classList.toggle('checked', checkbox.checked);
+        }
+
+        function validateStep3() {
+            const required = ['firstName', 'lastName', 'email', 'phone', 'pickupAddress', 'dropoffAddress'];
+            for (let field of required) {
+                const value = document.getElementById(field).value.trim();
+                if (!value) {
+                    alert(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+                    document.getElementById(field).focus();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        async function loadTimeSlots() {
+            const date = document.getElementById('selectedDate').value;
+            if (!date) return;
+
+            bookingData.selectedDate = date;
+            document.getElementById('timeSlotInfo').style.display = 'block';
+
+            const container = document.getElementById('timeSlots');
+            container.innerHTML = '<div class="loading">⏳ Loading available time windows...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/api/available-slots?date=${date}`);
+                const data = await response.json();
+
+                if (data.success && data.slots) {
+                    let html = '<div class="time-slots">';
+                    data.slots.forEach(slot => {
+                        const disabled = !slot.available ? 'unavailable' : '';
+                        html += `
+                            <div class="time-slot ${disabled}"
+                                 onclick="${slot.available ? `selectTime('${slot.time}', '${slot.label}')` : ''}"
+                                 data-time="${slot.time}">
+                                ${slot.label}
+                                ${!slot.available ? '<br><small>Booked</small>' : ''}
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<div class="alert alert-warning">Failed to load time slots. Please try again.</div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="alert alert-warning">Error connecting to server. Make sure the booking system is running.</div>';
+            }
+        }
+
+        function selectTime(time, label) {
+            // Remove previous selection
+            document.querySelectorAll('.time-slot').forEach(slot => {
+                slot.classList.remove('selected');
+            });
+
+            // Add selection
+            event.target.classList.add('selected');
+            bookingData.selectedTime = time;
+            bookingData.selectedTimeLabel = label;
+            document.getElementById('nextFromTime').disabled = false;
+        }
+
+        function showSummary() {
+            const date = new Date(bookingData.selectedDate);
+            const formattedDate = date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            let summaryHTML = `
+                <div class="summary-item">
+                    <span class="summary-label">Service Type:</span>
+                    <span class="summary-value">${bookingData.serviceType}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Name:</span>
+                    <span class="summary-value">${document.getElementById('firstName').value} ${document.getElementById('lastName').value}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Email:</span>
+                    <span class="summary-value">${document.getElementById('email').value}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Phone:</span>
+                    <span class="summary-value">${document.getElementById('phone').value}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Date:</span>
+                    <span class="summary-value">${formattedDate}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Arrival Window:</span>
+                    <span class="summary-value">${bookingData.selectedTimeLabel}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Pickup:</span>
+                    <span class="summary-value">${document.getElementById('pickupAddress').value}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Dropoff:</span>
+                    <span class="summary-value">${document.getElementById('dropoffAddress').value}</span>
+                </div>
+            `;
+
+            // Add special items if any selected
+            const specialItems = [];
+            if (bookingData.specialItems.hasSafe) specialItems.push('Safe');
+            if (bookingData.specialItems.hasPiano) specialItems.push('Piano');
+            if (bookingData.specialItems.hasHeavyItems) specialItems.push('Heavy Items');
+
+            if (specialItems.length > 0) {
+                summaryHTML += `
+                    <div class="summary-item">
+                        <span class="summary-label">Special Items:</span>
+                        <span class="summary-value">${specialItems.join(', ')}</span>
+                    </div>
+                `;
+            }
+
+            // Add stairs if present
+            if (bookingData.stairFlights > 0) {
+                summaryHTML += `
+                    <div class="summary-item">
+                        <span class="summary-label">Stairs:</span>
+                        <span class="summary-value">${bookingData.stairFlights} flight(s) @ $25 each</span>
+                    </div>
+                `;
+            }
+
+            // Add packing materials if any selected
+            if (Object.keys(bookingData.packingMaterials).length > 0 && servicesConfig) {
+                let materialsList = [];
+                let materialsTotal = 0;
+                for (const [key, qty] of Object.entries(bookingData.packingMaterials)) {
+                    const material = servicesConfig.packingMaterials[key];
+                    if (material) {
+                        const cost = material.price * qty;
+                        materialsList.push(`${material.name} (${qty}) - $${cost.toFixed(2)}`);
+                        materialsTotal += cost;
+                    }
+                }
+                if (materialsList.length > 0) {
+                    summaryHTML += `
+                        <div class="summary-item">
+                            <span class="summary-label">Packing Materials:</span>
+                            <span class="summary-value">${materialsList.join(', ')}<br><strong>Total: $${materialsTotal.toFixed(2)}</strong></span>
+                        </div>
+                    `;
+                }
+            }
+
+            // Labor only specific
+            if (bookingData.serviceType === 'Labor Only') {
+                if (bookingData.laborOnly.truckSize) {
+                    summaryHTML += `
+                        <div class="summary-item">
+                            <span class="summary-label">Truck Size:</span>
+                            <span class="summary-value">${bookingData.laborOnly.truckSize}</span>
+                        </div>
+                    `;
+                }
+                summaryHTML += `
+                    <div class="summary-item">
+                        <span class="summary-label">Moving Pads:</span>
+                        <span class="summary-value">${bookingData.laborOnly.needsMovingPads ? 'Yes, please provide' : 'No, have my own'}</span>
+                    </div>
+                `;
+            }
+
+            // Single item specific
+            if (bookingData.serviceType === 'Single Item' && bookingData.singleItem.itemType) {
+                summaryHTML += `
+                    <div class="summary-item">
+                        <span class="summary-label">Item:</span>
+                        <span class="summary-value">${bookingData.singleItem.itemType}</span>
+                    </div>
+                `;
+            }
+
+            document.getElementById('summary').innerHTML = summaryHTML;
+        }
+
+        async function confirmBooking() {
+            // Compile all notes
+            let compiledNotes = document.getElementById('notes').value || '';
+
+            // Add special items to notes
+            const specialItems = [];
+            if (bookingData.specialItems.hasSafe) specialItems.push('Safe');
+            if (bookingData.specialItems.hasPiano) specialItems.push('Piano');
+            if (bookingData.specialItems.hasHeavyItems) specialItems.push('Heavy Items (500+ lbs)');
+
+            if (specialItems.length > 0) {
+                compiledNotes += `\n\nSpecial Items: ${specialItems.join(', ')}`;
+            }
+
+            // Add stairs info
+            if (bookingData.stairFlights > 0) {
+                compiledNotes += `\nStairs: ${bookingData.stairFlights} flight(s) @ $25 each = $${bookingData.stairFlights * 25}`;
+            }
+
+            // Add packing materials
+            if (Object.keys(bookingData.packingMaterials).length > 0 && servicesConfig) {
+                let materialsList = [];
+                let materialsTotal = 0;
+                for (const [key, qty] of Object.entries(bookingData.packingMaterials)) {
+                    const material = servicesConfig.packingMaterials[key];
+                    if (material) {
+                        const cost = material.price * qty;
+                        materialsList.push(`${material.name} (${qty}) - $${cost.toFixed(2)}`);
+                        materialsTotal += cost;
+                    }
+                }
+                if (materialsList.length > 0) {
+                    compiledNotes += `\n\nPacking Materials:\n${materialsList.join('\n')}\nMaterials Total: $${materialsTotal.toFixed(2)}`;
+                }
+            }
+
+            // Add labor-only details
+            if (bookingData.serviceType === 'Labor Only') {
+                if (bookingData.laborOnly.truckSize) {
+                    compiledNotes += `\nTruck Size: ${bookingData.laborOnly.truckSize}`;
+                }
+                compiledNotes += `\nMoving Pads: ${bookingData.laborOnly.needsMovingPads ? 'Yes, provide' : 'Customer has own'}`;
+            }
+
+            // Add single item details
+            if (bookingData.serviceType === 'Single Item' && bookingData.singleItem.itemType) {
+                compiledNotes += `\nItem Type: ${bookingData.singleItem.itemType}`;
+            }
+
+            const submitData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                serviceType: bookingData.serviceType,
+                pickupAddress: document.getElementById('pickupAddress').value,
+                dropoffAddress: document.getElementById('dropoffAddress').value,
+                notes: compiledNotes.trim(),
+                date: bookingData.selectedDate,
+                time: bookingData.selectedTime
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/api/book-appointment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(submitData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Hide confirm section
+                    document.getElementById('section-5').classList.remove('active');
+
+                    // Update step indicator
+                    document.getElementById('step-5').classList.add('completed');
+
+                    // Show success
+                    document.getElementById('bookingIdDisplay').textContent = `Booking ID: ${data.bookingId}`;
+                    document.getElementById('confirmEmail').textContent = submitData.email;
+                    document.getElementById('section-success').classList.add('active');
+                } else {
+                    alert('Booking failed: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error creating booking. Please make sure the server is running and try again.');
+            }
+        }
+    </script>
+</body>
+</html>

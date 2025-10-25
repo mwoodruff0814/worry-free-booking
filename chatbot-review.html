@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Review Your Booking - Worry Free Moving</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            padding: 10px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: #4a5568;
+            font-size: 14px;
+        }
+
+        .info-value {
+            color: #1a202c;
+            font-weight: 500;
+            text-align: right;
+            font-size: 14px;
+        }
+
+        .date-time-picker {
+            display: grid;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: #4a5568;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .time-slot {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+            font-weight: 500;
+        }
+
+        .time-slot:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+
+        .time-slot.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .time-slot.unavailable {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: #f7fafc;
+        }
+
+        .time-slot.unavailable:hover {
+            border-color: #e2e8f0;
+            background: #f7fafc;
+        }
+
+        .book-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+        }
+
+        .book-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .book-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .confirmation {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .confirmation.show {
+            display: block;
+        }
+
+        .confirmation-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .confirmation h2 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+
+        .confirmation p {
+            color: #4a5568;
+            margin-bottom: 10px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .confirmation-details {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .time-slots {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .info-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .info-value {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Review Your Booking</h1>
+            <p>Please review your information and select a date & time</p>
+        </div>
+
+        <div class="content">
+            <div id="booking-form">
+                <div class="error" id="error-message"></div>
+
+                <!-- Customer Information -->
+                <div class="section">
+                    <div class="section-title">👤 Contact Information</div>
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <span class="info-label">Name</span>
+                            <span class="info-value" id="display-name">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Email</span>
+                            <span class="info-value" id="display-email">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Phone</span>
+                            <span class="info-value" id="display-phone">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service Details -->
+                <div class="section">
+                    <div class="section-title">📦 Service Details</div>
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <span class="info-label">Service Type</span>
+                            <span class="info-value" id="display-service">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Pickup Address</span>
+                            <span class="info-value" id="display-pickup">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Dropoff Address</span>
+                            <span class="info-value" id="display-dropoff">-</span>
+                        </div>
+                        <div class="info-row" id="estimate-row" style="display: none;">
+                            <span class="info-label">Estimated Cost</span>
+                            <span class="info-value" id="display-estimate">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date & Time Selection -->
+                <div class="section">
+                    <div class="section-title">📅 Select Date & Time</div>
+                    <div class="date-time-picker">
+                        <div class="form-group">
+                            <label for="booking-date">Select Date</label>
+                            <input type="date" id="booking-date" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Available Time Slots</label>
+                            <div id="time-slots" class="time-slots">
+                                <div class="loading show">
+                                    <p>Select a date to see available times</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="book-button" id="confirm-button" disabled>
+                    Confirm Booking
+                </button>
+            </div>
+
+            <!-- Loading State -->
+            <div class="loading" id="loading-state">
+                <div class="spinner"></div>
+                <p>Processing your booking...</p>
+            </div>
+
+            <!-- Confirmation Screen -->
+            <div class="confirmation" id="confirmation-screen">
+                <div class="confirmation-icon">✅</div>
+                <h2>Booking Confirmed!</h2>
+                <p>Thank you for choosing Worry Free Moving!</p>
+
+                <div class="confirmation-details" id="confirmation-details">
+                    <!-- Populated via JavaScript -->
+                </div>
+
+                <p style="margin-top: 20px;">
+                    You will receive a confirmation email and SMS shortly.<br>
+                    We'll call you 24 hours before your appointment.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Parse URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookingData = {
+            firstName: urlParams.get('firstName') || '',
+            lastName: urlParams.get('lastName') || '',
+            email: urlParams.get('email') || '',
+            phone: urlParams.get('phone') || '',
+            serviceType: urlParams.get('serviceType') || '',
+            pickupAddress: urlParams.get('pickupAddress') || '',
+            dropoffAddress: urlParams.get('dropoffAddress') || '',
+            estimateTotal: urlParams.get('estimateTotal') || '',
+            estimateData: urlParams.get('estimateData') || '',
+            paymentSaved: urlParams.get('paymentSaved') === 'true',
+            paymentSkipped: urlParams.get('paymentSkipped') === 'true',
+            squareCustomerId: urlParams.get('squareCustomerId') || '',
+            cardLast4: urlParams.get('cardLast4') || '',
+            cardBrand: urlParams.get('cardBrand') || ''
+        };
+
+        let selectedTime = null;
+        let availableSlots = [];
+
+        // Populate summary
+        document.getElementById('display-name').textContent = `${bookingData.firstName} ${bookingData.lastName}`;
+        document.getElementById('display-email').textContent = bookingData.email;
+        document.getElementById('display-phone').textContent = bookingData.phone;
+        document.getElementById('display-service').textContent = bookingData.serviceType;
+        document.getElementById('display-pickup').textContent = bookingData.pickupAddress;
+        document.getElementById('display-dropoff').textContent = bookingData.dropoffAddress;
+
+        if (bookingData.estimateTotal) {
+            document.getElementById('estimate-row').style.display = 'flex';
+            document.getElementById('display-estimate').textContent = `$${bookingData.estimateTotal}`;
+        }
+
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('booking-date').setAttribute('min', today);
+
+        // Load available time slots when date changes
+        document.getElementById('booking-date').addEventListener('change', async function() {
+            const selectedDate = this.value;
+            if (!selectedDate) return;
+
+            await loadAvailableSlots(selectedDate);
+        });
+
+        async function loadAvailableSlots(date) {
+            const timeSlotsContainer = document.getElementById('time-slots');
+            timeSlotsContainer.innerHTML = '<div class="loading show"><div class="spinner"></div><p>Loading available times...</p></div>';
+
+            try {
+                console.log('Fetching slots for date:', date);
+                const url = `/api/available-slots?date=${date}`;
+                console.log('Fetch URL:', url);
+
+                const response = await fetch(url);
+                console.log('Response status:', response.status);
+
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to load time slots');
+                }
+
+                availableSlots = data.slots || [];
+                console.log('Available slots (before filtering):', availableSlots);
+
+                // Filter out 11am-2pm time slots for chatbot bookings
+                // These slots are still available for direct/phone bookings
+                const blockedTimes = ['11:00', '12:00', '13:00'];
+                availableSlots = availableSlots.filter(slot => !blockedTimes.includes(slot.time));
+                console.log('Available slots (after filtering 11am-2pm):', availableSlots);
+
+                renderTimeSlots();
+
+            } catch (error) {
+                console.error('Error loading slots:', error);
+                console.error('Error details:', error.message, error.stack);
+                timeSlotsContainer.innerHTML = `<p style="color: #e53e3e; text-align: center;">Failed to load available times. Error: ${error.message}<br>Check console for details.</p>`;
+            }
+        }
+
+        function renderTimeSlots() {
+            const timeSlotsContainer = document.getElementById('time-slots');
+            timeSlotsContainer.innerHTML = '';
+
+            if (availableSlots.length === 0) {
+                timeSlotsContainer.innerHTML = '<p style="text-align: center; color: #718096;">No available time slots for this date.</p>';
+                return;
+            }
+
+            availableSlots.forEach(slot => {
+                const slotDiv = document.createElement('div');
+                slotDiv.className = 'time-slot' + (slot.available ? '' : ' unavailable');
+                slotDiv.textContent = slot.time;
+
+                if (slot.available) {
+                    slotDiv.addEventListener('click', () => selectTimeSlot(slot.time, slotDiv));
+                }
+
+                timeSlotsContainer.appendChild(slotDiv);
+            });
+        }
+
+        function selectTimeSlot(time, element) {
+            // Remove previous selection
+            document.querySelectorAll('.time-slot.selected').forEach(el => {
+                el.classList.remove('selected');
+            });
+
+            // Select new slot
+            element.classList.add('selected');
+            selectedTime = time;
+
+            // Enable booking button
+            document.getElementById('confirm-button').disabled = false;
+        }
+
+        // Confirm booking
+        document.getElementById('confirm-button').addEventListener('click', async function() {
+            const selectedDate = document.getElementById('booking-date').value;
+
+            if (!selectedDate || !selectedTime) {
+                showError('Please select both a date and time slot');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('booking-form').style.display = 'none';
+            document.getElementById('loading-state').classList.add('show');
+
+            try {
+                const response = await fetch('/api/book-appointment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        firstName: bookingData.firstName,
+                        lastName: bookingData.lastName,
+                        email: bookingData.email,
+                        phone: bookingData.phone,
+                        date: selectedDate,
+                        time: selectedTime,
+                        serviceType: bookingData.serviceType,
+                        pickupAddress: bookingData.pickupAddress,
+                        dropoffAddress: bookingData.dropoffAddress,
+                        estimate: bookingData.estimateTotal,
+                        paymentSaved: bookingData.paymentSaved,
+                        squareCustomerId: bookingData.squareCustomerId,
+                        source: 'chatbot'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Booking failed');
+                }
+
+                // Show confirmation
+                showConfirmation(result, selectedDate, selectedTime);
+
+            } catch (error) {
+                console.error('Booking error:', error);
+                document.getElementById('loading-state').classList.remove('show');
+                document.getElementById('booking-form').style.display = 'block';
+                showError(error.message || 'Failed to create booking. Please try again.');
+            }
+        });
+
+        function showConfirmation(result, date, time) {
+            document.getElementById('loading-state').classList.remove('show');
+            document.getElementById('confirmation-screen').classList.add('show');
+
+            const confirmationDetails = document.getElementById('confirmation-details');
+            const formattedDate = new Date(date).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            confirmationDetails.innerHTML = `
+                <p><strong>Booking ID:</strong> ${result.bookingId || 'Pending'}</p>
+                <p><strong>Date:</strong> ${formattedDate}</p>
+                <p><strong>Time Window:</strong> ${formatTimeWindow(time)}</p>
+                <p><strong>Service:</strong> ${bookingData.serviceType}</p>
+                <p><strong>Pickup:</strong> ${bookingData.pickupAddress}</p>
+                <p><strong>Dropoff:</strong> ${bookingData.dropoffAddress}</p>
+            `;
+        }
+
+        function formatTimeWindow(time) {
+            const hour = parseInt(time.split(':')[0]);
+            const nextHour = hour + 2;
+
+            const formatHour = (h) => {
+                const period = h >= 12 ? 'PM' : 'AM';
+                const displayHour = h % 12 || 12;
+                return `${displayHour}:00 ${period}`;
+            };
+
+            return `${formatHour(hour)} - ${formatHour(nextHour)}`;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quality Moving Settings - Admin Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #2a9d8f 0%, #264653 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #2a9d8f;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: white;
+            color: #2a9d8f;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .back-link:hover {
+            transform: translateY(-2px);
+        }
+
+        .content {
+            background: white;
+            border-radius: 0 0 20px 20px;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .settings-grid {
+            display: grid;
+            gap: 30px;
+        }
+
+        .settings-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 4px solid #2a9d8f;
+        }
+
+        .settings-card h2 {
+            color: #2a9d8f;
+            font-size: 24px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .help-text {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #2a9d8f;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2a9d8f 0%, #264653 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(42,157,143,0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            margin-left: 10px;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .info-box {
+            background: #e7f6f2;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .info-box h3 {
+            color: #2a9d8f;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            list-style-position: inside;
+            color: #495057;
+        }
+
+        .info-box ul li {
+            margin: 5px 0;
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+
+            .content {
+                padding: 20px;
+            }
+        }
+
+        .save-status {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: #2a9d8f;
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .color-preview {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+            border: 2px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="admin-portal.html" class="back-link">← Back to Admin Portal</a>
+
+        <div class="header">
+            <h1>💼 Quality Moving Settings</h1>
+            <p>Configure all Quality Moving specific settings in one place</p>
+        </div>
+
+        <div class="content">
+            <div class="alert alert-info">
+                <strong>ℹ️ About Quality Moving:</strong> Quality Moving is your labor-only service for MovingHelp.com. These settings control branding, pricing, and communication for Quality Moving bookings.
+            </div>
+
+            <div id="saveStatus" class="save-status">✅ Settings saved successfully!</div>
+
+            <form id="settingsForm" onsubmit="saveSettings(event)">
+                <div class="settings-grid">
+                    <!-- Company Information -->
+                    <div class="settings-card">
+                        <h2>🏢 Company Information</h2>
+                        <div class="form-group">
+                            <label>Company Name</label>
+                            <input type="text" id="companyName" value="Quality Moving" required>
+                            <div class="help-text">This name appears on all emails, SMS, and calendar events</div>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="form-group">
+                                <label>Company Email</label>
+                                <input type="email" id="companyEmail" value="qualitymovingsolution@gmail.com" required>
+                                <div class="help-text">Booking confirmations sent from this address</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Company Phone</label>
+                                <input type="tel" id="companyPhone" value="330-720-3529" required>
+                                <div class="help-text">Display phone number for customers</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>CC Email Recipients</label>
+                            <input type="text" id="ccEmails" value="matt@worryfreemovers.com" placeholder="email1@example.com, email2@example.com">
+                            <div class="help-text">Comma-separated list of emails to CC on all Quality Moving notifications</div>
+                        </div>
+                    </div>
+
+                    <!-- SMS Settings -->
+                    <div class="settings-card">
+                        <h2>📱 SMS Settings</h2>
+                        <div class="two-column">
+                            <div class="form-group">
+                                <label>SMS From Number</label>
+                                <input type="tel" id="smsFromNumber" value="+13307203529" required>
+                                <div class="help-text">Must include country code (+1)</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>SMS Display Name</label>
+                                <input type="text" id="smsFromName" value="Quality Moving" required>
+                                <div class="help-text">Name shown in SMS messages</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>SMS Template</label>
+                            <textarea id="smsTemplate" rows="3">Hi {name}! Your Quality Moving appointment is confirmed for {date} at {time}. We'll see you then!</textarea>
+                            <div class="help-text">Available variables: {name}, {date}, {time}</div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing Settings -->
+                    <div class="settings-card">
+                        <h2>💰 Pricing Settings</h2>
+                        <div class="info-box">
+                            <h3>MovingHelp Standard Rates</h3>
+                            <ul>
+                                <li>Hourly rate: $115/hour</li>
+                                <li>2-hour minimum</li>
+                                <li>Labor only (customer provides truck)</li>
+                                <li>No travel fees, no packing materials</li>
+                            </ul>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="form-group">
+                                <label>Hourly Rate</label>
+                                <input type="number" id="hourlyRate" value="115" min="0" step="5" required>
+                                <div class="help-text">Per hour, per mover</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Minimum Hours</label>
+                                <input type="number" id="minimumHours" value="2" min="1" max="8" required>
+                                <div class="help-text">Minimum booking duration</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Additional Fees</label>
+                            <textarea id="additionalFees" rows="3" placeholder="e.g., Heavy items +$50, Stairs +$25">None (MovingHelp customers pay through platform)</textarea>
+                            <div class="help-text">List any additional fees or charges</div>
+                        </div>
+                    </div>
+
+                    <!-- Calendar Settings -->
+                    <div class="settings-card">
+                        <h2>📅 Calendar Settings</h2>
+                        <div class="form-group">
+                            <label>Calendar Event Prefix</label>
+                            <input type="text" id="calendarPrefix" value="QM" maxlength="4" required>
+                            <div class="help-text">Short code shown before event name (e.g., [QM] Job Name)</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Calendar Event Color</label>
+                            <select id="calendarColor">
+                                <option value="1">Lavender</option>
+                                <option value="2">Sage</option>
+                                <option value="3">Grape</option>
+                                <option value="4">Flamingo</option>
+                                <option value="5">Banana</option>
+                                <option value="6">Tangerine</option>
+                                <option value="7">Peacock</option>
+                                <option value="8">Graphite</option>
+                                <option value="9">Blueberry</option>
+                                <option value="10" selected>Basil (Green)</option>
+                                <option value="11">Tomato (Red)</option>
+                            </select>
+                            <span class="color-preview" id="colorPreview" style="background-color: #0b8043;"></span>
+                            <div class="help-text">Google Calendar color for Quality Moving events</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Default Event Duration (hours)</label>
+                            <input type="number" id="eventDuration" value="4" min="1" max="12" required>
+                            <div class="help-text">Default length for calendar events</div>
+                        </div>
+                    </div>
+
+                    <!-- Email Template Settings -->
+                    <div class="settings-card">
+                        <h2>📧 Email Template Settings</h2>
+                        <div class="alert alert-warning">
+                            <strong>⚠️ Important:</strong> Email templates are in <code>services/emailService.js</code>. Update the file to use these settings automatically.
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email Signature</label>
+                            <textarea id="emailSignature" rows="4">Best regards,
+Quality Moving Team
+330-720-3529
+qualitymovingsolution@gmail.com</textarea>
+                            <div class="help-text">Signature added to all outgoing emails</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Booking Confirmation Subject</label>
+                            <input type="text" id="confirmSubject" value="✅ Quality Moving Booking Confirmed - {date}">
+                            <div class="help-text">Subject line for booking confirmation emails</div>
+                        </div>
+                    </div>
+
+                    <!-- Service Offerings -->
+                    <div class="settings-card">
+                        <h2>🔧 Service Offerings</h2>
+                        <div class="form-group">
+                            <label>Services Provided</label>
+                            <textarea id="servicesList" rows="6">✓ Loading/Unloading trucks
+✓ Furniture moving
+✓ Heavy lifting
+✓ Furniture assembly/disassembly
+✓ Packing assistance (customer provides materials)
+✓ Local moves only</textarea>
+                            <div class="help-text">List of services Quality Moving provides</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Service Restrictions</label>
+                            <textarea id="restrictions" rows="4">✗ No long-distance moves
+✗ No truck provided
+✗ No packing materials provided
+✗ Customer must be present</textarea>
+                            <div class="help-text">What Quality Moving does NOT provide</div>
+                        </div>
+                    </div>
+
+                    <!-- Payment & MovingHelp -->
+                    <div class="settings-card">
+                        <h2>💳 Payment & MovingHelp</h2>
+                        <div class="info-box">
+                            <h3>Payment Policy</h3>
+                            <ul>
+                                <li><strong>Customers are prepaid through MovingHelp.com</strong></li>
+                                <li>All bookings come through MovingHelp platform</li>
+                                <li>Additional fees will be handled directly with customer on-site</li>
+                                <li>No payment processing needed through this system</li>
+                            </ul>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <strong>ℹ️ Note:</strong> Quality Moving operates exclusively through MovingHelp.com. Bookings are entered manually via the admin portal. Payment is already processed through MovingHelp, so additional fees (if any) are collected directly from customers.
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 40px; text-align: right;">
+                    <button type="button" class="btn btn-secondary" onclick="loadSettings()">
+                        🔄 Reset to Saved
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        💾 Save All Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+
+        // Load settings on page load
+        window.onload = loadSettings;
+
+        // Color mapping
+        const colorMap = {
+            '1': '#7986cb', '2': '#33b679', '3': '#8e24aa',
+            '4': '#e67c73', '5': '#f6c026', '6': '#f5511d',
+            '7': '#039be5', '8': '#616161', '9': '#3f51b5',
+            '10': '#0b8043', '11': '#d60000'
+        };
+
+        // Update color preview
+        document.getElementById('calendarColor').addEventListener('change', function() {
+            const color = colorMap[this.value] || '#0b8043';
+            document.getElementById('colorPreview').style.backgroundColor = color;
+        });
+
+        async function loadSettings() {
+            try {
+                const response = await fetch(`${API_URL}/api/communication-settings`);
+                const data = await response.json();
+
+                if (data.success && data.settings && data.settings.qualityMoving) {
+                    const qm = data.settings.qualityMoving;
+
+                    // Populate form fields
+                    document.getElementById('companyName').value = qm.companyName || 'Quality Moving';
+                    document.getElementById('companyEmail').value = qm.companyEmail || '';
+                    document.getElementById('companyPhone').value = qm.companyPhone || '';
+                    document.getElementById('ccEmails').value = (qm.ccEmails || []).join(', ');
+                    document.getElementById('smsFromNumber').value = qm.smsFromNumber || '';
+                    document.getElementById('smsFromName').value = qm.smsFromName || '';
+
+                    console.log('Quality Moving settings loaded');
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        }
+
+        async function saveSettings(event) {
+            event.preventDefault();
+
+            // Collect form data
+            const settings = {
+                qualityMoving: {
+                    companyName: document.getElementById('companyName').value,
+                    companyEmail: document.getElementById('companyEmail').value,
+                    companyPhone: document.getElementById('companyPhone').value,
+                    ccEmails: document.getElementById('ccEmails').value.split(',').map(e => e.trim()).filter(e => e),
+                    smsFromNumber: document.getElementById('smsFromNumber').value,
+                    smsFromName: document.getElementById('smsFromName').value,
+                    smsTemplate: document.getElementById('smsTemplate').value,
+                    pricing: {
+                        hourlyRate: parseFloat(document.getElementById('hourlyRate').value),
+                        minimumHours: parseInt(document.getElementById('minimumHours').value),
+                        additionalFees: document.getElementById('additionalFees').value
+                    },
+                    calendar: {
+                        prefix: document.getElementById('calendarPrefix').value,
+                        color: document.getElementById('calendarColor').value,
+                        defaultDuration: parseInt(document.getElementById('eventDuration').value)
+                    },
+                    email: {
+                        signature: document.getElementById('emailSignature').value,
+                        confirmSubject: document.getElementById('confirmSubject').value
+                    },
+                    services: {
+                        provided: document.getElementById('servicesList').value,
+                        restrictions: document.getElementById('restrictions').value
+                    },
+                    paymentPolicy: {
+                        prepaidThrough: 'MovingHelp.com',
+                        additionalFeesHandling: 'Direct with customer on-site',
+                        noPaymentProcessing: true
+                    }
+                }
+            };
+
+            try {
+                // Load existing settings first
+                const getResponse = await fetch(`${API_URL}/api/communication-settings`);
+                const existing = await getResponse.json();
+
+                // Merge with Quality Moving settings
+                const merged = {
+                    ...(existing.settings || {}),
+                    qualityMoving: settings.qualityMoving
+                };
+
+                // Save merged settings
+                const response = await fetch(`${API_URL}/api/communication-settings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(merged)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showSaveStatus();
+                } else {
+                    alert('Failed to save settings: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                alert('Error saving settings. Please try again.');
+            }
+        }
+
+        function showSaveStatus() {
+            const status = document.getElementById('saveStatus');
+            status.style.display = 'block';
+
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

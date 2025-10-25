@@ -1,0 +1,2560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Your Move - Worry Free Moving</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        /* Progress Indicator */
+        .progress-container {
+            background: #f8f9fa;
+            padding: 30px 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            max-width: 100%;
+            overflow-x: auto;
+            padding: 0 10px;
+        }
+
+        .progress-line {
+            position: absolute;
+            top: 20px;
+            left: 60px;
+            right: 60px;
+            height: 3px;
+            background: #e9ecef;
+            z-index: 0;
+        }
+
+        .progress-line-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            min-width: 80px;
+        }
+
+        .step-circle {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            color: #6c757d;
+            transition: all 0.3s;
+            margin-bottom: 8px;
+        }
+
+        .step.active .step-circle {
+            background: #004085;
+            border-color: #004085;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 64, 133, 0.3);
+        }
+
+        .step.completed .step-circle {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 11px;
+            color: #6c757d;
+            text-align: center;
+            max-width: 80px;
+            line-height: 1.2;
+        }
+
+        .step.active .step-label {
+            color: #004085;
+            font-weight: 600;
+        }
+
+        .step.completed .step-label {
+            color: #28a745;
+        }
+
+        /* Content */
+        .content {
+            padding: 40px 30px;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+            animation: fadeInSlide 0.4s ease;
+        }
+
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            color: #004085;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .section-subtitle {
+            color: #6c757d;
+            margin-bottom: 30px;
+            font-size: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .required {
+            color: #dc3545;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #004085;
+            box-shadow: 0 0 0 3px rgba(0, 64, 133, 0.1);
+        }
+
+        input.error, select.error, textarea.error {
+            border-color: #dc3545;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 13px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .help-text {
+            color: #6c757d;
+            font-size: 13px;
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* Service Type Cards */
+        .service-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .service-card {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .service-card:hover {
+            border-color: #004085;
+            box-shadow: 0 4px 12px rgba(0, 64, 133, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .service-card.selected {
+            border-color: #004085;
+            background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+            color: white;
+        }
+
+        .service-card-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .service-card-title {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .service-card-desc {
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        /* Checkbox and Radio Styling */
+        .checkbox-group, .radio-group {
+            margin-bottom: 20px;
+        }
+
+        .checkbox-item, .radio-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .checkbox-item:hover, .radio-item:hover {
+            border-color: #004085;
+            background: #f8f9fa;
+        }
+
+        .checkbox-item.checked, .radio-item.checked {
+            border-color: #004085;
+            background: #e7f3ff;
+        }
+
+        .checkbox-item input, .radio-item input {
+            width: auto;
+            margin-right: 12px;
+            cursor: pointer;
+        }
+
+        .checkbox-label, .radio-label {
+            flex: 1;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        /* Number Input with Buttons */
+        .number-input {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .number-input button {
+            width: 45px;
+            height: 45px;
+            border: 2px solid #004085;
+            background: white;
+            color: #004085;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .number-input button:hover {
+            background: #004085;
+            color: white;
+        }
+
+        .number-input input {
+            width: 80px;
+            text-align: center;
+            padding: 12px;
+        }
+
+        /* Alert Boxes */
+        .alert {
+            padding: 15px 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        /* Review Summary */
+        .review-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .review-section h3 {
+            color: #004085;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .edit-btn {
+            font-size: 13px;
+            color: #004085;
+            background: white;
+            border: 2px solid #004085;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .edit-btn:hover {
+            background: #004085;
+            color: white;
+        }
+
+        .review-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .review-item:last-child {
+            border-bottom: none;
+        }
+
+        .review-label {
+            color: #6c757d;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .review-value {
+            color: #212529;
+            font-weight: 600;
+            text-align: right;
+            font-size: 14px;
+        }
+
+        /* Estimate Display */
+        .estimate-box {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .estimate-label {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .estimate-amount {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .estimate-disclaimer {
+            font-size: 13px;
+            opacity: 0.85;
+        }
+
+        /* Buttons */
+        .buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 64, 133, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(40, 167, 69, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Success Page */
+        .success-container {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: scaleIn 0.5s ease;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .success-title {
+            color: #28a745;
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+
+        .booking-id {
+            background: #d4edda;
+            color: #155724;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 25px 0;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .next-steps {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            text-align: left;
+        }
+
+        .next-steps h3 {
+            color: #004085;
+            margin-bottom: 15px;
+        }
+
+        .next-steps ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .next-steps li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .next-steps li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        /* Loading Spinner */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Conditional Fields */
+        .conditional-field {
+            display: none;
+            margin-top: 15px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #004085;
+        }
+
+        .conditional-field.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Grid Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .progress-container {
+                padding: 20px 10px;
+            }
+
+            .step {
+                min-width: 60px;
+            }
+
+            .step-circle {
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
+            }
+
+            .step-label {
+                font-size: 10px;
+                max-width: 60px;
+            }
+
+            .progress-line {
+                left: 40px;
+                right: 40px;
+            }
+
+            .content {
+                padding: 25px 20px;
+            }
+
+            h2 {
+                font-size: 22px;
+            }
+
+            .service-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .estimate-amount {
+                font-size: 36px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .step-label {
+                display: none;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Terms Checkbox */
+        .terms-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .terms-checkbox input {
+            width: auto;
+            margin-top: 4px;
+        }
+
+        .terms-checkbox label {
+            flex: 1;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .terms-link {
+            color: #004085;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        /* Card on File Section */
+        .card-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px solid #e9ecef;
+        }
+
+        .card-section.active {
+            border-color: #004085;
+            background: #f0f7ff;
+        }
+
+        .card-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: #e7f3ff;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            border: 2px solid #004085;
+        }
+
+        .card-checkbox input {
+            width: auto;
+            margin-top: 4px;
+        }
+
+        .card-checkbox label {
+            flex: 1;
+            font-size: 14px;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .card-container-wrapper {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 1px solid #e2e8f0;
+        }
+
+        #card-container {
+            margin-bottom: 20px;
+            min-height: 100px;
+        }
+
+        .btn-save-card {
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .btn-save-card:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-save-card:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-skip {
+            width: 100%;
+            padding: 12px 24px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-skip:hover {
+            background: #5a6268;
+        }
+
+        #card-status-container {
+            margin-top: 15px;
+        }
+
+        .card-status {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .card-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .card-status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .https-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ffeaa7;
+            text-align: center;
+        }
+    </style>
+
+    <!-- Google Maps API with Places -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAWGIVnh7-2sgDJin_2qgNvwh4JD9UgJDo&libraries=places" async defer></script>
+
+    <!-- Square Web SDK -->
+    <script type="text/javascript" src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Book Your Move</h1>
+            <p>Get your personalized moving estimate in minutes</p>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-line">
+                    <div class="progress-line-fill" id="progressFill"></div>
+                </div>
+                <div class="step active" data-step="1">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">Service & Date</div>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">Addresses</div>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Location Details</div>
+                </div>
+                <div class="step" data-step="4">
+                    <div class="step-circle">4</div>
+                    <div class="step-label">Property Info</div>
+                </div>
+                <div class="step" data-step="5">
+                    <div class="step-circle">5</div>
+                    <div class="step-label">Inventory</div>
+                </div>
+                <div class="step" data-step="6">
+                    <div class="step-circle">6</div>
+                    <div class="step-label">Services</div>
+                </div>
+                <div class="step" data-step="7">
+                    <div class="step-circle">7</div>
+                    <div class="step-label">Your Info</div>
+                </div>
+                <div class="step" data-step="8">
+                    <div class="step-circle">8</div>
+                    <div class="step-label">Save Card</div>
+                </div>
+                <div class="step" data-step="9">
+                    <div class="step-circle">9</div>
+                    <div class="step-label">Review</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Step 1: Service Type & Date -->
+            <div class="form-section active" data-section="1">
+                <h2>What type of service do you need?</h2>
+                <p class="section-subtitle">Select the service that best fits your needs</p>
+
+                <div class="service-cards" id="serviceCards">
+                    <!-- Services will be loaded here -->
+                </div>
+
+                <div class="form-group">
+                    <label>When do you need this service? <span class="required">*</span></label>
+                    <input type="date" id="moveDate" required>
+                    <span class="help-text">Select your preferred move date (must be at least 1 day in advance)</span>
+                </div>
+
+                <!-- Labor Hours Field (conditional) -->
+                <div class="conditional-field" id="laborHoursField" style="display: none;">
+                    <div class="form-group">
+                        <label>Estimated Hours Needed <span class="required">*</span></label>
+                        <select id="estimatedHours">
+                            <option value="">Select hours...</option>
+                            <option value="2">2 hours (minimum)</option>
+                            <option value="3">3 hours</option>
+                            <option value="4">4 hours</option>
+                            <option value="5">5 hours</option>
+                            <option value="6">6 hours</option>
+                            <option value="7">7 hours</option>
+                            <option value="8">8 hours</option>
+                            <option value="9">9 hours</option>
+                            <option value="10">10 hours</option>
+                            <option value="12">12 hours</option>
+                        </select>
+                        <span class="help-text">How many hours do you think you'll need? (2 hour minimum)</span>
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-primary" onclick="nextStep()">Next: Addresses →</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Addresses -->
+            <div class="form-section" data-section="2">
+                <h2>Where are we moving from and to?</h2>
+                <p class="section-subtitle">Enter your pickup and delivery addresses</p>
+
+                <div class="form-group">
+                    <label>Pickup Address <span class="required">*</span></label>
+                    <input type="text" id="pickupAddress" placeholder="123 Main St, Akron OH" required>
+                    <span class="help-text">Start typing to search for your address</span>
+                </div>
+
+                <div class="form-group">
+                    <label>Dropoff Address <span class="required">*</span></label>
+                    <input type="text" id="dropoffAddress" placeholder="456 Oak Ave, Canton OH" required>
+                    <span class="help-text">Start typing to search for your address</span>
+                </div>
+
+                <div class="checkbox-item" onclick="toggleThirdLocation()">
+                    <input type="checkbox" id="hasThirdLocation">
+                    <label class="checkbox-label">I need to stop at a third location</label>
+                </div>
+
+                <div class="conditional-field" id="thirdLocationField">
+                    <div class="form-group">
+                        <label>Third Location Address <span class="required">*</span></label>
+                        <input type="text" id="thirdAddress" placeholder="789 Pine Rd, Cleveland OH">
+                        <span class="help-text">Additional stop (storage unit, donation center, etc.)</span>
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn-primary" onclick="nextStep()">Next: Location Details →</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Location Details -->
+            <div class="form-section" data-section="3">
+                <h2>Tell us about your locations</h2>
+                <p class="section-subtitle">This helps us prepare the right equipment and crew</p>
+
+                <!-- Pickup Location Details -->
+                <div class="review-section">
+                    <h3>Pickup Location</h3>
+
+                    <div class="form-group">
+                        <label>Home Type <span class="required">*</span></label>
+                        <select id="pickupHomeType" required>
+                            <option value="">Select...</option>
+                            <option value="house">House</option>
+                            <option value="apartment">Apartment</option>
+                            <option value="condo">Condo</option>
+                            <option value="townhouse">Townhouse</option>
+                            <option value="storage">Storage Unit</option>
+                            <option value="office">Office/Commercial</option>
+                        </select>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Bedrooms</label>
+                            <select id="pickupBedrooms">
+                                <option value="0">Studio/0</option>
+                                <option value="1">1 Bedroom</option>
+                                <option value="2">2 Bedrooms</option>
+                                <option value="3">3 Bedrooms</option>
+                                <option value="4">4 Bedrooms</option>
+                                <option value="5">5+ Bedrooms</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Flights of Stairs</label>
+                            <select id="pickupStairs">
+                                <option value="0">None (Ground level)</option>
+                                <option value="1">1 Flight</option>
+                                <option value="2">2 Flights</option>
+                                <option value="3">3 Flights</option>
+                                <option value="4">4+ Flights</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dropoff Location Details -->
+                <div class="review-section">
+                    <h3>Dropoff Location</h3>
+
+                    <div class="form-group">
+                        <label>Home Type <span class="required">*</span></label>
+                        <select id="dropoffHomeType" required>
+                            <option value="">Select...</option>
+                            <option value="house">House</option>
+                            <option value="apartment">Apartment</option>
+                            <option value="condo">Condo</option>
+                            <option value="townhouse">Townhouse</option>
+                            <option value="storage">Storage Unit</option>
+                            <option value="office">Office/Commercial</option>
+                        </select>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Bedrooms</label>
+                            <select id="dropoffBedrooms">
+                                <option value="0">Studio/0</option>
+                                <option value="1">1 Bedroom</option>
+                                <option value="2">2 Bedrooms</option>
+                                <option value="3">3 Bedrooms</option>
+                                <option value="4">4 Bedrooms</option>
+                                <option value="5">5+ Bedrooms</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Flights of Stairs</label>
+                            <select id="dropoffStairs">
+                                <option value="0">None (Ground level)</option>
+                                <option value="1">1 Flight</option>
+                                <option value="2">2 Flights</option>
+                                <option value="3">3 Flights</option>
+                                <option value="4">4+ Flights</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn-primary" onclick="nextStep()">Next: Property Details →</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Property Details -->
+            <div class="form-section" data-section="4">
+                <h2>Additional property information</h2>
+                <p class="section-subtitle">Help us understand any special considerations</p>
+
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="largeHome" onchange="updateCheckbox(this)">
+                        <label class="checkbox-label">Large home (3,000+ sq ft)</label>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="longWalk" onchange="updateCheckbox(this)">
+                        <label class="checkbox-label">Long walk from truck parking to entrance</label>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="narrowAccess" onchange="updateCheckbox(this)">
+                        <label class="checkbox-label">Narrow doorways or hallways</label>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="elevatorBuilding" onchange="updateCheckbox(this)">
+                        <label class="checkbox-label">Elevator building (need to reserve)</label>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="gatedCommunity" onchange="updateCheckbox(this)">
+                        <label class="checkbox-label">Gated community or restricted access</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Parking Situation</label>
+                    <select id="parkingSituation">
+                        <option value="driveway">Driveway parking available</option>
+                        <option value="street">Street parking</option>
+                        <option value="lot">Parking lot</option>
+                        <option value="difficult">Limited/difficult parking</option>
+                    </select>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn-primary" onclick="nextStep()">Next: Inventory →</button>
+                </div>
+            </div>
+
+            <!-- Step 5: Inventory -->
+            <div class="form-section" data-section="5">
+                <h2>What are we moving?</h2>
+                <p class="section-subtitle">Tell us about your items so we can prepare properly</p>
+
+                <div class="review-section">
+                    <h3>Electronics & Appliances</h3>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>TVs (65" or larger)</label>
+                            <div class="number-input">
+                                <button type="button" onclick="decrementValue('largeTVs')">-</button>
+                                <input type="number" id="largeTVs" value="0" min="0" readonly>
+                                <button type="button" onclick="incrementValue('largeTVs')">+</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Refrigerators</label>
+                            <div class="number-input">
+                                <button type="button" onclick="decrementValue('refrigerators')">-</button>
+                                <input type="number" id="refrigerators" value="0" min="0" readonly>
+                                <button type="button" onclick="incrementValue('refrigerators')">+</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Washers/Dryers</label>
+                            <div class="number-input">
+                                <button type="button" onclick="decrementValue('washerDryer')">-</button>
+                                <input type="number" id="washerDryer" value="0" min="0" readonly>
+                                <button type="button" onclick="incrementValue('washerDryer')">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="review-section">
+                    <h3>Special Items</h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="piano" onchange="updateCheckbox(this)">
+                            <label class="checkbox-label">Piano (Grand or Upright)</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="poolTable" onchange="updateCheckbox(this)">
+                            <label class="checkbox-label">Pool Table</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="hotTub" onchange="updateCheckbox(this)">
+                            <label class="checkbox-label">Hot Tub / Jacuzzi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="safe" onchange="updateCheckbox(this)">
+                            <label class="checkbox-label">Large Safe (300+ lbs)</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="antiques" onchange="updateCheckbox(this)">
+                            <label class="checkbox-label">Antiques or High-Value Items</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="artwork" onchange="updateCheckbox(this)">
+                            <label class="checkbox-label">Large Artwork or Mirrors</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="review-section">
+                    <h3>Garage & Outdoor</h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="shopEquipment" onchange="updateCheckbox(this)">
+                            <label class="checkbox-label">Workshop/Shop Equipment</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="outdoorFurniture" onchange="updateCheckbox(this)">
+                            <label class="checkbox-label">Outdoor Furniture/Equipment</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="lawnEquipment" onchange="updateCheckbox(this)">
+                            <label class="checkbox-label">Lawn Mowers/Garden Equipment</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="specialItemWarning" class="alert alert-warning" style="display: none;">
+                    <div>
+                        <strong>Special Item Notice:</strong>
+                        <p>Some of your items may require additional crew members, special equipment, or extra time. This will be factored into your estimate.</p>
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn-primary" onclick="nextStep()">Next: Additional Services →</button>
+                </div>
+            </div>
+
+            <!-- Step 6: Additional Services -->
+            <div class="form-section" data-section="6">
+                <h2>Additional services</h2>
+                <p class="section-subtitle">Would you like any of these services?</p>
+
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="packingService" onchange="updateCheckbox(this)">
+                        <label class="checkbox-label">Professional Packing Service</label>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="packingMaterials" onchange="updateCheckbox(this)">
+                        <label class="checkbox-label">Packing Materials (boxes, tape, paper)</label>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="movingBlankets" onchange="updateCheckbox(this)">
+                        <label class="checkbox-label">Extra Moving Blankets/Padding</label>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="disassembly" onchange="updateCheckbox(this)">
+                        <label class="checkbox-label">Furniture Disassembly/Reassembly</label>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="storageService" onchange="updateCheckbox(this)">
+                        <label class="checkbox-label">Temporary Storage Needed</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Additional Notes or Special Requests</label>
+                    <textarea id="additionalNotes" rows="4" placeholder="Any other information we should know? Special handling instructions, timing requirements, access codes, etc."></textarea>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn-primary" onclick="nextStep()">Next: Your Information →</button>
+                </div>
+            </div>
+
+            <!-- Step 7: Customer Information -->
+            <div class="form-section" data-section="7">
+                <h2>Your contact information</h2>
+                <p class="section-subtitle">How can we reach you?</p>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>First Name <span class="required">*</span></label>
+                        <input type="text" id="firstName" required>
+                        <span class="error-message" id="firstNameError">Please enter your first name</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Last Name <span class="required">*</span></label>
+                        <input type="text" id="lastName" required>
+                        <span class="error-message" id="lastNameError">Please enter your last name</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address <span class="required">*</span></label>
+                    <input type="email" id="email" required>
+                    <span class="help-text">We'll send your estimate and confirmation here</span>
+                    <span class="error-message" id="emailError">Please enter a valid email address</span>
+                </div>
+
+                <div class="form-group">
+                    <label>Phone Number <span class="required">*</span></label>
+                    <input type="tel" id="phone" placeholder="(330) 435-8686" required>
+                    <span class="help-text">For appointment confirmation and updates</span>
+                    <span class="error-message" id="phoneError">Please enter a valid phone number</span>
+                </div>
+
+                <div class="form-group">
+                    <label>Preferred Contact Method</label>
+                    <select id="contactMethod">
+                        <option value="email">Email</option>
+                        <option value="phone">Phone</option>
+                        <option value="text">Text Message</option>
+                    </select>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn-primary" onclick="nextStep()">Next: Save Card (Optional) →</button>
+                </div>
+            </div>
+
+            <!-- Step 8: Save Card on File (Optional) -->
+            <div class="form-section" data-section="8">
+                <h2>Save card for faster checkout (Optional)</h2>
+                <p class="section-subtitle">Securely save your card with Square for easy payment after your move</p>
+
+                <div class="alert alert-info">
+                    <div>
+                        <strong>💳 Why save your card?</strong>
+                        <p>Save time on moving day! We'll securely store your card with Square (PCI compliant). Payment is processed after your move is complete. You can skip this step if you prefer to pay another way.</p>
+                    </div>
+                </div>
+
+                <div class="card-checkbox" onclick="toggleCardSection()">
+                    <input type="checkbox" id="saveCardCheckbox" checked>
+                    <label>
+                        <strong>Yes, save my card for faster checkout</strong><br>
+                        <span style="font-size: 13px; opacity: 0.8;">Recommended - Makes payment quick and easy after your move</span>
+                    </label>
+                </div>
+
+                <div class="card-section active" id="cardSection">
+                    <div id="httpsWarning" class="https-warning" style="display: none;">
+                        💳 Card saving requires HTTPS. You can proceed without saving a card and pay after your move using another method.
+                    </div>
+
+                    <div class="card-container-wrapper" id="cardContainerWrapper">
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: #004085;">Card Information</strong>
+                            <div style="font-size: 13px; color: #666; margin-top: 5px;">
+                                Secured by Square - PCI Compliant
+                            </div>
+                        </div>
+
+                        <div id="card-container"></div>
+
+                        <button id="save-card-button" type="button" class="btn-save-card">
+                            💾 Save Card Securely
+                        </button>
+
+                        <div id="card-status-container"></div>
+
+                        <div style="margin-top: 16px; font-size: 12px; color: #718096; text-align: center;">
+                            No card data stored on our servers - Payment due after move completion
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <div>
+                        <strong>💡 Other payment options:</strong>
+                        <p>You can also pay with cash, check, or card on-site after your move. We'll discuss payment options when we confirm your booking.</p>
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn-skip" onclick="skipCardAndReview()">Skip - I'll pay later</button>
+                </div>
+            </div>
+
+            <!-- Step 9: Review & Confirm -->
+            <div class="form-section" data-section="9">
+                <h2>Review your booking</h2>
+                <p class="section-subtitle">Please review the details before confirming</p>
+
+                <!-- Estimate Display -->
+                <div class="estimate-box">
+                    <div class="estimate-label">Estimated Total</div>
+                    <div class="estimate-amount" id="estimateAmount">$0</div>
+                    <div class="estimate-disclaimer">Final price may vary based on actual time and services required</div>
+                </div>
+
+                <!-- Service Summary -->
+                <div class="review-section">
+                    <h3>Service Details <button class="edit-btn" onclick="goToStep(1)">Edit</button></h3>
+                    <div class="review-item">
+                        <span class="review-label">Service Type:</span>
+                        <span class="review-value" id="reviewService">-</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Move Date:</span>
+                        <span class="review-value" id="reviewDate">-</span>
+                    </div>
+                </div>
+
+                <!-- Addresses Summary -->
+                <div class="review-section">
+                    <h3>Addresses <button class="edit-btn" onclick="goToStep(2)">Edit</button></h3>
+                    <div class="review-item">
+                        <span class="review-label">From:</span>
+                        <span class="review-value" id="reviewPickup">-</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">To:</span>
+                        <span class="review-value" id="reviewDropoff">-</span>
+                    </div>
+                    <div class="review-item" id="reviewThirdItem" style="display: none;">
+                        <span class="review-label">Third Stop:</span>
+                        <span class="review-value" id="reviewThird">-</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Distance:</span>
+                        <span class="review-value" id="reviewDistance">-</span>
+                    </div>
+                </div>
+
+                <!-- Contact Summary -->
+                <div class="review-section">
+                    <h3>Contact Information <button class="edit-btn" onclick="goToStep(7)">Edit</button></h3>
+                    <div class="review-item">
+                        <span class="review-label">Name:</span>
+                        <span class="review-value" id="reviewName">-</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Email:</span>
+                        <span class="review-value" id="reviewEmail">-</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Phone:</span>
+                        <span class="review-value" id="reviewPhone">-</span>
+                    </div>
+                </div>
+
+                <!-- Payment Summary -->
+                <div class="review-section" id="reviewPaymentSection" style="display: none;">
+                    <h3>Payment Information <button class="edit-btn" onclick="goToStep(8)">Edit</button></h3>
+                    <div class="review-item">
+                        <span class="review-label">Card on File:</span>
+                        <span class="review-value" id="reviewCard">-</span>
+                    </div>
+                    <div style="font-size: 12px; color: #6c757d; margin-top: 10px;">
+                        Payment will be processed after your move is complete
+                    </div>
+                </div>
+
+                <!-- Terms & Conditions -->
+                <div class="terms-checkbox">
+                    <input type="checkbox" id="agreeTerms" onchange="updateTermsAgreement()">
+                    <label>
+                        I agree to the <span class="terms-link">terms and conditions</span> and understand that:
+                        <ul style="margin-top: 8px; padding-left: 20px;">
+                            <li>Final pricing is based on actual time and services</li>
+                            <li>A deposit may be required for moves over $500</li>
+                            <li>Cancellations require 24-hour notice</li>
+                            <li>We'll call to confirm 24 hours before the move</li>
+                        </ul>
+                    </label>
+                </div>
+
+                <div class="alert alert-info">
+                    <div>
+                        <strong>What happens next?</strong>
+                        <p>After you confirm, we'll send you a detailed estimate and confirmation email. Our team will call you 24 hours before your move to confirm all details and answer any questions.</p>
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn-success" id="confirmBtn" onclick="confirmBooking()" disabled>Confirm Booking</button>
+                </div>
+            </div>
+
+            <!-- Success Page -->
+            <div class="form-section" data-section="success">
+                <div class="success-container">
+                    <div class="success-icon">✅</div>
+                    <h2 class="success-title">Booking Confirmed!</h2>
+                    <p>Your move has been successfully scheduled</p>
+
+                    <div class="booking-id" id="bookingIdDisplay">Booking ID: #12345</div>
+
+                    <div class="next-steps">
+                        <h3>What's Next?</h3>
+                        <ul>
+                            <li>Check your email for a detailed confirmation and estimate</li>
+                            <li>We'll call you 24 hours before your move to confirm details</li>
+                            <li>Our crew will arrive on time with all necessary equipment</li>
+                            <li>You can call or text us anytime at (330) 435-8686</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-success">
+                        <div>
+                            <strong>Need to make changes?</strong>
+                            <p>Call us at (330) 435-8686 or reply to your confirmation email. Cancellations require 24-hour notice.</p>
+                        </div>
+                    </div>
+
+                    <div class="buttons">
+                        <button class="btn-primary" onclick="location.reload()">Book Another Move</button>
+                        <button class="btn-secondary" onclick="window.location.href='/'">Return Home</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+
+        // Configuration
+        const CONFIG = {
+            phone: "330-435-8686",
+            email: "service@worryfreemovers.com",
+            square: {
+                applicationId: "sq0idp-7GJn4RN8zcdsw3S1kJaNOA",
+                locationId: "L6WP06SMJKJSB",
+                environment: "production",
+                apiUrl: "https://worry-free-chatbot-git-master-matt-5184s-projects.vercel.app/api/square-customer"
+            }
+        };
+
+        // Square Payment Variables
+        let squarePayments = null;
+        let squareCard = null;
+        let cardSaved = false;
+
+        // State Management
+        let currentStep = 1;
+        let bookingData = {
+            serviceType: '',
+            moveDate: '',
+            estimatedHours: '',
+            pickupAddress: '',
+            dropoffAddress: '',
+            thirdAddress: '',
+            hasThirdLocation: false,
+            pickupDetails: {},
+            dropoffDetails: {},
+            propertyDetails: {},
+            inventory: {},
+            additionalServices: {},
+            customerInfo: {},
+            estimate: 0,
+            distance: 0,
+            driveTime: 0
+        };
+
+        let servicesConfig = null;
+        let autocompleteInstances = {};
+
+        // Initialize on page load
+        window.addEventListener('load', init);
+
+        function init() {
+            loadServices();
+            initializeGoogleMaps();
+            setMinDate();
+            loadFromLocalStorage();
+        }
+
+        // Toggle card section visibility
+        function toggleCardSection() {
+            const checkbox = document.getElementById('saveCardCheckbox');
+            const cardSection = document.getElementById('cardSection');
+            const saveButton = document.getElementById('save-card-button');
+            const skipButton = document.querySelector('.btn-skip');
+
+            if (checkbox.checked) {
+                cardSection.classList.add('active');
+                cardSection.style.display = 'block';
+                if (saveButton) saveButton.style.display = 'block';
+                if (skipButton) skipButton.textContent = 'Skip - I\'ll pay later';
+            } else {
+                cardSection.classList.remove('active');
+                cardSection.style.display = 'none';
+                if (saveButton) saveButton.style.display = 'none';
+                if (skipButton) skipButton.textContent = 'Continue without saving card';
+            }
+        }
+
+        // Initialize Square Payments when entering step 8
+        async function initializeSquarePayments() {
+            try {
+                // Wait for Square SDK to load
+                let attempts = 0;
+                while (!window.Square && attempts < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
+
+                if (!window.Square) {
+                    throw new Error('Square SDK not loaded');
+                }
+
+                console.log('Square SDK loaded successfully');
+
+                // Check if we're on HTTPS or localhost
+                // Explicitly exclude file:// protocol which is not secure
+                const isSecureContext = window.location.protocol !== 'file:' &&
+                    (window.isSecureContext ||
+                     window.location.protocol === 'https:' ||
+                     window.location.hostname === 'localhost');
+
+                if (!isSecureContext) {
+                    console.warn('Square Web SDK requires HTTPS');
+                    const httpsWarning = document.getElementById('httpsWarning');
+                    const cardContainerWrapper = document.getElementById('cardContainerWrapper');
+                    if (httpsWarning) httpsWarning.style.display = 'block';
+                    if (cardContainerWrapper) cardContainerWrapper.style.display = 'none';
+                    return;
+                }
+
+                // Initialize Square Payments
+                squarePayments = window.Square.payments(
+                    CONFIG.square.applicationId,
+                    CONFIG.square.locationId
+                );
+
+                // Initialize card payment method
+                squareCard = await squarePayments.card({
+                    style: {
+                        input: {
+                            fontSize: '16px'
+                        },
+                        '.input-container': {
+                            borderColor: '#e2e8f0',
+                            borderRadius: '8px'
+                        }
+                    }
+                });
+
+                await squareCard.attach('#card-container');
+                console.log('Square Card form attached');
+
+                // Setup save card button
+                const cardButton = document.getElementById('save-card-button');
+                if (cardButton && !cardButton.dataset.listenerAdded) {
+                    cardButton.addEventListener('click', handleCardSave);
+                    cardButton.dataset.listenerAdded = 'true';
+                }
+
+            } catch (error) {
+                console.error('Failed to initialize Square Payments:', error);
+                showCardStatus('Unable to load payment system. You can skip this step and pay later.', 'error');
+            }
+        }
+
+        // Handle card save
+        async function handleCardSave() {
+            const cardButton = document.getElementById('save-card-button');
+            const statusContainer = document.getElementById('card-status-container');
+
+            try {
+                cardButton.disabled = true;
+                cardButton.textContent = '⏳ Processing...';
+                statusContainer.innerHTML = '';
+
+                // Tokenize card
+                console.log('Tokenizing card...');
+                const result = await squareCard.tokenize();
+
+                if (result.status === 'OK') {
+                    console.log('Card tokenized successfully');
+                    await processCardToken(result.token, result.details);
+                } else {
+                    console.error('Tokenization failed:', result.errors);
+                    let errorMessage = 'Card validation failed. Please check your card details.';
+                    if (result.errors && result.errors.length > 0) {
+                        errorMessage = result.errors.map(e => e.message).join(', ');
+                    }
+                    showCardStatus(errorMessage, 'error');
+                    cardButton.disabled = false;
+                    cardButton.textContent = '💾 Save Card Securely';
+                }
+            } catch (error) {
+                console.error('Card save error:', error);
+                showCardStatus('An error occurred. Please try again.', 'error');
+                cardButton.disabled = false;
+                cardButton.textContent = '💾 Save Card Securely';
+            }
+        }
+
+        // Process card token
+        async function processCardToken(token, cardDetails) {
+            try {
+                console.log('Sending card to backend...');
+
+                const requestBody = {
+                    customerData: {
+                        firstName: bookingData.customerInfo.firstName,
+                        lastName: bookingData.customerInfo.lastName,
+                        email: bookingData.customerInfo.email,
+                        phone: bookingData.customerInfo.phone,
+                        movingDate: bookingData.moveDate
+                    },
+                    cardToken: token,
+                    estimate: bookingData.estimate
+                };
+
+                const response = await fetch(CONFIG.square.apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const responseText = await response.text();
+                console.log('Response:', responseText);
+
+                if (!response.ok) {
+                    let errorData;
+                    try {
+                        errorData = JSON.parse(responseText);
+                    } catch (e) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                    throw new Error(errorData.message || 'Failed to save card');
+                }
+
+                const data = JSON.parse(responseText);
+
+                if (data.success) {
+                    showCardStatus('✅ Card saved successfully! You can now continue to review.', 'success');
+                    cardSaved = true;
+                    bookingData.cardOnFile = true;
+                    bookingData.squareCustomerId = data.customerId;
+                    bookingData.cardLast4 = cardDetails.card?.last4 || 'XXXX';
+
+                    // Enable continue button or auto-proceed
+                    setTimeout(() => {
+                        proceedToReview();
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Failed to save card');
+                }
+            } catch (error) {
+                console.error('Error processing card:', error);
+                showCardStatus('Failed to save card: ' + error.message, 'error');
+                const cardButton = document.getElementById('save-card-button');
+                if (cardButton) {
+                    cardButton.disabled = false;
+                    cardButton.textContent = '💾 Save Card Securely';
+                }
+            }
+        }
+
+        // Show card status message
+        function showCardStatus(message, type) {
+            const container = document.getElementById('card-status-container');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div class="card-status ${type}">
+                    <span>${message}</span>
+                </div>
+            `;
+        }
+
+        // Skip card and go to review
+        async function skipCardAndReview() {
+            bookingData.cardOnFile = false;
+            await proceedToReview();
+        }
+
+        // Proceed to review after calculating estimate
+        async function proceedToReview() {
+            // Save current step data if not already saved
+            if (currentStep === 8) {
+                saveCurrentStepData();
+            }
+
+            showLoading();
+            try {
+                // Calculate distance and drive time if not already done
+                if (!bookingData.distance) {
+                    await calculateDistance();
+                }
+
+                // Calculate estimate if not already done
+                if (!bookingData.estimate) {
+                    await calculateEstimate();
+                }
+
+                // Show review page
+                populateReview();
+                currentStep = 9;
+                showStep(9);
+                updateProgress();
+                scrollToTop();
+            } catch (error) {
+                console.error('Error calculating estimate:', error);
+                alert('Unable to calculate estimate. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Set minimum date to tomorrow
+        function setMinDate() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const minDate = tomorrow.toISOString().split('T')[0];
+            document.getElementById('moveDate').min = minDate;
+        }
+
+        // Load services from API
+        async function loadServices() {
+            try {
+                const response = await fetch(`${API_URL}/api/services`);
+                const data = await response.json();
+
+                if (data.success && data.services) {
+                    servicesConfig = data.services;
+                    renderServiceCards(data.services);
+                } else {
+                    loadFallbackServices();
+                }
+            } catch (error) {
+                console.error('Error loading services:', error);
+                loadFallbackServices();
+            }
+        }
+
+        // Render service cards
+        function renderServiceCards(services) {
+            const container = document.getElementById('serviceCards');
+            let html = '';
+
+            // Moving Services
+            if (services.movingServices) {
+                for (const [key, service] of Object.entries(services.movingServices)) {
+                    if (service.enabled) {
+                        html += `
+                            <div class="service-card" onclick="selectService('${service.name}', this)">
+                                <div class="service-card-icon">${service.icon || '🚚'}</div>
+                                <div class="service-card-title">${service.name}</div>
+                                <div class="service-card-desc">${service.description || ''}</div>
+                            </div>
+                        `;
+                    }
+                }
+            }
+
+            // Labor Only
+            if (services.laborOnly && services.laborOnly.enabled) {
+                html += `
+                    <div class="service-card" onclick="selectService('${services.laborOnly.name}', this)">
+                        <div class="service-card-icon">${services.laborOnly.icon || '💪'}</div>
+                        <div class="service-card-title">${services.laborOnly.name}</div>
+                        <div class="service-card-desc">${services.laborOnly.description || ''}</div>
+                    </div>
+                `;
+            }
+
+            // Single Item
+            if (services.singleItem && services.singleItem.enabled) {
+                html += `
+                    <div class="service-card" onclick="selectService('${services.singleItem.name}', this)">
+                        <div class="service-card-icon">${services.singleItem.icon || '📦'}</div>
+                        <div class="service-card-title">${services.singleItem.name}</div>
+                        <div class="service-card-desc">${services.singleItem.description || ''}</div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Fallback services if API fails
+        function loadFallbackServices() {
+            const container = document.getElementById('serviceCards');
+            container.innerHTML = `
+                <div class="service-card" onclick="selectService('2 Person Crew', this)">
+                    <div class="service-card-icon">👥</div>
+                    <div class="service-card-title">2 Person Crew</div>
+                    <div class="service-card-desc">Perfect for smaller moves</div>
+                </div>
+                <div class="service-card" onclick="selectService('3 Person Crew', this)">
+                    <div class="service-card-icon">👥👤</div>
+                    <div class="service-card-title">3 Person Crew</div>
+                    <div class="service-card-desc">Ideal for medium homes</div>
+                </div>
+                <div class="service-card" onclick="selectService('4 Person Crew', this)">
+                    <div class="service-card-icon">👥👥</div>
+                    <div class="service-card-title">4 Person Crew</div>
+                    <div class="service-card-desc">Best for larger homes</div>
+                </div>
+                <div class="service-card" onclick="selectService('Labor Only', this)">
+                    <div class="service-card-icon">💪</div>
+                    <div class="service-card-title">Labor Only</div>
+                    <div class="service-card-desc">You provide the truck</div>
+                </div>
+                <div class="service-card" onclick="selectService('Single Item Move', this)">
+                    <div class="service-card-icon">📦</div>
+                    <div class="service-card-title">Single Item</div>
+                    <div class="service-card-desc">One item delivery</div>
+                </div>
+            `;
+        }
+
+        // Select service
+        function selectService(serviceName, element) {
+            // Remove previous selection
+            document.querySelectorAll('.service-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Add selection
+            element.classList.add('selected');
+            bookingData.serviceType = serviceName;
+
+            // Show/hide labor hours field based on service type
+            const laborHoursField = document.getElementById('laborHoursField');
+            const estimatedHoursSelect = document.getElementById('estimatedHours');
+
+            if (serviceName === 'Labor Only') {
+                laborHoursField.style.display = 'block';
+                estimatedHoursSelect.setAttribute('required', 'required');
+            } else {
+                laborHoursField.style.display = 'none';
+                estimatedHoursSelect.removeAttribute('required');
+                estimatedHoursSelect.value = ''; // Clear selection
+            }
+
+            saveToLocalStorage();
+        }
+
+        // Initialize Google Maps autocomplete
+        function initializeGoogleMaps() {
+            if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+                setTimeout(initializeGoogleMaps, 500);
+                return;
+            }
+
+            const fields = ['pickupAddress', 'dropoffAddress', 'thirdAddress'];
+            fields.forEach(fieldId => {
+                const input = document.getElementById(fieldId);
+                if (input) {
+                    const autocomplete = new google.maps.places.Autocomplete(input, {
+                        componentRestrictions: { country: 'us' },
+                        fields: ['formatted_address', 'geometry'],
+                        types: ['address']
+                    });
+
+                    autocomplete.addListener('place_changed', function() {
+                        const place = autocomplete.getPlace();
+                        if (place.formatted_address) {
+                            input.value = place.formatted_address;
+                            bookingData[fieldId] = place.formatted_address;
+                            saveToLocalStorage();
+                        }
+                    });
+
+                    autocompleteInstances[fieldId] = autocomplete;
+                }
+            });
+        }
+
+        // Toggle third location
+        function toggleThirdLocation() {
+            const checkbox = document.getElementById('hasThirdLocation');
+            const field = document.getElementById('thirdLocationField');
+
+            if (checkbox.checked) {
+                field.classList.add('active');
+                bookingData.hasThirdLocation = true;
+            } else {
+                field.classList.remove('active');
+                bookingData.hasThirdLocation = false;
+                bookingData.thirdAddress = '';
+                document.getElementById('thirdAddress').value = '';
+            }
+            saveToLocalStorage();
+        }
+
+        // Update checkbox parent styling
+        function updateCheckbox(checkbox) {
+            const parent = checkbox.closest('.checkbox-item');
+            if (checkbox.checked) {
+                parent.classList.add('checked');
+            } else {
+                parent.classList.remove('checked');
+            }
+
+            // Check for special item warnings
+            checkSpecialItemWarnings();
+        }
+
+        // Check for special item warnings
+        function checkSpecialItemWarnings() {
+            const specialItems = ['poolTable', 'hotTub', 'safe', 'piano'];
+            const hasSpecialItems = specialItems.some(id => document.getElementById(id)?.checked);
+            const warning = document.getElementById('specialItemWarning');
+
+            if (hasSpecialItems) {
+                warning.style.display = 'flex';
+            } else {
+                warning.style.display = 'none';
+            }
+        }
+
+        // Increment/Decrement number inputs
+        function incrementValue(fieldId) {
+            const input = document.getElementById(fieldId);
+            input.value = parseInt(input.value) + 1;
+            saveToLocalStorage();
+        }
+
+        function decrementValue(fieldId) {
+            const input = document.getElementById(fieldId);
+            if (parseInt(input.value) > 0) {
+                input.value = parseInt(input.value) - 1;
+                saveToLocalStorage();
+            }
+        }
+
+        // Update terms agreement
+        function updateTermsAgreement() {
+            const checkbox = document.getElementById('agreeTerms');
+            const confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.disabled = !checkbox.checked;
+        }
+
+        // Navigation
+        function nextStep() {
+            if (validateCurrentStep()) {
+                saveCurrentStepData();
+                currentStep++;
+                showStep(currentStep);
+                updateProgress();
+                scrollToTop();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+                updateProgress();
+                scrollToTop();
+            }
+        }
+
+        function goToStep(step) {
+            currentStep = step;
+            showStep(step);
+            updateProgress();
+            scrollToTop();
+        }
+
+        function showStep(step) {
+            // Hide all sections
+            document.querySelectorAll('.form-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Show current section
+            const section = document.querySelector(`[data-section="${step}"]`);
+            if (section) {
+                section.classList.add('active');
+            }
+
+            // Update step indicators
+            document.querySelectorAll('.step').forEach((stepEl, index) => {
+                stepEl.classList.remove('active', 'completed');
+                if (index + 1 < step) {
+                    stepEl.classList.add('completed');
+                } else if (index + 1 === step) {
+                    stepEl.classList.add('active');
+                }
+            });
+
+            // Initialize Square Payments when entering step 8 (card step)
+            if (step === 8 && !squarePayments) {
+                initializeSquarePayments();
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentStep - 1) / 8) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Validation
+        function validateCurrentStep() {
+            switch(currentStep) {
+                case 1:
+                    if (!bookingData.serviceType) {
+                        alert('Please select a service type');
+                        return false;
+                    }
+                    const moveDate = document.getElementById('moveDate').value;
+                    if (!moveDate) {
+                        alert('Please select a move date');
+                        return false;
+                    }
+                    bookingData.moveDate = moveDate;
+
+                    // Validate estimated hours for Labor Only service
+                    if (bookingData.serviceType === 'Labor Only') {
+                        const estimatedHours = document.getElementById('estimatedHours').value;
+                        if (!estimatedHours) {
+                            alert('Please select estimated hours for labor only service');
+                            return false;
+                        }
+                        bookingData.estimatedHours = parseInt(estimatedHours);
+                    } else {
+                        bookingData.estimatedHours = '';
+                    }
+
+                    return true;
+
+                case 2:
+                    const pickup = document.getElementById('pickupAddress').value;
+                    const dropoff = document.getElementById('dropoffAddress').value;
+
+                    if (!pickup || !dropoff) {
+                        alert('Please enter both pickup and dropoff addresses');
+                        return false;
+                    }
+
+                    if (document.getElementById('hasThirdLocation').checked) {
+                        const third = document.getElementById('thirdAddress').value;
+                        if (!third) {
+                            alert('Please enter the third location address');
+                            return false;
+                        }
+                    }
+                    return true;
+
+                case 3:
+                    if (!document.getElementById('pickupHomeType').value ||
+                        !document.getElementById('dropoffHomeType').value) {
+                        alert('Please select home types for both locations');
+                        return false;
+                    }
+                    return true;
+
+                case 7:
+                    return validateCustomerInfo();
+
+                case 8:
+                    // Card step is optional, always allow proceeding
+                    return true;
+
+                default:
+                    return true;
+            }
+        }
+
+        function validateCustomerInfo() {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+
+            let valid = true;
+
+            if (!firstName) {
+                showError('firstName', 'Please enter your first name');
+                valid = false;
+            } else {
+                clearError('firstName');
+            }
+
+            if (!lastName) {
+                showError('lastName', 'Please enter your last name');
+                valid = false;
+            } else {
+                clearError('lastName');
+            }
+
+            if (!email || !isValidEmail(email)) {
+                showError('email', 'Please enter a valid email address');
+                valid = false;
+            } else {
+                clearError('email');
+            }
+
+            if (!phone) {
+                showError('phone', 'Please enter a valid phone number');
+                valid = false;
+            } else {
+                clearError('phone');
+            }
+
+            return valid;
+        }
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function showError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const error = document.getElementById(fieldId + 'Error');
+
+            field.classList.add('error');
+            if (error) {
+                error.textContent = message;
+                error.style.display = 'block';
+            }
+        }
+
+        function clearError(fieldId) {
+            const field = document.getElementById(fieldId);
+            const error = document.getElementById(fieldId + 'Error');
+
+            field.classList.remove('error');
+            if (error) {
+                error.style.display = 'none';
+            }
+        }
+
+        // Save current step data
+        function saveCurrentStepData() {
+            switch(currentStep) {
+                case 1:
+                    bookingData.serviceType = bookingData.serviceType;
+                    bookingData.moveDate = document.getElementById('moveDate').value;
+                    break;
+
+                case 2:
+                    bookingData.pickupAddress = document.getElementById('pickupAddress').value;
+                    bookingData.dropoffAddress = document.getElementById('dropoffAddress').value;
+                    bookingData.hasThirdLocation = document.getElementById('hasThirdLocation').checked;
+                    if (bookingData.hasThirdLocation) {
+                        bookingData.thirdAddress = document.getElementById('thirdAddress').value;
+                    }
+                    break;
+
+                case 3:
+                    bookingData.pickupDetails = {
+                        homeType: document.getElementById('pickupHomeType').value,
+                        bedrooms: document.getElementById('pickupBedrooms').value,
+                        stairs: document.getElementById('pickupStairs').value
+                    };
+                    bookingData.dropoffDetails = {
+                        homeType: document.getElementById('dropoffHomeType').value,
+                        bedrooms: document.getElementById('dropoffBedrooms').value,
+                        stairs: document.getElementById('dropoffStairs').value
+                    };
+                    break;
+
+                case 4:
+                    bookingData.propertyDetails = {
+                        largeHome: document.getElementById('largeHome').checked,
+                        longWalk: document.getElementById('longWalk').checked,
+                        narrowAccess: document.getElementById('narrowAccess').checked,
+                        elevatorBuilding: document.getElementById('elevatorBuilding').checked,
+                        gatedCommunity: document.getElementById('gatedCommunity').checked,
+                        parking: document.getElementById('parkingSituation').value
+                    };
+                    break;
+
+                case 5:
+                    bookingData.inventory = {
+                        largeTVs: parseInt(document.getElementById('largeTVs').value),
+                        refrigerators: parseInt(document.getElementById('refrigerators').value),
+                        washerDryer: parseInt(document.getElementById('washerDryer').value),
+                        piano: document.getElementById('piano').checked,
+                        poolTable: document.getElementById('poolTable').checked,
+                        hotTub: document.getElementById('hotTub').checked,
+                        safe: document.getElementById('safe').checked,
+                        antiques: document.getElementById('antiques').checked,
+                        artwork: document.getElementById('artwork').checked,
+                        shopEquipment: document.getElementById('shopEquipment').checked,
+                        outdoorFurniture: document.getElementById('outdoorFurniture').checked,
+                        lawnEquipment: document.getElementById('lawnEquipment').checked
+                    };
+                    break;
+
+                case 6:
+                    bookingData.additionalServices = {
+                        packingService: document.getElementById('packingService').checked,
+                        packingMaterials: document.getElementById('packingMaterials').checked,
+                        movingBlankets: document.getElementById('movingBlankets').checked,
+                        disassembly: document.getElementById('disassembly').checked,
+                        storageService: document.getElementById('storageService').checked,
+                        notes: document.getElementById('additionalNotes').value
+                    };
+                    break;
+
+                case 7:
+                    bookingData.customerInfo = {
+                        firstName: document.getElementById('firstName').value,
+                        lastName: document.getElementById('lastName').value,
+                        email: document.getElementById('email').value,
+                        phone: document.getElementById('phone').value,
+                        contactMethod: document.getElementById('contactMethod').value
+                    };
+                    break;
+
+                case 8:
+                    // Card data already saved in processCardToken if card was saved
+                    // Just record whether they opted to save card
+                    const saveCardChecked = document.getElementById('saveCardCheckbox')?.checked;
+                    bookingData.attemptedCardSave = saveCardChecked;
+                    break;
+            }
+
+            saveToLocalStorage();
+        }
+
+
+        // Calculate distance using Google Maps
+        async function calculateDistance() {
+            return new Promise((resolve, reject) => {
+                if (typeof google === 'undefined' || !google.maps) {
+                    // Fallback to API
+                    resolve();
+                    return;
+                }
+
+                const service = new google.maps.DistanceMatrixService();
+                const origin = bookingData.pickupAddress;
+                const destination = bookingData.dropoffAddress;
+
+                service.getDistanceMatrix({
+                    origins: [origin],
+                    destinations: [destination],
+                    travelMode: 'DRIVING',
+                    unitSystem: google.maps.UnitSystem.IMPERIAL
+                }, (response, status) => {
+                    if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
+                        const element = response.rows[0].elements[0];
+                        bookingData.distance = element.distance.value / 1609.34; // Convert to miles
+                        bookingData.driveTime = element.duration.value / 60; // Convert to minutes
+                        resolve();
+                    } else {
+                        // Use fallback
+                        bookingData.distance = 10; // Default
+                        bookingData.driveTime = 20; // Default
+                        resolve();
+                    }
+                });
+            });
+        }
+
+        // Calculate estimate using pricing logic
+        async function calculateEstimate() {
+            try {
+                const response = await fetch(`${API_URL}/api/calculate-estimate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bookingData)
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.estimate) {
+                    // Store full estimate breakdown
+                    bookingData.estimateBreakdown = data.estimate;
+                    bookingData.estimate = data.estimate.total;
+                } else {
+                    // Fallback calculation
+                    bookingData.estimate = calculateFallbackEstimate();
+                    bookingData.estimateBreakdown = null;
+                }
+            } catch (error) {
+                console.error('Error calculating estimate:', error);
+                bookingData.estimate = calculateFallbackEstimate();
+                bookingData.estimateBreakdown = null;
+            }
+        }
+
+        // Fallback estimate calculation
+        function calculateFallbackEstimate() {
+            let estimate = 300; // Base rate
+
+            // Add distance
+            estimate += bookingData.distance * 2;
+
+            // Add stairs
+            const totalStairs = parseInt(bookingData.pickupDetails.stairs || 0) +
+                               parseInt(bookingData.dropoffDetails.stairs || 0);
+            estimate += totalStairs * 25;
+
+            // Add special items
+            if (bookingData.inventory.piano) estimate += 200;
+            if (bookingData.inventory.poolTable) estimate += 300;
+            if (bookingData.inventory.hotTub) estimate += 250;
+            if (bookingData.inventory.safe) estimate += 150;
+
+            return Math.round(estimate);
+        }
+
+        // Populate review page
+        function populateReview() {
+            // Estimate
+            document.getElementById('estimateAmount').textContent =
+                '$' + bookingData.estimate.toLocaleString();
+
+            // Service details
+            document.getElementById('reviewService').textContent = bookingData.serviceType;
+
+            const dateObj = new Date(bookingData.moveDate + 'T00:00:00');
+            document.getElementById('reviewDate').textContent =
+                dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            // Addresses
+            document.getElementById('reviewPickup').textContent = bookingData.pickupAddress;
+            document.getElementById('reviewDropoff').textContent = bookingData.dropoffAddress;
+
+            if (bookingData.hasThirdLocation) {
+                document.getElementById('reviewThirdItem').style.display = 'flex';
+                document.getElementById('reviewThird').textContent = bookingData.thirdAddress;
+            } else {
+                document.getElementById('reviewThirdItem').style.display = 'none';
+            }
+
+            document.getElementById('reviewDistance').textContent =
+                bookingData.distance.toFixed(1) + ' miles';
+
+            // Contact info
+            document.getElementById('reviewName').textContent =
+                bookingData.customerInfo.firstName + ' ' + bookingData.customerInfo.lastName;
+            document.getElementById('reviewEmail').textContent = bookingData.customerInfo.email;
+            document.getElementById('reviewPhone').textContent = bookingData.customerInfo.phone;
+
+            // Payment info (if card was saved)
+            const paymentSection = document.getElementById('reviewPaymentSection');
+            const reviewCard = document.getElementById('reviewCard');
+            if (bookingData.cardOnFile && bookingData.cardLast4) {
+                paymentSection.style.display = 'block';
+                reviewCard.innerHTML = `✅ Card ending in ${bookingData.cardLast4}`;
+            } else {
+                paymentSection.style.display = 'none';
+            }
+        }
+
+        // Confirm booking
+        async function confirmBooking() {
+            if (!document.getElementById('agreeTerms').checked) {
+                alert('Please agree to the terms and conditions');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_URL}/api/book-appointment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bookingData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show success page
+                    document.getElementById('bookingIdDisplay').textContent =
+                        'Booking ID: #' + (data.bookingId || Math.floor(Math.random() * 100000));
+
+                    currentStep = 'success';
+                    showStep('success');
+                    updateProgress();
+                    scrollToTop();
+
+                    // Clear local storage
+                    localStorage.removeItem('bookingData');
+                } else {
+                    alert('Booking failed: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error confirming booking:', error);
+                alert('Unable to confirm booking. Please try again or call us at (330) 435-8686');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Local storage functions
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('bookingData', JSON.stringify(bookingData));
+            } catch (error) {
+                console.error('Error saving to localStorage:', error);
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const saved = localStorage.getItem('bookingData');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    // Optionally restore the data
+                    // bookingData = data;
+                }
+            } catch (error) {
+                console.error('Error loading from localStorage:', error);
+            }
+        }
+
+        // Loading overlay
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        // Auto-save form data on input
+        document.addEventListener('input', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+                saveToLocalStorage();
+            }
+        });
+    </script>
+</body>
+</html>

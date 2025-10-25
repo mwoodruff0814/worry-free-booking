@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worry Free Moving - Test Booking System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #004085;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .status.loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+        }
+
+        .test-section h2 {
+            color: #004085;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,64,133,0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .time-slot {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+            font-weight: 500;
+        }
+
+        .time-slot.available {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .response {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+        }
+
+        .feature-badge {
+            display: inline-block;
+            background: #ffc107;
+            color: #000;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚚 Worry Free Moving</h1>
+        <p class="subtitle">Booking System Test Page <span class="feature-badge">NEW: 1-HOUR WINDOWS</span></p>
+
+        <div id="status" class="status loading">
+            ⏳ Checking server connection...
+        </div>
+
+        <div class="test-section">
+            <h2>📡 Server Status</h2>
+            <button onclick="testHealth()">Test Server Connection</button>
+            <div id="health-response"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📅 Available Time Slots (with 1-hour arrival windows)</h2>
+            <button onclick="getTimeSlots()">Get Available Slots for November 1, 2025</button>
+            <div id="slots-container"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📝 Create Test Booking</h2>
+            <button onclick="createTestBooking()">Book Test Appointment</button>
+            <div id="booking-response"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+
+        // Check server on page load
+        window.onload = async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/health`);
+                const data = await response.json();
+
+                if (data.status === 'ok') {
+                    document.getElementById('status').className = 'status success';
+                    document.getElementById('status').innerHTML = '✅ Server is running! Ready to accept bookings.';
+                } else {
+                    throw new Error('Server returned unexpected status');
+                }
+            } catch (error) {
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').innerHTML = `
+                    ❌ Server not running!<br>
+                    <small>Please start the server first:<br>
+                    1. Open Command Prompt<br>
+                    2. cd C:\\Users\\caspe\\OneDrive\\Desktop\\worry-free-booking<br>
+                    3. npm start</small>
+                `;
+            }
+        };
+
+        async function testHealth() {
+            const container = document.getElementById('health-response');
+            container.innerHTML = '<div class="response">⏳ Testing connection...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/api/health`);
+                const data = await response.json();
+                container.innerHTML = `<div class="response">✅ Success!<br><br>${JSON.stringify(data, null, 2)}</div>`;
+            } catch (error) {
+                container.innerHTML = `<div class="response">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function getTimeSlots() {
+            const container = document.getElementById('slots-container');
+            container.innerHTML = '<div class="response">⏳ Loading time slots...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/api/available-slots?date=2025-11-01`);
+                const data = await response.json();
+
+                if (data.success && data.slots) {
+                    let html = '<div class="time-slots">';
+                    data.slots.forEach(slot => {
+                        const className = slot.available ? 'available' : '';
+                        html += `<div class="time-slot ${className}">${slot.label}</div>`;
+                    });
+                    html += '</div>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = `<div class="response">❌ Failed to load slots</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="response">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function createTestBooking() {
+            const container = document.getElementById('booking-response');
+            container.innerHTML = '<div class="response">⏳ Creating test booking...</div>';
+
+            const bookingData = {
+                firstName: 'Test',
+                lastName: 'Customer',
+                email: 'matt@worryfreemovers.com',
+                phone: '3304358686',
+                date: '2025-11-01',
+                time: '10:00',
+                serviceType: 'Moving Service',
+                pickupAddress: '123 Test Street, Akron OH',
+                dropoffAddress: '456 Demo Avenue, Canton OH'
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/api/book-appointment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bookingData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    container.innerHTML = `
+                        <div class="response">
+                            ✅ <strong>Booking Created Successfully!</strong><br><br>
+                            <strong>Booking ID:</strong> ${data.bookingId}<br>
+                            <strong>Date:</strong> November 1, 2025<br>
+                            <strong>Arrival Window:</strong> 10:00 AM - 11:00 AM<br><br>
+                            <em>Check your email at matt@worryfreemovers.com for confirmation with the new 1-hour arrival window format!</em>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `<div class="response">❌ ${data.message || 'Booking failed'}</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="response">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

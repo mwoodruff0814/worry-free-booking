@@ -1,0 +1,187 @@
+<!-- ===============================================
+     NEW PRICING TAB - FRESH START (No Cache Issues)
+     =============================================== -->
+
+        <!-- PRICING TAB -->
+        <div id="pricingTab" class="tab-content" style="display: none;">
+            <div class="dashboard-content">
+                <h2 style="color: #333; margin-bottom: 25px;">💰 Services & Pricing Management</h2>
+
+                <div style="background: #d4edda; border: 2px solid #28a745; color: #155724; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="margin: 0 0 10px 0; color: #155724;">✅ NEW TAB LOADED SUCCESSFULLY!</h3>
+                    <p style="margin: 0;">This is a brand new Pricing tab with no cache issues. Loaded at: <strong id="pricingLoadTime"></strong></p>
+                </div>
+
+                <div style="background: #e8f4f8; padding: 15px; border-radius: 6px; border-left: 4px solid #17a2b8; margin-bottom: 25px;">
+                    <strong>ℹ️ Note:</strong> This tab controls all pricing across your booking system, including the chatbot.
+                </div>
+
+                <!-- Services Display Container -->
+                <div id="servicesDisplay" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div style="text-align: center; padding: 40px; color: #999;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">⏳</div>
+                        <p>Click "Load Services" below to fetch pricing data...</p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 25px;">
+                    <button class="btn-primary" onclick="loadPricingData()" style="margin-right: 10px;">🔄 Load Services</button>
+                    <button class="btn-secondary" onclick="testPricingAPI()">🔧 Test API</button>
+                </div>
+
+                <!-- Debug Output -->
+                <div id="pricingDebug" style="display: none; background: #f8f9fa; padding: 15px; border-radius: 6px; margin-top: 20px;">
+                    <h4 style="margin-top: 0;">Debug Output:</h4>
+                    <pre id="pricingDebugOutput" style="background: white; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px;"></pre>
+                </div>
+            </div>
+        </div>
+
+<!-- ===============================================
+     PRICING TAB JAVASCRIPT FUNCTIONS
+     =============================================== -->
+
+<script>
+// Set load time when tab is accessed
+function loadPricing() {
+    const loadTimeEl = document.getElementById('pricingLoadTime');
+    if (loadTimeEl) {
+        const now = new Date();
+        loadTimeEl.textContent = now.toLocaleTimeString();
+    }
+}
+
+// Test API connectivity
+async function testPricingAPI() {
+    const debugDiv = document.getElementById('pricingDebug');
+    const debugOutput = document.getElementById('pricingDebugOutput');
+
+    debugDiv.style.display = 'block';
+    debugOutput.textContent = 'Testing API...\n\n';
+
+    try {
+        const timestamp = new Date().getTime();
+        const url = `${API_URL}/services?_t=${timestamp}`;
+        debugOutput.textContent += `Fetching: ${url}\n\n`;
+
+        const response = await fetch(url, {
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
+
+        debugOutput.textContent += `Status: ${response.status} ${response.ok ? '✅' : '❌'}\n\n`;
+
+        const data = await response.json();
+        debugOutput.textContent += 'Response:\n' + JSON.stringify(data, null, 2);
+
+        if (data.success && data.services) {
+            debugOutput.textContent += `\n\n✅ API is working! Found ${Object.keys(data.services.movingServices || {}).length} moving services`;
+        }
+    } catch (error) {
+        debugOutput.textContent += `\n\n❌ ERROR: ${error.message}`;
+    }
+}
+
+// Load and display pricing data
+async function loadPricingData() {
+    const container = document.getElementById('servicesDisplay');
+
+    container.innerHTML = '<div style="text-align: center; padding: 40px;"><div style="font-size: 48px; margin-bottom: 15px;">⏳</div><p>Loading services...</p></div>';
+
+    try {
+        const timestamp = new Date().getTime();
+        const response = await fetch(`${API_URL}/services?_t=${timestamp}`, {
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.services) {
+            displayPricingData(data.services);
+        } else {
+            throw new Error('Invalid data format');
+        }
+    } catch (error) {
+        container.innerHTML = `
+            <div style="background: #f8d7da; border: 2px solid #dc3545; color: #721c24; padding: 20px; border-radius: 8px;">
+                <h3 style="margin: 0 0 10px 0;">❌ Failed to load services</h3>
+                <p style="margin: 0;"><strong>Error:</strong> ${error.message}</p>
+                <p style="margin: 10px 0 0 0;">Make sure the server is running on port 3001</p>
+            </div>
+        `;
+    }
+}
+
+// Display the pricing data
+function displayPricingData(services) {
+    const container = document.getElementById('servicesDisplay');
+
+    let html = '<div style="display: grid; gap: 20px;">';
+
+    // Moving Services
+    if (services.movingServices) {
+        html += '<div><h3 style="color: #667eea; margin-bottom: 15px;">🚚 Moving Services</h3>';
+        html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">';
+
+        for (const [key, service] of Object.entries(services.movingServices)) {
+            html += `
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
+                    <h4 style="margin: 0 0 10px 0; color: #333;">${service.icon} ${service.name}</h4>
+                    <p style="margin: 0 0 10px 0; font-size: 14px; color: #666;">${service.description}</p>
+                    <div style="background: white; padding: 10px; border-radius: 4px;">
+                        <div style="font-size: 18px; font-weight: bold; color: #667eea;">$${service.baseRate}/hr</div>
+                        <div style="font-size: 12px; color: #999;">Service Charge: ${(service.serviceCharge * 100)}%</div>
+                    </div>
+                </div>
+            `;
+        }
+        html += '</div></div>';
+    }
+
+    // Other Services
+    html += '<div><h3 style="color: #667eea; margin-bottom: 15px;">📦 Additional Services</h3>';
+    html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">';
+
+    if (services.laborOnly) {
+        html += `
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
+                <h4 style="margin: 0 0 10px 0; color: #333;">${services.laborOnly.icon} ${services.laborOnly.name}</h4>
+                <div style="background: white; padding: 10px; border-radius: 4px;">
+                    <div style="font-size: 18px; font-weight: bold; color: #28a745;">$${services.laborOnly.baseRate}/hr</div>
+                </div>
+            </div>
+        `;
+    }
+
+    if (services.singleItem) {
+        html += `
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                <h4 style="margin: 0 0 10px 0; color: #333;">${services.singleItem.icon} ${services.singleItem.name}</h4>
+                <div style="background: white; padding: 10px; border-radius: 4px;">
+                    <div style="font-size: 18px; font-weight: bold; color: #ffc107;">$${services.singleItem.baseRate} base</div>
+                </div>
+            </div>
+        `;
+    }
+
+    html += '</div></div>';
+    html += '</div>';
+
+    html += '<div style="margin-top: 20px; padding: 15px; background: #d1ecf1; border-radius: 6px; border-left: 4px solid #17a2b8; color: #0c5460;">';
+    html += '<strong>✅ Services loaded successfully!</strong> This data is live from your server.';
+    html += '</div>';
+
+    container.innerHTML = html;
+}
+</script>

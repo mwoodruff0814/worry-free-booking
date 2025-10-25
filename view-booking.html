@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Your Booking - Worry Free Moving</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .booking-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .booking-card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .detail-value {
+            color: #333;
+            text-align: right;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .status-confirmed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-contact {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-contact:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .lookup-form {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-message {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .contact-info {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .contact-info h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .contact-item {
+            margin-bottom: 10px;
+        }
+
+        .contact-item strong {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>View Your Booking</h1>
+            <p>Enter your booking details to view or cancel your appointment</p>
+        </div>
+
+        <div class="content">
+            <div id="lookupForm" class="lookup-form">
+                <div class="form-group">
+                    <label for="bookingId">Booking ID</label>
+                    <input type="text" id="bookingId" placeholder="e.g., BK-20250124-1234" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="your@email.com" required>
+                </div>
+
+                <button class="btn-primary" onclick="lookupBooking()">View My Booking</button>
+            </div>
+
+            <div id="bookingDetails" style="display: none;">
+                <!-- Booking details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+
+        // Check if booking ID and email are in URL parameters
+        window.addEventListener('load', () => {
+            const params = new URLSearchParams(window.location.search);
+            const bookingId = params.get('id');
+            const email = params.get('email');
+
+            if (bookingId && email) {
+                document.getElementById('bookingId').value = bookingId;
+                document.getElementById('email').value = email;
+                lookupBooking();
+            }
+        });
+
+        async function lookupBooking() {
+            const bookingId = document.getElementById('bookingId').value.trim();
+            const email = document.getElementById('email').value.trim();
+
+            if (!bookingId || !email) {
+                alert('Please enter both booking ID and email address');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/booking-lookup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ bookingId, email })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.booking) {
+                    displayBooking(data.booking);
+                } else {
+                    alert(data.message || 'Booking not found. Please check your booking ID and email.');
+                }
+            } catch (error) {
+                console.error('Error looking up booking:', error);
+                alert('Unable to retrieve booking. Please try again later.');
+            }
+        }
+
+        function displayBooking(booking) {
+            const lookupForm = document.getElementById('lookupForm');
+            const bookingDetails = document.getElementById('bookingDetails');
+
+            lookupForm.style.display = 'none';
+            bookingDetails.style.display = 'block';
+
+            const statusClass = booking.status === 'confirmed' ? 'status-confirmed' :
+                              booking.status === 'cancelled' ? 'status-cancelled' : 'status-pending';
+
+            const isCancelled = booking.status === 'cancelled';
+            const isPast = new Date(booking.date) < new Date();
+
+            bookingDetails.innerHTML = `
+                <div class="booking-card">
+                    <h2>Booking Details</h2>
+                    <div class="detail-row">
+                        <span class="detail-label">Booking ID:</span>
+                        <span class="detail-value"><strong>${booking.bookingId}</strong></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Status:</span>
+                        <span class="detail-value"><span class="status-badge ${statusClass}">${booking.status.toUpperCase()}</span></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Service Type:</span>
+                        <span class="detail-value">${booking.serviceType}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Date:</span>
+                        <span class="detail-value">${new Date(booking.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    </div>
+                    ${booking.time ? `<div class="detail-row">
+                        <span class="detail-label">Estimated Arrival:</span>
+                        <span class="detail-value">${booking.time}</span>
+                    </div>` : ''}
+                    <div class="detail-row">
+                        <span class="detail-label">Customer:</span>
+                        <span class="detail-value">${booking.firstName} ${booking.lastName}</span>
+                    </div>
+                    ${booking.pickupAddress ? `<div class="detail-row">
+                        <span class="detail-label">Pickup Address:</span>
+                        <span class="detail-value">${booking.pickupAddress}</span>
+                    </div>` : ''}
+                    ${booking.dropoffAddress ? `<div class="detail-row">
+                        <span class="detail-label">Dropoff Address:</span>
+                        <span class="detail-value">${booking.dropoffAddress}</span>
+                    </div>` : ''}
+                </div>
+
+                <div class="contact-info">
+                    <h3>Need Help?</h3>
+                    <div class="contact-item">
+                        <strong>Phone:</strong> (330) 435-8686
+                    </div>
+                    <div class="contact-item">
+                        <strong>Email:</strong> service@worryfreemovers.com
+                    </div>
+                    <div class="contact-item">
+                        <strong>Hours:</strong> Monday - Saturday: 8:00 AM - 6:00 PM
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn btn-contact" onclick="contactUs()">Contact Us</button>
+                    <button class="btn btn-cancel" onclick="cancelBooking('${booking.bookingId}')" ${isCancelled || isPast ? 'disabled' : ''}>
+                        ${isCancelled ? 'Already Cancelled' : isPast ? 'Move Completed' : 'Cancel Booking'}
+                    </button>
+                </div>
+
+                <button class="btn-primary" onclick="backToLookup()" style="margin-top: 20px;">Look Up Another Booking</button>
+            `;
+        }
+
+        function backToLookup() {
+            document.getElementById('lookupForm').style.display = 'block';
+            document.getElementById('bookingDetails').style.display = 'none';
+            document.getElementById('bookingId').value = '';
+            document.getElementById('email').value = '';
+        }
+
+        async function cancelBooking(bookingId) {
+            if (!confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/cancel-appointment/${bookingId}`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Your booking has been cancelled. You will receive a confirmation email shortly.');
+                    lookupBooking(); // Refresh the booking details
+                } else {
+                    alert(data.message || 'Unable to cancel booking. Please contact us directly.');
+                }
+            } catch (error) {
+                console.error('Error cancelling booking:', error);
+                alert('Unable to cancel booking. Please contact us at (330) 435-8686.');
+            }
+        }
+
+        function contactUs() {
+            window.location.href = 'tel:3304358686';
+        }
+    </script>
+</body>
+</html>

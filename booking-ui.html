@@ -1,0 +1,750 @@
+<!--
+    Custom Booking UI - Insert this into your Sarah AI v3.html
+    Replace the Acuity container with this booking interface
+-->
+
+<style>
+/* Booking Container Styles */
+#wfm-booking-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    z-index: 10002;
+    display: none;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+#wfm-booking-header {
+    background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+    color: white;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 10px rgba(0,64,133,0.2);
+}
+
+#wfm-booking-back {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid white;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+#wfm-booking-back:hover {
+    background: white;
+    color: #004085;
+}
+
+.booking-content {
+    padding: 20px;
+    flex-grow: 1;
+}
+
+.booking-step {
+    display: none;
+}
+
+.booking-step.active {
+    display: block;
+}
+
+.booking-form-group {
+    margin-bottom: 20px;
+}
+
+.booking-form-group label {
+    display: block;
+    font-weight: 600;
+    color: #004085;
+    margin-bottom: 8px;
+}
+
+.booking-form-group input,
+.booking-form-group select,
+.booking-form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.booking-form-group input:focus,
+.booking-form-group select:focus,
+.booking-form-group textarea:focus {
+    border-color: #004085;
+    box-shadow: 0 0 0 3px rgba(0,64,133,0.1);
+}
+
+.booking-form-group input:disabled {
+    background: #f0f4f8;
+    color: #666;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+}
+
+.calendar-day:hover:not(.disabled) {
+    background: #f0f4f8;
+    border-color: #004085;
+}
+
+.calendar-day.selected {
+    background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+    color: white;
+    border-color: #004085;
+}
+
+.calendar-day.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.calendar-day.past {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.time-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.time-slot {
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+}
+
+.time-slot:hover:not(.unavailable) {
+    background: #f0f4f8;
+    border-color: #004085;
+}
+
+.time-slot.selected {
+    background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+    color: white;
+    border-color: #004085;
+}
+
+.time-slot.unavailable {
+    opacity: 0.3;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+.booking-summary {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.booking-summary h3 {
+    color: #004085;
+    margin-bottom: 10px;
+}
+
+.summary-row {
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.summary-label {
+    font-weight: 600;
+    color: #666;
+}
+
+.booking-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.booking-btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.booking-btn-primary {
+    background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+    color: white;
+    box-shadow: 0 3px 12px rgba(0,64,133,0.3);
+}
+
+.booking-btn-primary:hover {
+    background: linear-gradient(135deg, #002855 0%, #004085 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 20px rgba(0,64,133,0.4);
+}
+
+.booking-btn-secondary {
+    background: white;
+    color: #004085;
+    border: 2px solid #004085;
+}
+
+.booking-btn-secondary:hover {
+    background: #f0f4f8;
+}
+
+.booking-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.booking-success {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.booking-success .success-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.booking-success h2 {
+    color: #004085;
+    margin-bottom: 10px;
+}
+
+.booking-id {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 20px 0;
+    font-family: monospace;
+    font-size: 18px;
+    font-weight: 600;
+    color: #004085;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+
+<!-- Booking Container HTML -->
+<div id="wfm-booking-container">
+    <div id="wfm-booking-header">
+        <button id="wfm-booking-back">← Back to Chat</button>
+        <span id="wfm-booking-title">Schedule Your Appointment</span>
+    </div>
+
+    <div class="booking-content">
+        <!-- Step 1: Customer Information -->
+        <div class="booking-step active" id="booking-step-1">
+            <h2 style="color: #004085; margin-bottom: 20px;">Your Information</h2>
+
+            <div class="booking-form-group">
+                <label for="booking-first-name">First Name *</label>
+                <input type="text" id="booking-first-name" placeholder="Enter your first name" required>
+            </div>
+
+            <div class="booking-form-group">
+                <label for="booking-last-name">Last Name *</label>
+                <input type="text" id="booking-last-name" placeholder="Enter your last name" required>
+            </div>
+
+            <div class="booking-form-group">
+                <label for="booking-email">Email Address *</label>
+                <input type="email" id="booking-email" placeholder="your@email.com" required>
+            </div>
+
+            <div class="booking-form-group">
+                <label for="booking-phone">Phone Number *</label>
+                <input type="tel" id="booking-phone" placeholder="(330) 555-1234" required>
+            </div>
+
+            <div class="booking-buttons">
+                <button class="booking-btn booking-btn-primary" onclick="nextBookingStep(2)">
+                    Continue →
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Select Date -->
+        <div class="booking-step" id="booking-step-2">
+            <h2 style="color: #004085; margin-bottom: 20px;">Select Date</h2>
+
+            <div class="booking-form-group">
+                <label>Choose your preferred date:</label>
+                <div id="booking-calendar" class="calendar-grid">
+                    <!-- Calendar will be generated here -->
+                </div>
+            </div>
+
+            <div class="booking-buttons">
+                <button class="booking-btn booking-btn-secondary" onclick="prevBookingStep(1)">
+                    ← Back
+                </button>
+                <button class="booking-btn booking-btn-primary" id="continue-to-time" disabled onclick="nextBookingStep(3)">
+                    Continue →
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Select Time -->
+        <div class="booking-step" id="booking-step-3">
+            <h2 style="color: #004085; margin-bottom: 20px;">Select Time</h2>
+
+            <div class="booking-form-group">
+                <label>Available time slots for <span id="selected-date-display"></span>:</label>
+                <div id="booking-time-slots" class="time-slots-grid">
+                    <!-- Time slots will be generated here -->
+                </div>
+            </div>
+
+            <div class="booking-buttons">
+                <button class="booking-btn booking-btn-secondary" onclick="prevBookingStep(2)">
+                    ← Back
+                </button>
+                <button class="booking-btn booking-btn-primary" id="continue-to-confirm" disabled onclick="nextBookingStep(4)">
+                    Continue →
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 4: Confirmation -->
+        <div class="booking-step" id="booking-step-4">
+            <h2 style="color: #004085; margin-bottom: 20px;">Confirm Your Booking</h2>
+
+            <div class="booking-summary" id="booking-summary">
+                <h3>Appointment Details</h3>
+                <div class="summary-row">
+                    <span class="summary-label">Name:</span>
+                    <span id="summary-name"></span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Email:</span>
+                    <span id="summary-email"></span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Phone:</span>
+                    <span id="summary-phone"></span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Date:</span>
+                    <span id="summary-date"></span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Time:</span>
+                    <span id="summary-time"></span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Service:</span>
+                    <span id="summary-service"></span>
+                </div>
+            </div>
+
+            <div class="booking-form-group">
+                <label for="booking-notes">Additional Notes (Optional)</label>
+                <textarea id="booking-notes" rows="4" placeholder="Any special requests or information we should know?"></textarea>
+            </div>
+
+            <div class="booking-buttons">
+                <button class="booking-btn booking-btn-secondary" onclick="prevBookingStep(3)">
+                    ← Back
+                </button>
+                <button class="booking-btn booking-btn-primary" id="confirm-booking-btn" onclick="confirmBooking()">
+                    Confirm Booking
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 5: Success -->
+        <div class="booking-step" id="booking-step-5">
+            <div class="booking-success">
+                <div class="success-icon">✅</div>
+                <h2>Booking Confirmed!</h2>
+                <p>Your appointment has been successfully scheduled.</p>
+
+                <div class="booking-id">
+                    Booking ID: <span id="confirmation-booking-id"></span>
+                </div>
+
+                <div class="booking-summary">
+                    <h3>Appointment Details</h3>
+                    <div class="summary-row">
+                        <span class="summary-label">Date:</span>
+                        <span id="confirmation-date"></span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Time:</span>
+                        <span id="confirmation-time"></span>
+                    </div>
+                </div>
+
+                <p style="margin-top: 20px; color: #666;">
+                    A confirmation email with calendar invite has been sent to <strong id="confirmation-email"></strong>
+                </p>
+
+                <div class="booking-buttons" style="margin-top: 30px;">
+                    <button class="booking-btn booking-btn-primary" onclick="closeBookingUI()">
+                        Return to Chat
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Booking System JavaScript
+const bookingState = {
+    currentStep: 1,
+    selectedDate: null,
+    selectedTime: null,
+    customerInfo: {},
+    apiUrl: 'http://localhost:3001/api' // Change to your API URL
+};
+
+// Initialize booking UI
+function initBookingUI() {
+    document.getElementById('wfm-booking-back').addEventListener('click', closeBookingUI);
+    generateCalendar();
+}
+
+// Navigation functions
+function nextBookingStep(step) {
+    // Validate current step
+    if (!validateCurrentStep()) {
+        return;
+    }
+
+    // Hide current step
+    document.querySelectorAll('.booking-step').forEach(s => s.classList.remove('active'));
+
+    // Show next step
+    document.getElementById(`booking-step-${step}`).classList.add('active');
+    bookingState.currentStep = step;
+
+    // Special actions for specific steps
+    if (step === 3) {
+        loadTimeSlots();
+    } else if (step === 4) {
+        showBookingSummary();
+    }
+
+    // Scroll to top
+    document.querySelector('.booking-content').scrollTop = 0;
+}
+
+function prevBookingStep(step) {
+    document.querySelectorAll('.booking-step').forEach(s => s.classList.remove('active'));
+    document.getElementById(`booking-step-${step}`).classList.add('active');
+    bookingState.currentStep = step;
+    document.querySelector('.booking-content').scrollTop = 0;
+}
+
+function validateCurrentStep() {
+    if (bookingState.currentStep === 1) {
+        const firstName = document.getElementById('booking-first-name').value.trim();
+        const lastName = document.getElementById('booking-last-name').value.trim();
+        const email = document.getElementById('booking-email').value.trim();
+        const phone = document.getElementById('booking-phone').value.trim();
+
+        if (!firstName || !lastName || !email || !phone) {
+            alert('Please fill in all required fields');
+            return false;
+        }
+
+        if (!email.includes('@') || !email.includes('.')) {
+            alert('Please enter a valid email address');
+            return false;
+        }
+
+        bookingState.customerInfo = { firstName, lastName, email, phone };
+    }
+
+    if (bookingState.currentStep === 2 && !bookingState.selectedDate) {
+        alert('Please select a date');
+        return false;
+    }
+
+    if (bookingState.currentStep === 3 && !bookingState.selectedTime) {
+        alert('Please select a time');
+        return false;
+    }
+
+    return true;
+}
+
+// Generate calendar for next 30 days
+function generateCalendar() {
+    const calendarEl = document.getElementById('booking-calendar');
+    calendarEl.innerHTML = '';
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Add day headers
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    days.forEach(day => {
+        const dayHeader = document.createElement('div');
+        dayHeader.textContent = day;
+        dayHeader.style.fontWeight = '600';
+        dayHeader.style.color = '#004085';
+        dayHeader.style.textAlign = 'center';
+        calendarEl.appendChild(dayHeader);
+    });
+
+    // Generate 30 days starting from today
+    for (let i = 0; i < 30; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day';
+        dayEl.textContent = date.getDate();
+        dayEl.dataset.date = date.toISOString().split('T')[0];
+
+        // Disable past dates (should not happen with current logic)
+        if (date < today) {
+            dayEl.classList.add('past');
+        } else {
+            dayEl.addEventListener('click', () => selectDate(date, dayEl));
+        }
+
+        calendarEl.appendChild(dayEl);
+    }
+}
+
+function selectDate(date, element) {
+    // Remove previous selection
+    document.querySelectorAll('.calendar-day').forEach(day => day.classList.remove('selected'));
+
+    // Select new date
+    element.classList.add('selected');
+    bookingState.selectedDate = date.toISOString().split('T')[0];
+
+    // Enable continue button
+    document.getElementById('continue-to-time').disabled = false;
+
+    // Update display
+    document.getElementById('selected-date-display').textContent = date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
+async function loadTimeSlots() {
+    const timeSlotsEl = document.getElementById('booking-time-slots');
+    timeSlotsEl.innerHTML = '<div style="text-align: center; padding: 20px;">Loading available times...</div>';
+
+    try {
+        const response = await fetch(`${bookingState.apiUrl}/available-slots?date=${bookingState.selectedDate}`);
+        const data = await response.json();
+
+        if (data.success) {
+            timeSlotsEl.innerHTML = '';
+            data.slots.forEach(slot => {
+                const slotEl = document.createElement('div');
+                slotEl.className = 'time-slot';
+                if (!slot.available) {
+                    slotEl.classList.add('unavailable');
+                }
+                slotEl.textContent = slot.label;
+                slotEl.dataset.time = slot.time;
+
+                if (slot.available) {
+                    slotEl.addEventListener('click', () => selectTime(slot.time, slot.label, slotEl));
+                }
+
+                timeSlotsEl.appendChild(slotEl));
+            });
+        } else {
+            timeSlotsEl.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Failed to load time slots</div>';
+        }
+    } catch (error) {
+        console.error('Error loading time slots:', error);
+        timeSlotsEl.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Error loading time slots. Please try again.</div>';
+    }
+}
+
+function selectTime(time, label, element) {
+    // Remove previous selection
+    document.querySelectorAll('.time-slot').forEach(slot => slot.classList.remove('selected'));
+
+    // Select new time
+    element.classList.add('selected');
+    bookingState.selectedTime = time;
+    bookingState.selectedTimeLabel = label;
+
+    // Enable continue button
+    document.getElementById('continue-to-confirm').disabled = false;
+}
+
+function showBookingSummary() {
+    const { firstName, lastName, email, phone } = bookingState.customerInfo;
+
+    document.getElementById('summary-name').textContent = `${firstName} ${lastName}`;
+    document.getElementById('summary-email').textContent = email;
+    document.getElementById('summary-phone').textContent = phone;
+    document.getElementById('summary-date').textContent = new Date(bookingState.selectedDate).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    document.getElementById('summary-time').textContent = bookingState.selectedTimeLabel;
+    document.getElementById('summary-service').textContent = chatState.serviceType || 'Moving Service';
+}
+
+async function confirmBooking() {
+    const confirmBtn = document.getElementById('confirm-booking-btn');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<span class="loading-spinner"></span> Booking...';
+
+    try {
+        const { firstName, lastName, email, phone } = bookingState.customerInfo;
+        const notes = document.getElementById('booking-notes').value;
+
+        const bookingData = {
+            firstName,
+            lastName,
+            email,
+            phone,
+            date: bookingState.selectedDate,
+            time: bookingState.selectedTime,
+            serviceType: chatState.serviceType || 'Moving Service',
+            pickupAddress: chatState.data.pickupAddress || '',
+            dropoffAddress: chatState.data.dropoffAddress || '',
+            notes,
+            estimateDetails: chatState.data.estimateDetails || null
+        };
+
+        const response = await fetch(`${bookingState.apiUrl}/book-appointment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(bookingData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Show success screen
+            document.getElementById('confirmation-booking-id').textContent = data.bookingId;
+            document.getElementById('confirmation-date').textContent = new Date(bookingState.selectedDate).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('confirmation-time').textContent = bookingState.selectedTimeLabel;
+            document.getElementById('confirmation-email').textContent = email;
+
+            nextBookingStep(5);
+        } else {
+            alert('Failed to book appointment: ' + (data.error || 'Unknown error'));
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirm Booking';
+        }
+
+    } catch (error) {
+        console.error('Error confirming booking:', error);
+        alert('Failed to book appointment. Please try again or contact us at 330-435-8686');
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Confirm Booking';
+    }
+}
+
+function closeBookingUI() {
+    document.getElementById('wfm-booking-container').style.display = 'none';
+    // Reset booking state
+    bookingState.currentStep = 1;
+    bookingState.selectedDate = null;
+    bookingState.selectedTime = null;
+    bookingState.customerInfo = {};
+    document.querySelectorAll('.booking-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('booking-step-1').classList.add('active');
+}
+
+// Auto-fill customer data from chatbot
+function showBookingUI() {
+    // Auto-fill customer information from chatbot
+    if (chatState.data.firstName) {
+        document.getElementById('booking-first-name').value = chatState.data.firstName;
+    }
+    if (chatState.data.lastName) {
+        document.getElementById('booking-last-name').value = chatState.data.lastName;
+    }
+    if (chatState.data.email) {
+        document.getElementById('booking-email').value = chatState.data.email;
+    }
+    if (chatState.data.phone) {
+        document.getElementById('booking-phone').value = chatState.data.phone;
+    }
+
+    // Show booking UI
+    document.getElementById('wfm-booking-container').style.display = 'flex';
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBookingUI);
+} else {
+    initBookingUI();
+}
+</script>
