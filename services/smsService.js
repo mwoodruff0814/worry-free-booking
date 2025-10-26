@@ -274,6 +274,13 @@ async function sendSMSConfirmation(details) {
                 message = `REMINDER: Your ${companyDisplayName} appointment is TODAY! Arrival window: ${timeWindow}. Please ensure everything is ready. We're on our way! Questions? Call ${companyPhone}`;
                 break;
 
+            case 'timeoff-response':
+                // For time off approval/denial responses
+                // serviceType contains the status emoji and text
+                // pickupAddress contains the details
+                message = `Hi ${customerName}! ${serviceType}. ${pickupAddress}. Questions? Call ${companyPhone}`;
+                break;
+
             default:
                 if (calendarUrl) {
                     message = `Hi ${customerName}! Appointment update for ${formattedDate}. Arrival window: ${timeWindow}. Call ${companyPhone} for details.`;

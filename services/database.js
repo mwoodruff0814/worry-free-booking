@@ -353,6 +353,71 @@ async function updateServicesConfig(servicesData) {
 }
 
 // ========================================
+// TIME OFF REQUESTS OPERATIONS
+// ========================================
+
+/**
+ * Get all time off requests
+ */
+async function getAllTimeOffRequests() {
+    const database = getDatabase();
+    return await database.collection('timeOffRequests').find({}).sort({ createdAt: -1 }).toArray();
+}
+
+/**
+ * Get time off request by ID
+ */
+async function getTimeOffRequestById(requestId) {
+    const database = getDatabase();
+    return await database.collection('timeOffRequests').findOne({ requestId });
+}
+
+/**
+ * Create time off request
+ */
+async function createTimeOffRequest(request) {
+    const database = getDatabase();
+    const result = await database.collection('timeOffRequests').insertOne({
+        ...request,
+        createdAt: request.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    });
+
+    return {
+        ...request,
+        _id: result.insertedId
+    };
+}
+
+/**
+ * Update time off request status
+ */
+async function updateTimeOffRequestStatus(requestId, status, responseNote) {
+    const database = getDatabase();
+    const result = await database.collection('timeOffRequests').updateOne(
+        { requestId },
+        {
+            $set: {
+                status,
+                responseNote: responseNote || '',
+                respondedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }
+        }
+    );
+
+    return result.modifiedCount > 0;
+}
+
+/**
+ * Get pending time off requests
+ */
+async function getPendingTimeOffRequests() {
+    const database = getDatabase();
+    return await database.collection('timeOffRequests').find({ status: 'pending' }).sort({ createdAt: -1 }).toArray();
+}
+
+// ========================================
 // MIGRATION HELPERS
 // ========================================
 
@@ -418,6 +483,13 @@ module.exports = {
     // Services
     getServicesConfig,
     updateServicesConfig,
+
+    // Time Off Requests
+    getAllTimeOffRequests,
+    getTimeOffRequestById,
+    createTimeOffRequest,
+    updateTimeOffRequestStatus,
+    getPendingTimeOffRequests,
 
     // Migration
     bulkInsertAppointments,

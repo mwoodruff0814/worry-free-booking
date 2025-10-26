@@ -1078,6 +1078,7 @@
                 <button class="tab-button" onclick="switchTab('services')">💰 Services & Pricing</button>
                 <button class="tab-button" onclick="switchTab('users')">🔐 Authorized Users</button>
                 <button class="tab-button" onclick="switchTab('employees')">👷 Employees</button>
+                <button class="tab-button" onclick="switchTab('timeoff')">🗓️ Time Off Requests</button>
                 <button class="tab-button" onclick="switchTab('settings')">⚙️ Settings</button>
             </div>
         </div>
@@ -1391,6 +1392,34 @@
                     <div id="packingMaterialsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
                         <!-- Will be populated by JavaScript -->
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TIME OFF REQUESTS TAB -->
+        <div id="timeoffTab" class="tab-content">
+            <div class="dashboard-content">
+                <h2 style="color: #333; margin-bottom: 25px;">🗓️ Time Off Requests</h2>
+
+                <!-- Filter Tabs -->
+                <div style="margin-bottom: 20px; border-bottom: 2px solid #e9ecef;">
+                    <button id="timeoffFilterAll" class="filter-button active" onclick="filterTimeOffRequests('all')" style="padding: 10px 20px; border: none; background: none; cursor: pointer; border-bottom: 3px solid #667eea; color: #667eea; font-weight: 600;">
+                        All Requests
+                    </button>
+                    <button id="timeoffFilterPending" class="filter-button" onclick="filterTimeOffRequests('pending')" style="padding: 10px 20px; border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; color: #6c757d; font-weight: 600;">
+                        Pending
+                    </button>
+                    <button id="timeoffFilterApproved" class="filter-button" onclick="filterTimeOffRequests('approved')" style="padding: 10px 20px; border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; color: #6c757d; font-weight: 600;">
+                        Approved
+                    </button>
+                    <button id="timeoffFilterDenied" class="filter-button" onclick="filterTimeOffRequests('denied')" style="padding: 10px 20px; border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; color: #6c757d; font-weight: 600;">
+                        Denied
+                    </button>
+                </div>
+
+                <!-- Time Off Requests List -->
+                <div id="timeOffRequestsList" style="background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden;">
+                    <p style="text-align: center; padding: 40px; color: #6c757d;">Loading time off requests...</p>
                 </div>
             </div>
         </div>
@@ -5980,6 +6009,178 @@ service@worryfreemovers.com`;
                 button.textContent = originalText;
             }
         }
+
+        // ========================================
+        // TIME OFF REQUESTS FUNCTIONS
+        // ========================================
+
+        let allTimeOffRequests = [];
+        let currentTimeOffFilter = 'all';
+
+        async function loadTimeOffRequests() {
+            try {
+                const response = await fetch(`${API_URL}/api/crew-timeoff`);
+                const data = await response.json();
+
+                if (data.success) {
+                    allTimeOffRequests = data.requests || [];
+                    displayTimeOffRequests();
+                } else {
+                    document.getElementById('timeOffRequestsList').innerHTML = `
+                        <p style="text-align: center; padding: 40px; color: #dc3545;">
+                            Failed to load time off requests
+                        </p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading time off requests:', error);
+                document.getElementById('timeOffRequestsList').innerHTML = `
+                    <p style="text-align: center; padding: 40px; color: #dc3545;">
+                        Error loading time off requests
+                    </p>
+                `;
+            }
+        }
+
+        function filterTimeOffRequests(filter) {
+            currentTimeOffFilter = filter;
+
+            // Update filter button styles
+            document.querySelectorAll('.filter-button').forEach(btn => {
+                btn.style.borderBottom = '3px solid transparent';
+                btn.style.color = '#6c757d';
+            });
+
+            const activeButton = document.getElementById(`timeoffFilter${filter.charAt(0).toUpperCase() + filter.slice(1)}`);
+            if (activeButton) {
+                activeButton.style.borderBottom = '3px solid #667eea';
+                activeButton.style.color = '#667eea';
+            }
+
+            displayTimeOffRequests();
+        }
+
+        function displayTimeOffRequests() {
+            let filteredRequests = allTimeOffRequests;
+
+            if (currentTimeOffFilter !== 'all') {
+                filteredRequests = allTimeOffRequests.filter(req => req.status === currentTimeOffFilter);
+            }
+
+            if (filteredRequests.length === 0) {
+                document.getElementById('timeOffRequestsList').innerHTML = `
+                    <p style="text-align: center; padding: 40px; color: #6c757d;">
+                        No ${currentTimeOffFilter === 'all' ? '' : currentTimeOffFilter} time off requests found
+                    </p>
+                `;
+                return;
+            }
+
+            const html = filteredRequests.map(req => {
+                const statusColor = req.status === 'approved' ? '#28a745' : req.status === 'denied' ? '#dc3545' : '#ffc107';
+                const statusEmoji = req.status === 'approved' ? '✅' : req.status === 'denied' ? '❌' : '⏳';
+                const statusText = req.status.charAt(0).toUpperCase() + req.status.slice(1);
+
+                return `
+                    <div style="border-bottom: 1px solid #e9ecef; padding: 20px; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                        <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 15px;">
+                            <div style="flex: 1; min-width: 250px;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <span style="font-size: 24px;">${statusEmoji}</span>
+                                    <h3 style="margin: 0; color: #333;">${req.crewName}</h3>
+                                    <span style="background: ${statusColor}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                        ${statusText}
+                                    </span>
+                                </div>
+                                <div style="color: #6c757d; font-size: 14px; line-height: 1.6;">
+                                    <div><strong>Type:</strong> ${req.requestType || 'Vacation'}</div>
+                                    <div><strong>Dates:</strong> ${new Date(req.startDate).toLocaleDateString()} - ${new Date(req.endDate).toLocaleDateString()}</div>
+                                    <div><strong>Duration:</strong> ${req.daysCount} day(s)</div>
+                                    <div><strong>Email:</strong> ${req.crewEmail}</div>
+                                    <div><strong>Phone:</strong> ${req.crewPhone}</div>
+                                    <div><strong>Submitted:</strong> ${new Date(req.submittedDate || req.createdAt).toLocaleString()}</div>
+                                    ${req.reason ? `<div><strong>Reason:</strong> ${req.reason}</div>` : ''}
+                                    ${req.responseNote ? `<div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px;"><strong>Response Note:</strong> ${req.responseNote}</div>` : ''}
+                                    ${req.respondedAt ? `<div><strong>Responded:</strong> ${new Date(req.respondedAt).toLocaleString()}</div>` : ''}
+                                </div>
+                            </div>
+                            ${req.status === 'pending' ? `
+                            <div style="display: flex; flex-direction: column; gap: 10px; min-width: 200px;">
+                                <input
+                                    type="text"
+                                    id="note-${req.requestId}"
+                                    placeholder="Add response note (optional)"
+                                    style="padding: 8px 12px; border: 1px solid #ced4da; border-radius: 5px; font-size: 14px;"
+                                />
+                                <button
+                                    onclick="respondToTimeOffRequest('${req.requestId}', 'approved')"
+                                    style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: 600; transition: background 0.2s;"
+                                    onmouseover="this.style.background='#218838'"
+                                    onmouseout="this.style.background='#28a745'"
+                                >
+                                    ✅ Approve
+                                </button>
+                                <button
+                                    onclick="respondToTimeOffRequest('${req.requestId}', 'denied')"
+                                    style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: 600; transition: background 0.2s;"
+                                    onmouseover="this.style.background='#c82333'"
+                                    onmouseout="this.style.background='#dc3545'"
+                                >
+                                    ❌ Deny
+                                </button>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('timeOffRequestsList').innerHTML = html;
+        }
+
+        async function respondToTimeOffRequest(requestId, status) {
+            const noteInput = document.getElementById(`note-${requestId}`);
+            const responseNote = noteInput ? noteInput.value.trim() : '';
+
+            const confirmMessage = status === 'approved'
+                ? `Are you sure you want to APPROVE this time off request?${responseNote ? `\n\nNote: ${responseNote}` : ''}`
+                : `Are you sure you want to DENY this time off request?${responseNote ? `\n\nNote: ${responseNote}` : ''}`;
+
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/crew-timeoff/respond`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        requestId,
+                        status,
+                        responseNote
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`✅ Time off request ${status} successfully!\n\nEmployee will receive email and SMS confirmation.`);
+                    await loadTimeOffRequests(); // Reload the list
+                } else {
+                    alert(`❌ Error: ${data.error || 'Failed to respond to time off request'}`);
+                }
+            } catch (error) {
+                console.error('Error responding to time off request:', error);
+                alert('❌ Failed to respond to time off request. Please try again.');
+            }
+        }
+
+        // Load time off requests when tab is opened
+        document.querySelector('button[onclick="switchTab(\'timeoff\')"]').addEventListener('click', () => {
+            loadTimeOffRequests();
+        });
     </script>
 </body>
 </html>

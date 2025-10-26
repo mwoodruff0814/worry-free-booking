@@ -29,7 +29,12 @@ const {
     updateEmployeeLogin,
     updateEmployeePassword,
     getServicesConfig,
-    updateServicesConfig
+    updateServicesConfig,
+    getAllTimeOffRequests,
+    getTimeOffRequestById,
+    createTimeOffRequest,
+    updateTimeOffRequestStatus,
+    getPendingTimeOffRequests
 } = require('./services/database');
 
 const app = express();
@@ -1787,20 +1792,8 @@ app.post('/api/crew-timeoff', async (req, res) => {
             createdAt: new Date().toISOString()
         };
 
-        // Load existing requests
-        let requests = [];
-        try {
-            const data = await fs.readFile(CREW_TIMEOFF_FILE, 'utf8');
-            requests = JSON.parse(data);
-        } catch (error) {
-            // File doesn't exist yet, start with empty array
-        }
-
-        // Add new request
-        requests.push(timeOffRequest);
-
-        // Save to file
-        await fs.writeFile(CREW_TIMEOFF_FILE, JSON.stringify(requests, null, 2));
+        // Save to MongoDB
+        await createTimeOffRequest(timeOffRequest);
 
         // Send notification email to management
         const { sendCrewTimeOffNotification } = require('./services/emailService');
@@ -1913,12 +1906,8 @@ app.post('/api/crew-timeoff/respond', async (req, res) => {
             });
         }
 
-        // Load existing requests
-        const data = await fs.readFile(CREW_TIMEOFF_FILE, 'utf8');
-        const requests = JSON.parse(data);
-
-        // Find the request
-        const request = requests.find(r => r.requestId === requestId);
+        // Get request from MongoDB
+        const request = await getTimeOffRequestById(requestId);
 
         if (!request) {
             return res.status(404).json({
@@ -1927,13 +1916,13 @@ app.post('/api/crew-timeoff/respond', async (req, res) => {
             });
         }
 
-        // Update request status
+        // Update request status in MongoDB
+        await updateTimeOffRequestStatus(requestId, status, responseNote);
+
+        // Update the local request object for email/SMS
         request.status = status;
         request.responseNote = responseNote || '';
         request.respondedAt = new Date().toISOString();
-
-        // Save updated requests
-        await fs.writeFile(CREW_TIMEOFF_FILE, JSON.stringify(requests, null, 2));
 
         // Send response email to crew member
         const { sendCrewTimeOffResponse } = require('./services/emailService');
@@ -1948,9 +1937,30 @@ app.post('/api/crew-timeoff/respond', async (req, res) => {
                 daysCount: request.daysCount,
                 responseNote
             });
-            console.log(`Time-off ${status} email sent to ${request.crewName}`);
+            console.log(`✅ Time-off ${status} email sent to ${request.crewName}`);
         } catch (error) {
-            console.error('Failed to send response email:', error);
+            console.error('❌ Failed to send response email:', error);
+        }
+
+        // Send SMS notification to crew member
+        const { sendSMSConfirmation } = require('./services/smsService');
+        try {
+            const statusEmoji = status === 'approved' ? '✅' : '❌';
+            const statusText = status === 'approved' ? 'APPROVED' : 'DENIED';
+
+            await sendSMSConfirmation({
+                phone: request.crewPhone,
+                customerName: request.crewName,
+                date: request.startDate,
+                time: '', // No time for time off requests
+                type: 'timeoff-response',
+                serviceType: `Time Off Request ${statusEmoji} ${statusText}`,
+                companyName: 'Worry Free Moving',
+                pickupAddress: `${request.daysCount} day(s) ${request.requestType}: ${request.startDate} to ${request.endDate}${responseNote ? `. Note: ${responseNote}` : ''}`
+            });
+            console.log(`✅ Time-off ${status} SMS sent to ${request.crewName} at ${request.crewPhone}`);
+        } catch (error) {
+            console.error('❌ Failed to send SMS notification:', error);
         }
 
         res.json({
@@ -1959,11 +1969,36 @@ app.post('/api/crew-timeoff/respond', async (req, res) => {
             request
         });
 
+        console.log(`✅ Time-off request ${requestId} ${status} for ${request.crewName}`);
+
     } catch (error) {
         console.error('Error responding to time-off request:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to respond to time-off request'
+        });
+    }
+});
+
+// Get all time off requests (admin only)
+app.get('/api/crew-timeoff', async (req, res) => {
+    try {
+        const requests = await getAllTimeOffRequests();
+
+        res.json({
+            success: true,
+            requests,
+            count: requests.length
+        });
+
+        console.log(`✅ Fetched ${requests.length} time-off requests`);
+
+    } catch (error) {
+        console.error('Error fetching time-off requests:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch time-off requests',
+            requests: []
         });
     }
 });
