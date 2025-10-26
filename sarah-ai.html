@@ -7640,13 +7640,7 @@ case 'select_heavy_item':
                             </span>
                         </div>
 
-                        <div style="background: #fff3cd; padding: 10px; border-radius: 8px; margin: 10px 0;">
-                            <strong>💰 Hourly Rate Breakdown:</strong><br>
-                            Base rate: $${CONFIG.rates.moving.base.toFixed(2)}/hour<br>
-                            Distance adjustment (+$${(fromDistance * CONFIG.rates.moving.distanceAdj).toFixed(2)} for ${fromDistance.toFixed(1)} miles): $${baseRate.toFixed(2)}/hour<br>
-                            ${crewSize > 2 ? `Crew size (${crewSize} movers, +$${((crewSize - 2) * CONFIG.rates.moving.crewAdd).toFixed(2)}): $${estimate.hourlyRate}/hour<br>` : ''}
-                            <strong>Final hourly rate: $${estimate.hourlyRate}/hour</strong>
-                        </div>
+                        💰 <strong>Hourly rate:</strong> $${estimate.hourlyRate}/hour<br><br>
 
                         <strong>💰 Your Investment:</strong><br>
                         Moving service (${estimate.totalHours} hrs): $${estimate.baseCost}<br>
