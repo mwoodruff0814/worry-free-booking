@@ -214,9 +214,50 @@ async function deleteGoogleCalendarEvent(eventIds) {
     return result;
 }
 
+/**
+ * Get all events from Matt's Google Calendar for a specific date
+ * Used for availability checking
+ */
+async function getEventsForDate(date) {
+    try {
+        if (!mattCalendar) {
+            console.warn('Matt\'s calendar not initialized');
+            return [];
+        }
+
+        // Parse the date and create time range for the full day
+        const startOfDay = new Date(date + 'T00:00:00');
+        const endOfDay = new Date(date + 'T23:59:59');
+
+        const response = await mattCalendar.events.list({
+            calendarId: 'matt@worryfreemovers.com',
+            timeMin: startOfDay.toISOString(),
+            timeMax: endOfDay.toISOString(),
+            singleEvents: true,
+            orderBy: 'startTime',
+        });
+
+        const events = response.data.items || [];
+
+        // Transform to simpler format
+        return events.map(event => ({
+            id: event.id,
+            summary: event.summary,
+            start: event.start.dateTime || event.start.date,
+            end: event.end.dateTime || event.end.date,
+            status: event.status
+        }));
+
+    } catch (error) {
+        console.error('❌ Failed to fetch events from Google Calendar:', error.message);
+        return [];
+    }
+}
+
 module.exports = {
     initGoogleAuth,
     createGoogleCalendarEvent,
     updateGoogleCalendarEvent,
-    deleteGoogleCalendarEvent
+    deleteGoogleCalendarEvent,
+    getEventsForDate
 };

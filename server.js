@@ -152,13 +152,13 @@ async function getAppointmentsByCompany(company) {
 
 // Save appointments for a specific company
 async function saveAppointmentsByCompany(company, appointments) {
+    const file = company === 'Quality Moving' ? QUALITY_APPOINTMENTS_FILE : WORRYFREE_APPOINTMENTS_FILE;
     try {
-        const file = company === 'Quality Moving' ? QUALITY_APPOINTMENTS_FILE : WORRYFREE_APPOINTMENTS_FILE;
         await fs.writeFile(file, JSON.stringify(appointments, null, 2));
         return true;
     } catch (error) {
-        console.error(`Error saving ${company} appointments:`, error);
-        return false;
+        console.error(`❌ CRITICAL: Failed to save ${company} appointments:`, error);
+        throw new Error(`Failed to save appointment to database: ${error.message}`);
     }
 }
 
@@ -195,13 +195,15 @@ app.get('/api/available-slots', async (req, res) => {
     try {
         const { date } = req.query;
 
-        // Use multi-calendar system to check availability across ALL calendars
+        // Use central admin calendar (single source of truth for availability)
         const { getAvailableSlots } = require('./services/calendarManager');
         const slots = await getAvailableSlots(date);
 
+        console.log(`📅 Available slots for ${date} from central calendar: ${slots.filter(s => s.available).length}/${slots.length} available`);
+
         res.json({ success: true, slots });
     } catch (error) {
-        console.error('Error fetching available slots:', error);
+        console.error('Error fetching available slots from central calendar:', error);
         res.status(500).json({ success: false, error: 'Failed to fetch available slots' });
     }
 });
@@ -239,6 +241,26 @@ app.post('/api/book-appointment', async (req, res) => {
                 success: false,
                 error: 'Missing required fields'
             });
+        }
+
+        // Validate availability before booking (check against central admin calendar)
+        try {
+            const { checkAvailability } = require('./services/calendarManager');
+            const availabilityCheck = await checkAvailability(date, time, serviceType);
+
+            if (!availabilityCheck.available) {
+                console.log(`⚠️ Requested time slot ${date} ${time} is not available in central calendar`);
+                return res.status(409).json({
+                    success: false,
+                    error: 'This time slot is no longer available. Please select a different time.',
+                    reason: availabilityCheck.reason
+                });
+            }
+
+            console.log(`✅ Time slot ${date} ${time} is available in central calendar - proceeding with booking`);
+        } catch (error) {
+            console.error('Error checking central calendar availability:', error);
+            // Continue with booking even if availability check fails (to prevent blocking legitimate bookings)
         }
 
         // Determine company - default to Worry Free if not specified
@@ -283,7 +305,45 @@ app.post('/api/book-appointment', async (req, res) => {
             createdAt: new Date().toISOString()
         };
 
-        // Create calendar event details using formatted description
+        // STEP 1: Save to CENTRAL ADMIN CALENDAR first (single source of truth)
+        const { addCalendarEvent, determineCalendar } = require('./services/calendarManager');
+        const calendarType = determineCalendar(serviceType || 'Moving Service');
+
+        const centralCalendarEvent = {
+            bookingId,
+            title: `${firstName} ${lastName}`,
+            date,
+            time,
+            serviceType: serviceType || 'Moving Service',
+            company: bookingCompany,
+            customer: {
+                firstName,
+                lastName,
+                email,
+                phone
+            },
+            addresses: {
+                pickup: pickupAddress || '',
+                dropoff: dropoffAddress || ''
+            },
+            estimateDetails: estimateDetails || null,
+            estimatedHours: estimatedHours || null,
+            numMovers: numMovers || null,
+            estimatedTotal: estimatedTotal || null,
+            status: 'confirmed',
+            notes: notes || ''
+        };
+
+        await addCalendarEvent(calendarType, centralCalendarEvent);
+        console.log(`📅 Event added to central ${calendarType} calendar: ${bookingId}`);
+
+        // STEP 2: Save to appointments database
+        const appointments = await getAppointmentsByCompany(bookingCompany);
+        appointments.push(appointment);
+        await saveAppointmentsByCompany(bookingCompany, appointments);
+        console.log(`📋 ${bookingCompany} booking saved to database: ${bookingId}`);
+
+        // STEP 3: Sync to Google Calendar (Matt's and Zach's personal calendars)
         const eventDetails = {
             summary: `[${bookingCompany === 'Quality Moving' ? 'QM' : 'WF'}] ${serviceType || 'Moving Service'} - ${firstName} ${lastName}`,
             description: formatCalendarDescription(appointment),
@@ -293,22 +353,23 @@ app.post('/api/book-appointment', async (req, res) => {
             attendees: ['zlarimer24@gmail.com']
         };
 
-        // Add to Google Calendar (both Matt's and Zach's calendars)
         try {
             const googleEventIds = await createGoogleCalendarEvent(eventDetails);
             appointment.googleEventId = googleEventIds; // { matt: id, zach: id }
-            console.log('✅ Google Calendar events created:', googleEventIds);
+
+            // Update appointment with Google Calendar IDs
+            const updatedAppointments = await getAppointmentsByCompany(bookingCompany);
+            const aptIndex = updatedAppointments.findIndex(a => a.bookingId === bookingId);
+            if (aptIndex !== -1) {
+                updatedAppointments[aptIndex].googleEventId = googleEventIds;
+                await saveAppointmentsByCompany(bookingCompany, updatedAppointments);
+            }
+
+            console.log('✅ Synced to Google Calendars:', googleEventIds);
         } catch (error) {
-            console.error('❌ Failed to create Google Calendar event:', error);
-            // Continue even if Google Calendar fails
+            console.error('❌ Failed to sync to Google Calendar:', error);
+            // Continue even if Google Calendar sync fails - booking still saved to central calendar
         }
-
-        // Save to company-specific storage
-        const appointments = await getAppointmentsByCompany(bookingCompany);
-        appointments.push(appointment);
-        await saveAppointmentsByCompany(bookingCompany, appointments);
-
-        console.log(`📋 ${bookingCompany} booking created: ${bookingId}`);
 
         // iCloud Calendar disabled - customers can add via email calendar buttons instead
         // try {
