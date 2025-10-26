@@ -1072,7 +1072,8 @@
         <!-- Tab Navigation -->
         <div class="tab-navigation">
             <div class="tab-nav-inner">
-                <button class="tab-button active" onclick="switchTab('bookings')">📅 Bookings</button>
+                <button class="tab-button active" onclick="switchTab('home')">🏠 Home</button>
+                <button class="tab-button" onclick="switchTab('bookings')">📅 Bookings</button>
                 <button class="tab-button" onclick="switchTab('customers')">👥 Customers</button>
                 <button class="tab-button" onclick="switchTab('calendar')">🗓️ Calendar</button>
                 <button class="tab-button" onclick="switchTab('services')">💰 Services & Pricing</button>
@@ -1083,8 +1084,48 @@
             </div>
         </div>
 
+        <!-- HOME TAB -->
+        <div id="homeTab" class="tab-content active">
+            <div class="dashboard-content">
+                <h2 style="color: #333; margin-bottom: 25px;">🏠 Dashboard Home</h2>
+
+                <!-- Quick Stats -->
+                <div class="stats-grid" style="margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-details">
+                            <div class="stat-value" id="homePendingTimeoff">0</div>
+                            <div class="stat-label">Pending Time Off</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-details">
+                            <div class="stat-value" id="homeTodayBookings">0</div>
+                            <div class="stat-label">Today's Bookings</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔔</div>
+                        <div class="stat-details">
+                            <div class="stat-value" id="homeRecentActivity">0</div>
+                            <div class="stat-label">Recent Activity (24h)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications Feed -->
+                <div style="background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 20px;">
+                    <h3 style="margin-bottom: 20px; color: #333;">🔔 Recent Notifications</h3>
+                    <div id="notificationsFeed">
+                        <p style="text-align: center; padding: 40px; color: #6c757d;">Loading notifications...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- BOOKINGS TAB -->
-        <div id="bookingsTab" class="tab-content active">
+        <div id="bookingsTab" class="tab-content">
             <div class="dashboard-content">
             <!-- Stats -->
             <div class="stats-grid">
@@ -6082,7 +6123,7 @@ service@worryfreemovers.com`;
 
         async function loadTimeOffRequests() {
             try {
-                const response = await fetch(`${API_URL}/api/crew-timeoff`);
+                const response = await fetch(`${API_URL}/crew-timeoff`);
                 const data = await response.json();
 
                 if (data.success) {
@@ -6214,7 +6255,7 @@ service@worryfreemovers.com`;
             }
 
             try {
-                const response = await fetch(`${API_URL}/api/crew-timeoff/respond`, {
+                const response = await fetch(`${API_URL}/crew-timeoff/respond`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -6231,6 +6272,7 @@ service@worryfreemovers.com`;
                 if (data.success) {
                     alert(`✅ Time off request ${status} successfully!\n\nEmployee will receive email and SMS confirmation.`);
                     await loadTimeOffRequests(); // Reload the list
+                    loadHomeNotifications(); // Reload home notifications
                 } else {
                     alert(`❌ Error: ${data.error || 'Failed to respond to time off request'}`);
                 }
@@ -6246,6 +6288,156 @@ service@worryfreemovers.com`;
         });
 
         // ========================================
+        // HOME TAB - NOTIFICATIONS FEED
+        // ========================================
+
+        async function loadHomeNotifications() {
+            try {
+                // Fetch appointments and time off requests in parallel
+                const [appointmentsRes, timeoffRes] = await Promise.all([
+                    fetch(`${API_URL}/appointments`),
+                    fetch(`${API_URL}/crew-timeoff`)
+                ]);
+
+                const appointmentsData = await appointmentsRes.json();
+                const timeoffData = await timeoffRes.json();
+
+                const appointments = appointmentsData.appointments || [];
+                const timeoffRequests = timeoffData.requests || [];
+
+                // Filter for recent activity (last 24 hours)
+                const oneDayAgo = new Date();
+                oneDayAgo.setHours(oneDayAgo.getDate() - 1);
+
+                const recentAppointments = appointments.filter(apt => {
+                    const createdDate = new Date(apt.createdAt || apt.date);
+                    return createdDate >= oneDayAgo;
+                });
+
+                // Count today's bookings
+                const today = new Date().toISOString().split('T')[0];
+                const todayBookings = appointments.filter(apt => apt.date === today);
+
+                // Count pending time off
+                const pendingTimeoff = timeoffRequests.filter(req => req.status === 'pending');
+
+                // Update stats
+                document.getElementById('homePendingTimeoff').textContent = pendingTimeoff.length;
+                document.getElementById('homeTodayBookings').textContent = todayBookings.length;
+                document.getElementById('homeRecentActivity').textContent = recentAppointments.length + pendingTimeoff.length;
+
+                // Build notifications array
+                const notifications = [];
+
+                // Add time off requests as notifications
+                pendingTimeoff.forEach(req => {
+                    notifications.push({
+                        type: 'timeoff',
+                        time: new Date(req.submittedDate || req.createdAt),
+                        icon: '📋',
+                        title: `Time Off Request - ${req.crewName}`,
+                        description: `${req.requestType} • ${formatDateET(req.startDate)} to ${formatDateET(req.endDate)} • ${req.daysCount} day(s)`,
+                        actions: [
+                            { label: '✅ Approve', color: '#28a745', onClick: `respondToTimeOffRequest('${req.requestId}', 'approved')` },
+                            { label: '❌ Deny', color: '#dc3545', onClick: `respondToTimeOffRequest('${req.requestId}', 'denied')` },
+                            { label: 'View Details', color: '#007bff', onClick: `switchTab('timeoff')` }
+                        ],
+                        data: req
+                    });
+                });
+
+                // Add recent bookings as notifications
+                recentAppointments.forEach(apt => {
+                    notifications.push({
+                        type: 'booking',
+                        time: new Date(apt.createdAt || apt.date),
+                        icon: '📅',
+                        title: `New Booking - ${apt.customerName}`,
+                        description: `${apt.serviceType} • ${formatDateET(apt.date)} ${apt.time ? 'at ' + apt.time : ''}`,
+                        actions: [
+                            { label: 'View Details', color: '#007bff', onClick: `viewAppointmentDetails('${apt.bookingId}')` }
+                        ],
+                        data: apt
+                    });
+                });
+
+                // Sort by most recent first
+                notifications.sort((a, b) => b.time - a.time);
+
+                // Display notifications
+                displayNotifications(notifications);
+
+            } catch (error) {
+                console.error('Error loading home notifications:', error);
+                document.getElementById('notificationsFeed').innerHTML = `
+                    <p style="text-align: center; padding: 40px; color: #dc3545;">
+                        Error loading notifications
+                    </p>
+                `;
+            }
+        }
+
+        function displayNotifications(notifications) {
+            if (notifications.length === 0) {
+                document.getElementById('notificationsFeed').innerHTML = `
+                    <p style="text-align: center; padding: 40px; color: #6c757d;">
+                        No recent notifications
+                    </p>
+                `;
+                return;
+            }
+
+            const html = notifications.map(notif => {
+                const timeAgo = getTimeAgo(notif.time);
+                const actionsHtml = notif.actions.map(action => `
+                    <button onclick="${action.onClick}" style="background: ${action.color}; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-right: 8px; font-size: 13px; font-weight: 600; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                        ${action.label}
+                    </button>
+                `).join('');
+
+                return `
+                    <div style="border-bottom: 1px solid #e9ecef; padding: 20px; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                        <div style="display: flex; gap: 15px;">
+                            <div style="font-size: 40px;">${notif.icon}</div>
+                            <div style="flex: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                    <h4 style="margin: 0; color: #333; font-size: 16px;">${notif.title}</h4>
+                                    <span style="font-size: 12px; color: #6c757d;">${timeAgo}</span>
+                                </div>
+                                <p style="margin: 0 0 12px 0; color: #6c757d; font-size: 14px;">${notif.description}</p>
+                                <div>
+                                    ${actionsHtml}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('notificationsFeed').innerHTML = html;
+        }
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+            if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+            if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+            return formatDateET(date.toISOString().split('T')[0]);
+        }
+
+        // Load home notifications when home tab is opened
+        document.querySelector('button[onclick="switchTab(\'home\')"]').addEventListener('click', () => {
+            loadHomeNotifications();
+        });
+
+        // Load home notifications on page load (since home is default tab)
+        if (sessionToken) {
+            loadHomeNotifications();
+        }
+
+        // ========================================
         // EMPLOYEE TIME OFF HISTORY FUNCTIONS
         // ========================================
 
@@ -6256,7 +6448,7 @@ service@worryfreemovers.com`;
 
             try {
                 // Fetch all time off requests
-                const response = await fetch(`${API_URL}/api/crew-timeoff`);
+                const response = await fetch(`${API_URL}/crew-timeoff`);
                 const data = await response.json();
 
                 if (data.success) {
