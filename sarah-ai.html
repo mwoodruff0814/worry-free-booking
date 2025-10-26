@@ -7504,6 +7504,17 @@ case 'select_heavy_item':
                     const hourlyRate = baseRate + ((crewSize - 2) * CONFIG.rates.moving.crewAdd);
                     const baseCost = totalHours * hourlyRate;
                     const serviceCharge = baseCost * CONFIG.rates.moving.serviceCharge;
+
+                    // Debug logging to verify distance adjustment
+                    console.log('🔍 DISTANCE PRICING DEBUG:');
+                    console.log('   From Distance:', fromDistance, 'miles');
+                    console.log('   Base Rate (192.50):', CONFIG.rates.moving.base);
+                    console.log('   Distance Adj (0.75/mile):', CONFIG.rates.moving.distanceAdj);
+                    console.log('   Distance Charge:', (fromDistance * CONFIG.rates.moving.distanceAdj).toFixed(2));
+                    console.log('   Base Rate After Distance:', baseRate.toFixed(2));
+                    console.log('   Crew Size:', crewSize);
+                    console.log('   Crew Adjustment:', ((crewSize - 2) * CONFIG.rates.moving.crewAdd).toFixed(2));
+                    console.log('   FINAL HOURLY RATE:', hourlyRate.toFixed(2));
                     
                     // Calculate all fees
                     const specialItemFee = CONFIG.specialItems[chatState.data.specialItems]?.fee || 0;
