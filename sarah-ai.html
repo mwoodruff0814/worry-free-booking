@@ -4404,14 +4404,14 @@ if (isMobile && send) {
             
             const greeting = getRandomResponse(SARAH_PERSONALITY.greetings);
             showBotMessage(greeting);
-            
+
             setTimeout(() => {
                 showBotMessage("I can help you get an instant estimate and schedule your move today! Before we start, what's your full name? 😊");
                 showInput("Enter your full name (first and last)...");
                 chatState.stage = 'get_name_initial';
                 saveNavigationState();
                 saveSession();
-            }, 1200);
+            }, 400);
         }
 
         function openChat() {
