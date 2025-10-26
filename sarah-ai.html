@@ -1598,6 +1598,10 @@
             formSubmitUrl: "https://formsubmit.co/ajax/service@worryfreemovers.com",
             additionalEmail: "bwdrff1990@gmail.com,zlarimer24@gmail.com",
             storageKey: "wfm_chat_session",
+            // Backend API URL (auto-detects environment)
+            apiUrl: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'http://localhost:3001'
+                : 'https://worry-free-booking.onrender.com',
             // Cloudinary configuration
             cloudinary: {
                 cloudName: "dhiukpg4d",
