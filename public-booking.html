@@ -2674,10 +2674,10 @@
 
                 const data = await response.json();
 
-                if (data.success) {
-                    // Show success page
+                if (data.success && data.bookingId) {
+                    // Show success page with booking ID
                     document.getElementById('bookingIdDisplay').textContent =
-                        'Booking ID: #' + (data.bookingId || Math.floor(Math.random() * 100000));
+                        'Booking ID: ' + data.bookingId;
 
                     currentStep = 'success';
                     showStep('success');
@@ -2687,7 +2687,7 @@
                     // Clear local storage
                     localStorage.removeItem('bookingData');
                 } else {
-                    alert('Booking failed: ' + (data.message || 'Unknown error'));
+                    alert('Booking failed: ' + (data.message || data.error || 'Unknown error. Please call us at (330) 435-8686'));
                 }
             } catch (error) {
                 console.error('Error confirming booking:', error);

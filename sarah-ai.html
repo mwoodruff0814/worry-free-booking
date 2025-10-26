@@ -394,6 +394,198 @@
             background: #e2e8f0;
         }
 
+        /* Date & Time Scheduler Styles */
+        #wfm-datetime-scheduler {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 10002;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .scheduler-header {
+            background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .scheduler-header button {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .scheduler-header button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .scheduler-header span {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .scheduler-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .scheduler-step {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .scheduler-step h3 {
+            color: #004085;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .scheduler-date-input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .scheduler-date-input:focus {
+            border-color: #004085;
+            box-shadow: 0 0 0 3px rgba(0,64,133,0.1);
+        }
+
+        .scheduler-btn-primary {
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0,64,133,0.3);
+        }
+
+        .scheduler-btn-primary:hover {
+            background: linear-gradient(135deg, #002855 0%, #004085 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,64,133,0.4);
+        }
+
+        .scheduler-btn-primary:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .scheduler-btn-secondary {
+            padding: 12px 20px;
+            background: #e2e8f0;
+            color: #333;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .scheduler-btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .selected-date-display {
+            background: #eef2ff;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #004085;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .time-slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .time-slot-button {
+            padding: 14px;
+            border: 2px solid #004085;
+            background: white;
+            color: #004085;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .time-slot-button:hover {
+            background: #e7f3ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,64,133,0.2);
+        }
+
+        .time-slot-button.selected {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-color: #28a745;
+            box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+        }
+
+        .no-slots-message {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            color: #856404;
+            text-align: center;
+        }
+
+        .scheduler-nav-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .scheduler-nav-buttons .scheduler-btn-secondary {
+            flex: 1;
+        }
+
+        .scheduler-nav-buttons .scheduler-btn-primary {
+            flex: 2;
+        }
+
+        /* Mobile adjustments for scheduler */
+        @media (max-width: 768px) {
+            .time-slots-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+
         /* Acuity Container Styles */
         #wfm-acuity-container {
             position: absolute;
@@ -1291,6 +1483,38 @@
                     <button class="date-cancel-btn">Cancel</button>
                 </div>
             </div>
+
+            <!-- Date & Time Scheduler (Live Availability) -->
+            <div id="wfm-datetime-scheduler" style="display: none;">
+                <div class="scheduler-header">
+                    <button id="wfm-scheduler-back">← Back to Chat</button>
+                    <span>📅 Schedule Your Move</span>
+                </div>
+                <div class="scheduler-content">
+                    <!-- Step 1: Date Selection -->
+                    <div id="scheduler-date-step" class="scheduler-step">
+                        <h3>Select Your Preferred Date</h3>
+                        <input type="date" id="scheduler-date-input" min="" class="scheduler-date-input">
+                        <button id="scheduler-date-next" class="scheduler-btn-primary">Next: Choose Time →</button>
+                    </div>
+
+                    <!-- Step 2: Time Selection -->
+                    <div id="scheduler-time-step" class="scheduler-step" style="display: none;">
+                        <h3>Available Time Slots</h3>
+                        <div id="scheduler-selected-date" class="selected-date-display"></div>
+                        <div id="scheduler-time-slots" class="time-slots-grid">
+                            <!-- Time slots loaded here -->
+                        </div>
+                        <div id="scheduler-no-slots" style="display: none;" class="no-slots-message">
+                            <p>⚠️ No available slots for this date. Please go back and select a different date.</p>
+                        </div>
+                        <div class="scheduler-nav-buttons">
+                            <button id="scheduler-time-back" class="scheduler-btn-secondary">← Back to Date</button>
+                            <button id="scheduler-time-confirm" class="scheduler-btn-primary" style="display: none;">Continue to Payment →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <!-- Acuity Container -->
             <div id="wfm-acuity-container" style="display: none;">
@@ -1708,7 +1932,17 @@
 const datePickerContainer = document.getElementById('wfm-date-picker-container');
 const datePickerInput = document.getElementById('wfm-date-picker');
 let dateConfirmBtn, dateCancelBtn;
-        
+
+        // Date & Time Scheduler elements
+        const datetimeScheduler = document.getElementById('wfm-datetime-scheduler');
+        const schedulerDateInput = document.getElementById('scheduler-date-input');
+        const schedulerDateStep = document.getElementById('scheduler-date-step');
+        const schedulerTimeStep = document.getElementById('scheduler-time-step');
+        const schedulerTimeSlotsContainer = document.getElementById('scheduler-time-slots');
+        const schedulerSelectedDate = document.getElementById('scheduler-selected-date');
+        const schedulerNoSlots = document.getElementById('scheduler-no-slots');
+        let selectedTimeSlot = null;
+
         // Acuity elements
         const acuityContainer = document.getElementById('wfm-acuity-container');
         const acuityIframe = document.getElementById('wfm-acuity-iframe');
@@ -2432,6 +2666,156 @@ setTimeout(() => {
             showInput("Enter your preferred date...");
         }
 
+        // ========================================
+        // DATE & TIME SCHEDULER FUNCTIONS (LIVE AVAILABILITY)
+        // ========================================
+
+        // Show the date/time scheduler
+        function showDateTimeScheduler() {
+            // Hide chat elements
+            messages.style.display = 'none';
+            navigation.style.display = 'none';
+            options.style.display = 'none';
+            inputArea.style.display = 'none';
+
+            // Show scheduler
+            datetimeScheduler.style.display = 'flex';
+
+            // Reset scheduler state
+            schedulerDateStep.style.display = 'block';
+            schedulerTimeStep.style.display = 'none';
+            schedulerTimeSlotsContainer.innerHTML = '';
+            schedulerNoSlots.style.display = 'none';
+            selectedTimeSlot = null;
+
+            // Set minimum date to today
+            const today = new Date();
+            const dd = String(today.getDate()).padStart(2, '0');
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const yyyy = today.getFullYear();
+            schedulerDateInput.min = yyyy + '-' + mm + '-' + dd;
+            schedulerDateInput.value = '';
+        }
+
+        // Hide the scheduler
+        function hideDateTimeScheduler() {
+            datetimeScheduler.style.display = 'none';
+            // Show chat elements again
+            messages.style.display = 'block';
+            navigation.style.display = 'flex';
+        }
+
+        // Handle date selection - fetch available time slots
+        async function handleSchedulerDateSelection() {
+            const selectedDate = schedulerDateInput.value;
+            if (!selectedDate) {
+                alert('Please select a date');
+                return;
+            }
+
+            // Store the selected date
+            chatState.data.movingDate = selectedDate;
+
+            // Format date for display
+            const date = new Date(selectedDate + 'T00:00:00');
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedDate = date.toLocaleDateString('en-US', options);
+            chatState.data.formattedDate = formattedDate;
+
+            // Show loading state
+            schedulerTimeSlotsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">Loading available time slots...</div>';
+
+            // Hide date step, show time step
+            schedulerDateStep.style.display = 'none';
+            schedulerTimeStep.style.display = 'block';
+            schedulerSelectedDate.textContent = formattedDate;
+
+            // Fetch available slots from API
+            try {
+                const response = await fetch(`${CONFIG.apiUrl}/api/available-slots?date=${selectedDate}`);
+                const data = await response.json();
+
+                schedulerTimeSlotsContainer.innerHTML = '';
+
+                if (data.success && data.slots && data.slots.length > 0) {
+                    schedulerNoSlots.style.display = 'none';
+
+                    // Create time slot buttons
+                    data.slots.forEach(slot => {
+                        const btn = document.createElement('button');
+                        btn.className = 'time-slot-button';
+                        btn.textContent = slot.time;
+                        btn.dataset.time = slot.time;
+
+                        btn.onclick = function() {
+                            // Deselect all other slots
+                            document.querySelectorAll('.time-slot-button').forEach(b => {
+                                b.classList.remove('selected');
+                            });
+
+                            // Select this slot
+                            this.classList.add('selected');
+                            selectedTimeSlot = slot.time;
+                            chatState.data.movingTime = slot.time;
+
+                            // Show confirm button
+                            document.getElementById('scheduler-time-confirm').style.display = 'block';
+                        };
+
+                        schedulerTimeSlotsContainer.appendChild(btn);
+                    });
+                } else {
+                    // No slots available
+                    schedulerNoSlots.style.display = 'block';
+                    document.getElementById('scheduler-time-confirm').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error fetching time slots:', error);
+                schedulerTimeSlotsContainer.innerHTML = `
+                    <div style="background: #fff3cd; padding: 20px; border-radius: 10px; color: #856404; text-align: center;">
+                        <p><strong>⚠️ Unable to load time slots</strong></p>
+                        <p>Please try again or call us at 330-435-8686</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Go back to date selection from time selection
+        function backToDateSelection() {
+            schedulerTimeStep.style.display = 'none';
+            schedulerDateStep.style.display = 'block';
+            selectedTimeSlot = null;
+            chatState.data.movingTime = null;
+        }
+
+        // Confirm date and time - proceed to payment
+        function confirmDateTimeSelection() {
+            if (!selectedTimeSlot) {
+                alert('Please select a time slot');
+                return;
+            }
+
+            // Hide scheduler
+            hideDateTimeScheduler();
+
+            // Show confirmation messages
+            const formattedDate = chatState.data.formattedDate;
+            const formattedTime = selectedTimeSlot;
+
+            showUserMessage(`${formattedDate} at ${formattedTime}`);
+            showBotMessage(`Perfect! I have ${formattedDate} at ${formattedTime} noted for your move.`);
+
+            setTimeout(() => {
+                showBotMessage("Now let's save a card for easy payment after your move is complete!");
+                setTimeout(() => {
+                    showBotMessage("💡 Your card will be securely saved. No charges until after your move is complete!");
+                    setTimeout(() => {
+                        showPaymentModal();
+                    }, 1000);
+                }, 1000);
+            }, 800);
+        }
+
         // Acuity integration functions with parameter passing
         function showAcuityScheduler() {
             // Hide chat elements
@@ -2672,36 +3056,48 @@ setTimeout(() => {
 
                 showPaymentStatus(`✅ ${result.message || 'Card saved successfully!'}`, 'success');
 
-                // Send confirmation email
+                // Create booking with date/time and get booking ID
                 setTimeout(() => {
-                    submitLead().then(() => {
+                    createBooking().then((bookingResult) => {
+                        const bookingId = bookingResult.bookingId;
+
                         setTimeout(() => {
                             hidePaymentModal();
                             showBotMessage("🎉 Perfect! Your card is securely saved and your booking is complete!");
                             showBotMessage(`Payment method saved: ${result.cardBrand} ending in ${result.cardLast4}`);
 
-                            // Show confirmation screen
+                            // Show confirmation screen with booking number
                             setTimeout(() => {
                                 showBotMessage("✅ BOOKING CONFIRMED!");
                                 setTimeout(() => {
-                                    showBotMessage(`📧 Confirmation email sent to ${customerEmail}`);
+                                    showBotMessage(`🎫 Your Booking Number: <strong style="font-size: 18px; color: #004085;">${bookingId}</strong>`);
                                     setTimeout(() => {
-                                        showBotMessage("📞 A member of our team will reach out to you within 24-48 hours to confirm all details and answer any questions.");
+                                        showBotMessage(`📧 Confirmation email sent to ${customerEmail}`);
                                         setTimeout(() => {
-                                            showBotMessage("If you need immediate assistance, call us at 330-435-8686");
-                                            // Show options for what's next
+                                            showBotMessage(`📅 Scheduled for: ${chatState.data.formattedDate} at ${chatState.data.movingTime}`);
                                             setTimeout(() => {
-                                                showOptions([
-                                                    { text: "📋 View My Booking", value: "view_booking" },
-                                                    { text: "📞 Call Us Now", value: "call" },
-                                                    { text: "💬 Start New Estimate", value: "restart" }
-                                                ]);
+                                                showBotMessage("📞 A member of our team will reach out to you within 24-48 hours to confirm all details and answer any questions.");
+                                                setTimeout(() => {
+                                                    showBotMessage("If you need immediate assistance, call us at 330-435-8686");
+                                                    // Show options for what's next
+                                                    setTimeout(() => {
+                                                        showOptions([
+                                                            { text: "📋 View My Booking", value: "view_booking" },
+                                                            { text: "📞 Call Us Now", value: "call" },
+                                                            { text: "💬 Start New Estimate", value: "restart" }
+                                                        ]);
+                                                    }, 1500);
+                                                }, 1500);
                                             }, 1500);
                                         }, 1500);
                                     }, 1500);
                                 }, 1000);
                             }, 1000);
                         }, 1500);
+                    }).catch((error) => {
+                        hidePaymentModal();
+                        showBotMessage(`❌ There was an issue creating your booking: ${error.message}`);
+                        showBotMessage("Your card has been saved, but please call us at 330-435-8686 to confirm your booking.");
                     });
                 }, 2000);
 
@@ -3125,7 +3521,13 @@ dateConfirmBtn = document.querySelector('.date-confirm-btn');
 dateCancelBtn = document.querySelector('.date-cancel-btn');
 if (dateConfirmBtn) dateConfirmBtn.addEventListener('click', handleDateConfirm);
 if (dateCancelBtn) dateCancelBtn.addEventListener('click', handleDateCancel);
-                
+
+                // Date & Time Scheduler event listeners
+                document.getElementById('wfm-scheduler-back').addEventListener('click', hideDateTimeScheduler);
+                document.getElementById('scheduler-date-next').addEventListener('click', handleSchedulerDateSelection);
+                document.getElementById('scheduler-time-back').addEventListener('click', backToDateSelection);
+                document.getElementById('scheduler-time-confirm').addEventListener('click', confirmDateTimeSelection);
+
                 // Acuity back button
                 acuityBackBtn.addEventListener('click', hideAcuityScheduler);
 
@@ -6831,18 +7233,15 @@ case 'select_heavy_item':
 
     // Check if quote already submitted
     if (chatState.data.quoteSubmitted) {
-        // Quote already sent, go straight to date picker
+        // Quote already sent, go straight to scheduler
         showBotMessage("✅ Great! Let's schedule your move.");
         setTimeout(() => {
-            showBotMessage("📅 Please select your preferred date:");
-            setTimeout(() => {
-                showDatePicker();
-            }, 500);
+            showDateTimeScheduler();
         }, 500);
     } else {
         // Need to collect info or submit quote first
         chatState.data.isAutoSubmit = true;
-        chatState.data.isSchedulingAfterEmail = true; // Flag that we're scheduling
+        chatState.data.isSchedulingAfterEmail = true;
 
         // Check if we have all contact info
         if (hasCompleteContactInfo()) {
@@ -6851,10 +7250,7 @@ case 'select_heavy_item':
             submitLead().then(() => {
                 showBotMessage("✅ Quote sent! Now let's schedule your move.");
                 setTimeout(() => {
-                    showBotMessage("📅 Please select your preferred date:");
-                    setTimeout(() => {
-                        showDatePicker();
-                    }, 500);
+                    showDateTimeScheduler();
                 }, 1000);
             });
         } else {
@@ -6863,16 +7259,13 @@ case 'select_heavy_item':
             autoSubmitQuote().then(() => {
                 showBotMessage("✅ Quote sent! Now let's schedule your move.");
                 setTimeout(() => {
-                    showBotMessage("📅 Please select your preferred date:");
-                    setTimeout(() => {
-                        showDatePicker();
-                    }, 500);
+                    showDateTimeScheduler();
                 }, 1000);
             }).catch(() => {
                 // If auto-submit fails, still try to schedule
                 showBotMessage("Let me connect you to scheduling...");
                 setTimeout(() => {
-                    showDatePicker();
+                    showDateTimeScheduler();
                 }, 500);
             });
         }
@@ -8281,6 +8674,71 @@ Facebook: facebook.com/worryfreemovers
         console.error('Error sending customer quote:', error);
     }
 }
+        // ========================================
+        // CREATE BOOKING FUNCTION (Hits /api/book-appointment)
+        // ========================================
+        async function createBooking() {
+            const data = chatState.data;
+
+            // Build booking data
+            const bookingData = {
+                firstName: data.firstName,
+                lastName: data.lastName,
+                email: data.email,
+                phone: data.phone,
+                date: data.movingDate, // YYYY-MM-DD format
+                time: data.movingTime, // HH:MM format
+                serviceType: chatState.serviceType,
+                pickupAddress: data.from || '',
+                dropoffAddress: data.to || '',
+                company: chatState.serviceType && chatState.serviceType.toLowerCase().includes('labor')
+                    ? 'Quality Moving'
+                    : 'Worry Free Moving',
+                estimateDetails: data.estimate || {},
+                estimatedHours: data.estimate?.totalHours || 0,
+                estimatedTotal: data.estimate?.total || 0,
+                numMovers: data.crewSize || 2,
+                notes: `
+Service: ${chatState.serviceType}
+Locations: ${data.from || 'N/A'} → ${data.to || 'N/A'}
+${data.hasThirdLocation ? `Third Location: ${data.thirdLocation}` : ''}
+Home Size: ${data.homeSize || 'N/A'}
+Crew Size: ${data.crewSize} movers
+Estimated Hours: ${data.estimate?.totalHours || 'N/A'}
+Total Estimate: $${data.estimate?.total || 0}
+${data.appliances?.length > 0 ? `Appliances: ${data.appliances.join(', ')}` : ''}
+${data.shopEquipment?.length > 0 ? `Shop Equipment: ${data.shopEquipment.join(', ')}` : ''}
+${data.oversizedFurniture?.length > 0 ? `Oversized Items: ${data.oversizedFurniture.join(', ')}` : ''}
+${data.tvHandling?.length > 0 ? `TVs: ${data.tvHandling.join(', ')}` : ''}
+                `.trim()
+            };
+
+            try {
+                console.log('📤 Creating booking...', bookingData);
+
+                const response = await fetch(`${CONFIG.apiUrl}/api/book-appointment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(bookingData)
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.bookingId) {
+                    console.log('✅ Booking created successfully:', result.bookingId);
+                    return result; // Returns { success: true, bookingId, appointment, message }
+                } else {
+                    throw new Error(result.error || 'Failed to create booking');
+                }
+            } catch (error) {
+                console.error('❌ Booking creation failed:', error);
+                throw error;
+            }
+        }
+
         async function submitLead(leadData = null) {
             // Use provided data or current state
             const data = leadData || chatState.data;
