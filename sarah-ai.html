@@ -7275,13 +7275,13 @@ case 'select_heavy_item':
         }
     }
 } else if (value === 'pay_deposit') {
-                        // Handle payment - save card on file
-                        showBotMessage("Perfect! Let me set up secure payment for your booking...");
+                        // Handle payment - but FIRST pick date/time from calendar
+                        showBotMessage("Perfect! Let's secure your booking.");
                         setTimeout(() => {
-                            showBotMessage("💡 Your card will be securely saved. No charges until after your move is complete!");
+                            showBotMessage("First, let's pick your move date and time from our available slots...");
                         }, 600);
                         setTimeout(() => {
-                            showPaymentModal();
+                            showDateTimeScheduler(); // Show date/time picker FIRST, then payment
                         }, 1400);
                     } else if (value === 'continue_anyway') {
                         if (chatState.stage.includes('special')) {
@@ -7628,9 +7628,15 @@ case 'select_heavy_item':
                                 *Includes ${estimate.totalDistance} miles of driving ${deliveryToBaseDistance > 85 ? '(half return trip included)' : ''}
                             </span>
                         </div>
-                        
-                        💰 <strong>Hourly rate:</strong> $${estimate.hourlyRate}/hour<br><br>
-                        
+
+                        <div style="background: #fff3cd; padding: 10px; border-radius: 8px; margin: 10px 0;">
+                            <strong>💰 Hourly Rate Breakdown:</strong><br>
+                            Base rate: $${CONFIG.rates.moving.base.toFixed(2)}/hour<br>
+                            Distance adjustment (+$${(fromDistance * CONFIG.rates.moving.distanceAdj).toFixed(2)} for ${fromDistance.toFixed(1)} miles): $${baseRate.toFixed(2)}/hour<br>
+                            ${crewSize > 2 ? `Crew size (${crewSize} movers, +$${((crewSize - 2) * CONFIG.rates.moving.crewAdd).toFixed(2)}): $${estimate.hourlyRate}/hour<br>` : ''}
+                            <strong>Final hourly rate: $${estimate.hourlyRate}/hour</strong>
+                        </div>
+
                         <strong>💰 Your Investment:</strong><br>
                         Moving service (${estimate.totalHours} hrs): $${estimate.baseCost}<br>
                         Service fee: $${estimate.serviceCharge}<br>
@@ -8085,8 +8091,7 @@ case 'select_heavy_item':
             setTimeout(() => {
                 showBotMessage("How would you like to proceed, " + (chatState.data.firstName || chatState.data.name) + "?");
                 showOptions([
-                    { text: "💳 Save Card & Secure Booking", value: "pay_deposit", primary: true },
-                    { text: "📅 Schedule with Sarah", value: "schedule_acuity" },
+                    { text: "📅 Schedule My Move", value: "pay_deposit", primary: true },
                     { text: "📞 Call: 330-435-8686", value: "call" },
                     { text: "📧 Email Estimate", value: "email_quote" },
                     { text: "📄 View & Print Quote", value: "print_quote" },
