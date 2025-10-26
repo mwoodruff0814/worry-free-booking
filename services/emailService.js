@@ -1399,6 +1399,108 @@ ${companySettings.companyName}
     }
 }
 
+/**
+ * Send Employee Password Reset Email
+ */
+async function sendEmployeePasswordResetEmail(details) {
+    try {
+        const {
+            employeeName,
+            email,
+            temporaryPassword,
+            username
+        } = details;
+
+        const companySettings = await loadCompanySettings('Worry Free Moving');
+        const transporter = initializeTransporter('Worry Free Moving');
+
+        if (!transporter) {
+            console.warn('Email service not configured. Skipping password reset email.');
+            return null;
+        }
+
+        const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                .password-box { background: #f8f9fa; border-left: 4px solid #28a745; padding: 20px; margin: 20px 0; border-radius: 5px; }
+                .password { font-size: 24px; font-weight: bold; color: #28a745; font-family: 'Courier New', monospace; letter-spacing: 2px; }
+                .info-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 5px; }
+                .button { display: inline-block; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; margin: 20px 0; }
+                .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e9ecef; color: #6c757d; font-size: 14px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🔑 Password Reset</h1>
+                    <p>Your temporary password is ready</p>
+                </div>
+                <div class="content">
+                    <h2>Hi ${employeeName},</h2>
+                    <p>Your administrator has reset your employee portal password. You can use the temporary password below to login.</p>
+
+                    <div class="password-box">
+                        <p style="margin: 0; font-size: 14px; color: #666;">Your Temporary Password:</p>
+                        <p class="password">${temporaryPassword}</p>
+                    </div>
+
+                    <div class="info-box">
+                        <p style="margin: 0;"><strong>⚠️ Important Security Information:</strong></p>
+                        <ul style="margin: 10px 0 0 20px;">
+                            <li>This is a temporary password</li>
+                            <li>Please change it immediately after logging in</li>
+                            <li>Go to "Change Password" section in your portal</li>
+                            <li>Choose a strong, unique password</li>
+                        </ul>
+                    </div>
+
+                    <p><strong>Login Instructions:</strong></p>
+                    <ol>
+                        <li>Go to the employee portal</li>
+                        <li>Username: <strong>${username}</strong></li>
+                        <li>Password: Use the temporary password above</li>
+                        <li>Click "Change Password" after logging in</li>
+                    </ol>
+
+                    <center>
+                        <a href="${process.env.BASE_URL || 'http://localhost:3001'}/employee-portal.html" class="button">
+                            🔐 Go to Employee Portal
+                        </a>
+                    </center>
+
+                    <p style="margin-top: 30px; color: #666;">If you did not request this password reset, please contact your administrator immediately.</p>
+                </div>
+                <div class="footer">
+                    <p>${companySettings.companyName}</p>
+                    <p>${companySettings.companyPhone} | ${companySettings.companyEmail}</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+
+        const info = await transporter.sendMail({
+            from: `"${companySettings.companyName}" <${process.env.EMAIL_FROM || process.env.EMAIL_USER || companySettings.companyEmail}>`,
+            to: email,
+            subject: `Password Reset - ${companySettings.companyName} Employee Portal`,
+            html: htmlContent
+        });
+
+        console.log(`✅ Employee password reset email sent to: ${email} (${employeeName})`);
+        return info;
+
+    } catch (error) {
+        console.error('Error sending employee password reset email:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     sendConfirmationEmail,
     sendCancellationEmail,
@@ -1408,5 +1510,6 @@ module.exports = {
     sendEstimateEmail,
     sendCrewTimeOffNotification,
     sendCrewTimeOffConfirmation,
-    sendCrewTimeOffResponse
+    sendCrewTimeOffResponse,
+    sendEmployeePasswordResetEmail
 };

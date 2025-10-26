@@ -11,7 +11,7 @@ dotenv.config();
 // Import modules
 const { createGoogleCalendarEvent, updateGoogleCalendarEvent, deleteGoogleCalendarEvent, initGoogleAuth } = require('./services/googleCalendar');
 // const { createICloudCalendarEvent } = require('./services/icloudCalendar'); // Disabled - using email calendar buttons instead
-const { sendConfirmationEmail, sendEstimateEmail } = require('./services/emailService');
+const { sendConfirmationEmail, sendEstimateEmail, sendEmployeePasswordResetEmail } = require('./services/emailService');
 const { generateBookingId } = require('./utils/helpers');
 const {
     connectDatabase,
@@ -2142,6 +2142,78 @@ app.post('/api/employee/change-password', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to change password'
+        });
+    }
+});
+
+// Employee password reset (Admin) - USES MONGODB
+app.post('/api/employee/reset-password', async (req, res) => {
+    try {
+        const { employeeId } = req.body;
+
+        if (!employeeId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Employee ID required'
+            });
+        }
+
+        // Load employees from MongoDB
+        const employees = await getAllEmployees();
+
+        // Find employee
+        const employee = employees.find(emp => emp.id === employeeId);
+
+        if (!employee) {
+            return res.status(404).json({
+                success: false,
+                error: 'Employee not found'
+            });
+        }
+
+        // Generate temporary password (8 characters: uppercase, lowercase, numbers)
+        const generateTempPassword = () => {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+            let password = '';
+            for (let i = 0; i < 8; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return password;
+        };
+
+        const temporaryPassword = generateTempPassword();
+
+        // Hash the temporary password
+        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+
+        // Update employee password in MongoDB
+        const passwordChangedAt = new Date().toISOString();
+        await updateEmployeePassword(employeeId, hashedPassword, passwordChangedAt);
+
+        // Send password reset email
+        await sendEmployeePasswordResetEmail({
+            employeeName: `${employee.firstName} ${employee.lastName}`,
+            email: employee.email,
+            temporaryPassword: temporaryPassword,
+            username: employee.username
+        });
+
+        res.json({
+            success: true,
+            message: 'Password reset email sent successfully',
+            temporaryPassword: temporaryPassword
+        });
+
+        console.log(`✅ Password reset for employee: ${employeeId} (${employee.firstName} ${employee.lastName})`);
+        console.log(`   Temporary password: ${temporaryPassword}`);
+        console.log(`   Email sent to: ${employee.email}`);
+
+    } catch (error) {
+        console.error('Error resetting employee password:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to reset password',
+            details: error.message
         });
     }
 });

@@ -5427,10 +5427,13 @@ service@worryfreemovers.com`;
                             ${emp.status.charAt(0).toUpperCase() + emp.status.slice(1)}
                         </td>
                         <td style="padding: 15px; text-align: center;">
-                            <button onclick="editEmployee('${emp.id}')" style="background: #667eea; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px;">
+                            <button onclick="editEmployee('${emp.id}')" style="background: #667eea; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px;" title="Edit employee details">
                                 Edit
                             </button>
-                            <button onclick="deleteEmployee('${emp.id}')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+                            <button onclick="sendEmployeePasswordReset('${emp.id}')" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px;" title="Send password reset email">
+                                🔑 Reset Password
+                            </button>
+                            <button onclick="deleteEmployee('${emp.id}')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;" title="Delete employee">
                                 Delete
                             </button>
                         </td>
@@ -5564,6 +5567,39 @@ service@worryfreemovers.com`;
             } catch (error) {
                 console.error('Error saving employee:', error);
                 alert('Failed to save employee. Error: ' + error.message);
+            }
+        }
+
+        // Send Employee Password Reset Email
+        async function sendEmployeePasswordReset(employeeId) {
+            const employee = allEmployees.find(e => e.id === employeeId);
+
+            if (!employee) {
+                alert('Employee not found');
+                return;
+            }
+
+            if (confirm(`Send password reset email to ${employee.firstName} ${employee.lastName}?\n\nEmail: ${employee.email}\n\nA temporary password will be generated and sent to their email.`)) {
+                try {
+                    const response = await fetch(`${API_URL}/api/employee/reset-password`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ employeeId: employee.id })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        alert(`✅ Password reset email sent!\n\nTemporary password: ${data.temporaryPassword}\n\nEmail sent to: ${employee.email}\n\nThe employee can use this password to login and change it in their portal.`);
+                    } else {
+                        alert('❌ Error: ' + (data.error || 'Failed to send password reset email'));
+                    }
+                } catch (error) {
+                    console.error('Error sending password reset:', error);
+                    alert('❌ Failed to send password reset email. Please try again.');
+                }
             }
         }
 
