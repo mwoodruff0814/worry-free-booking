@@ -282,6 +282,44 @@ async function updateEmployees(employees) {
     return true;
 }
 
+/**
+ * Get employee by username (for login)
+ */
+async function getEmployeeByUsername(username) {
+    const database = getDatabase();
+    return await database.collection('employees').findOne({ username });
+}
+
+/**
+ * Update employee last login timestamp
+ */
+async function updateEmployeeLogin(employeeId, lastLogin) {
+    const database = getDatabase();
+    await database.collection('employees').updateOne(
+        { id: employeeId },
+        { $set: { lastLogin, updatedAt: new Date().toISOString() } }
+    );
+    return true;
+}
+
+/**
+ * Update employee password
+ */
+async function updateEmployeePassword(employeeId, newPasswordHash, passwordChangedAt) {
+    const database = getDatabase();
+    await database.collection('employees').updateOne(
+        { id: employeeId },
+        {
+            $set: {
+                password: newPasswordHash,
+                passwordChangedAt,
+                updatedAt: new Date().toISOString()
+            }
+        }
+    );
+    return true;
+}
+
 // ========================================
 // SERVICES OPERATIONS
 // ========================================
@@ -373,6 +411,9 @@ module.exports = {
     // Employees
     getAllEmployees,
     updateEmployees,
+    getEmployeeByUsername,
+    updateEmployeeLogin,
+    updateEmployeePassword,
 
     // Services
     getServicesConfig,

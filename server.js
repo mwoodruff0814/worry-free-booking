@@ -25,6 +25,9 @@ const {
     createUser,
     getAllEmployees,
     updateEmployees: updateMongoEmployees,
+    getEmployeeByUsername,
+    updateEmployeeLogin,
+    updateEmployeePassword,
     getServicesConfig,
     updateServicesConfig
 } = require('./services/database');
@@ -1971,28 +1974,22 @@ app.post('/api/crew-timeoff/respond', async (req, res) => {
 const EMPLOYEES_FILE = path.join(__dirname, 'data', 'employees.json');
 const bcrypt = require('bcrypt');
 
-// Employee login
+// Employee login - USES MONGODB
 app.post('/api/employee/login', async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        // Load employees
-        const data = await fs.readFile(EMPLOYEES_FILE, 'utf8');
-        const employees = JSON.parse(data);
+        // Load employee from MongoDB
+        const employee = await getEmployeeByUsername(username);
 
-        // Find employee by username
-        const employee = employees.find(emp => emp.username === username && emp.status === 'active');
-
-        if (!employee) {
+        if (!employee || employee.status !== 'active') {
             return res.status(401).json({
                 success: false,
                 error: 'Invalid username or password'
             });
         }
 
-        // For now, use simple password check (in production, use bcrypt)
-        // Since passwords are placeholder hashes, we'll implement a simple check
-        // You can update this when you set real hashed passwords
+        // Verify password with bcrypt
         let isValidPassword = false;
 
         try {
@@ -2011,15 +2008,16 @@ app.post('/api/employee/login', async (req, res) => {
             });
         }
 
-        // Update last login
-        employee.lastLogin = new Date().toISOString();
-        await fs.writeFile(EMPLOYEES_FILE, JSON.stringify(employees, null, 2));
+        // Update last login in MongoDB
+        const lastLogin = new Date().toISOString();
+        await updateEmployeeLogin(employee.id, lastLogin);
 
         // Generate session token (simple for now, use JWT in production)
         const token = Buffer.from(`${employee.id}:${Date.now()}`).toString('base64');
 
         // Return employee data (without password)
         const { password: pwd, ...employeeData } = employee;
+        employeeData.lastLogin = lastLogin; // Include updated lastLogin
 
         res.json({
             success: true,
@@ -2027,6 +2025,8 @@ app.post('/api/employee/login', async (req, res) => {
             employee: employeeData,
             message: 'Login successful'
         });
+
+        console.log(`✅ Employee login successful: ${username} (${employee.firstName} ${employee.lastName})`);
 
     } catch (error) {
         console.error('Employee login error:', error);
@@ -2082,6 +2082,7 @@ app.get('/api/employee/timeoff-requests', async (req, res) => {
 });
 
 // Change employee password
+// Change employee password - USES MONGODB
 app.post('/api/employee/change-password', async (req, res) => {
     try {
         const { employeeId, currentPassword, newPassword } = req.body;
@@ -2093,9 +2094,8 @@ app.post('/api/employee/change-password', async (req, res) => {
             });
         }
 
-        // Load employees
-        const data = await fs.readFile(EMPLOYEES_FILE, 'utf8');
-        const employees = JSON.parse(data);
+        // Load employees from MongoDB
+        const employees = await getAllEmployees();
 
         // Find employee
         const employee = employees.find(emp => emp.id === employeeId);
@@ -2126,17 +2126,16 @@ app.post('/api/employee/change-password', async (req, res) => {
         // Hash new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        // Update employee password
-        employee.password = hashedPassword;
-        employee.passwordChangedAt = new Date().toISOString();
-
-        // Save employees
-        await fs.writeFile(EMPLOYEES_FILE, JSON.stringify(employees, null, 2));
+        // Update employee password in MongoDB
+        const passwordChangedAt = new Date().toISOString();
+        await updateEmployeePassword(employeeId, hashedPassword, passwordChangedAt);
 
         res.json({
             success: true,
             message: 'Password changed successfully'
         });
+
+        console.log(`✅ Password changed for employee: ${employeeId} (${employee.firstName} ${employee.lastName})`);
 
     } catch (error) {
         console.error('Error changing employee password:', error);
