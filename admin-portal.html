@@ -5715,8 +5715,15 @@ service@worryfreemovers.com`;
         // Load Services from API
         async function loadServicesForAppointment() {
             try {
+                console.log('Fetching services from:', `${API_URL}/services`);
                 const response = await fetch(`${API_URL}/services`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
                 const data = await response.json();
+                console.log('Services loaded:', data);
                 availableServices = data;
 
                 // Populate service dropdown
@@ -5757,7 +5764,7 @@ service@worryfreemovers.com`;
 
             } catch (error) {
                 console.error('Error loading services:', error);
-                alert('Failed to load services. Please try again.');
+                alert(`⚠️ Failed to Load Services\nError: ${error.message}\n\nPlease check:\n1. Server is running: npm start\n2. Access admin portal via: http://localhost:3001/admin-portal.html\n3. Not using file:// URL\n\nSee browser console (F12) for details.`);
             }
         }
 
