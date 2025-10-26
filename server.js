@@ -1720,33 +1720,10 @@ app.get('/api/square-customer/:email', async (req, res) => {
 });
 
 // ==============================================
-// CREW TIME-OFF REQUEST ENDPOINT
+// CREW TIME-OFF REQUEST ENDPOINT (MongoDB)
 // ==============================================
-const CREW_TIMEOFF_FILE = path.join(__dirname, 'data', 'crew-timeoff-requests.json');
-
-// Get all crew time-off requests (admin only)
-app.get('/api/crew-timeoff', async (req, res) => {
-    try {
-        const data = await fs.readFile(CREW_TIMEOFF_FILE, 'utf8');
-        const requests = JSON.parse(data);
-
-        // Sort by submitted date (newest first)
-        requests.sort((a, b) => new Date(b.submittedDate) - new Date(a.submittedDate));
-
-        res.json({
-            success: true,
-            count: requests.length,
-            requests: requests
-        });
-    } catch (error) {
-        // If file doesn't exist, return empty array
-        res.json({
-            success: true,
-            count: 0,
-            requests: []
-        });
-    }
-});
+// NOTE: GET endpoint moved to line ~1984 with MongoDB integration
+// POST endpoint below saves to MongoDB
 
 // Submit crew time-off request
 app.post('/api/crew-timeoff', async (req, res) => {
