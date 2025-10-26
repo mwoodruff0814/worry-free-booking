@@ -28,7 +28,7 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            z-index: 999999; /* Very high z-index for Squarespace */
+            z-index: 9999;
             display: none; /* Always start hidden */
         }
 
@@ -1100,45 +1100,27 @@
             border: 2px solid #004085;
         }
 
-        /* Mobile-specific styles - High specificity for Squarespace */
+        /* Mobile-specific styles */
         @media (max-width: 768px) {
-            body #wfm-chat-container {
-                position: fixed !important;
-                bottom: 0 !important;
-                right: 0 !important;
-                left: 0 !important;
-                top: 0 !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                transform: none !important;
-                width: 100% !important;
-                height: 100% !important;
-                z-index: 999999 !important;
+            #wfm-chat-container {
+                bottom: 0;
+                right: 0;
+                left: 0;
+                padding: 0;
             }
 
-            body #wfm-chat-widget {
-                width: 100vw !important;
-                height: 100vh !important;
-                height: 100dvh !important;
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
-                bottom: 0 !important;
-                border-radius: 0 !important;
-                max-width: none !important;
-                max-height: none !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            /* Force fullscreen when chat is open */
-            body.wfm-chat-open #wfm-chat-container {
-                display: block !important;
-            }
-
-            body.wfm-chat-open #wfm-chat-widget {
-                display: flex !important;
+            #wfm-chat-widget {
+                width: 100%;
+                height: 100vh;
+                height: 100dvh;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                border-radius: 0;
+                max-width: none;
+                max-height: none;
             }
             
             #wfm-chat-messages {
@@ -4443,30 +4425,6 @@ if (isMobile && send) {
             chatState.hasBeenOpened = true;
 
             if (isMobile) {
-                // Add body class for mobile chat open
-                document.body.classList.add('wfm-chat-open');
-
-                // Force mobile fullscreen with inline styles to override Squarespace
-                container.style.position = 'fixed';
-                container.style.top = '0';
-                container.style.left = '0';
-                container.style.right = '0';
-                container.style.bottom = '0';
-                container.style.width = '100%';
-                container.style.height = '100%';
-                container.style.zIndex = '999999';
-
-                widget.style.position = 'fixed';
-                widget.style.top = '0';
-                widget.style.left = '0';
-                widget.style.right = '0';
-                widget.style.bottom = '0';
-                widget.style.width = '100vw';
-                widget.style.height = '100vh';
-                widget.style.maxWidth = 'none';
-                widget.style.maxHeight = 'none';
-                widget.style.borderRadius = '0';
-
                 document.body.style.overflow = 'hidden';
                 document.body.style.position = 'fixed';
                 document.body.style.width = '100%';
@@ -4496,36 +4454,14 @@ if (isMobile && send) {
             toggle.style.display = 'flex'; // Show toggle button again
             chatState.isOpen = false;
 
-            // Restore body scroll and reset mobile styles
+            // Restore body scroll on mobile
             if (isMobile) {
-                // Remove body class
-                document.body.classList.remove('wfm-chat-open');
-
                 const scrollY = document.body.style.top;
                 document.body.style.overflow = '';
                 document.body.style.position = '';
                 document.body.style.top = '';
+                document.body.style.width = '';
                 window.scrollTo(0, parseInt(scrollY || '0') * -1);
-
-                // Reset container and widget to desktop positioning
-                container.style.position = '';
-                container.style.top = '';
-                container.style.left = '';
-                container.style.right = '';
-                container.style.bottom = '';
-                container.style.width = '';
-                container.style.height = '';
-
-                widget.style.position = '';
-                widget.style.top = '';
-                widget.style.left = '';
-                widget.style.right = '';
-                widget.style.bottom = '';
-                widget.style.width = '';
-                widget.style.height = '';
-                widget.style.maxWidth = '';
-                widget.style.maxHeight = '';
-                widget.style.borderRadius = '';
             }
 
             saveSession();
