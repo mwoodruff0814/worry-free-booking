@@ -3473,22 +3473,113 @@ if (isMobile && send) {
             chatState.data.oversizedFurniture = [];
             chatState.data.selectedSpecialtyItems = [];
 
-            showBotMessage("Do you have any specialty items? (Shop equipment, oversized furniture, specialty mattresses)");
-            showSpecialtyItemOptions();
+            showBotMessage("Do you have any specialty items?");
+            showBotMessage("✨ Select all that apply, then click 'Continue'", 500);
+
+            setTimeout(() => {
+                showSpecialtyItemsImproved();
+            }, 800);
         }
 
-        function showSpecialtyItemOptions() {
-            showOptions([
-                { text: "🔧 Workbench", value: "workbench" },
-                { text: "🧰 Tool Chest", value: "toolChest" },
-                { text: "🪚 Table Saw", value: "tablesaw" },
-                { text: "🛋️ Oversized Sectional", value: "largeSectional" },
-                { text: "🎱 Pool Table", value: "poolTable" },
-                { text: "💜 Purple Mattress", value: "purpleMattress" },
-                { text: "🛏️ Tempur-Pedic", value: "tempurPedicMattress" },
-                { text: "⚖️ Other Heavy Item (300+ lbs)", value: "heavyFurniture" },
-                { text: "✓ Done / No Specialty Items", value: "done_specialty", primary: true }
-            ]);
+        function showSpecialtyItemsImproved() {
+            const optionsDiv = document.getElementById('wfm-chat-options');
+            optionsDiv.innerHTML = '';
+            optionsDiv.style.display = 'flex';
+            optionsDiv.style.flexDirection = 'column';
+            optionsDiv.style.gap = '12px';
+            optionsDiv.style.padding = '15px';
+
+            const categories = [
+                {
+                    title: '🛠️ SHOP EQUIPMENT',
+                    items: [
+                        { value: 'workbench', label: '🔧 Workbench' },
+                        { value: 'toolChest', label: '🧰 Tool Chest' },
+                        { value: 'tablesaw', label: '🪚 Table Saw' },
+                        { value: 'airCompressor', label: '💨 Air Compressor' },
+                        { value: 'weldingEquipment', label: '🔥 Welding Equipment' }
+                    ]
+                },
+                {
+                    title: '🛋️ OVERSIZED FURNITURE',
+                    items: [
+                        { value: 'largeSectional', label: '🛋️ Oversized Sectional (10ft+)' },
+                        { value: 'poolTable', label: '🎱 Pool Table' },
+                        { value: 'heavyFurniture', label: '⚖️ Heavy Furniture (300+ lbs)' }
+                    ]
+                },
+                {
+                    title: '🛏️ SPECIALTY MATTRESSES',
+                    items: [
+                        { value: 'purpleMattress', label: '💜 Purple Mattress' },
+                        { value: 'tempurPedicMattress', label: '🛏️ Tempur-Pedic' },
+                        { value: 'adjustableBase', label: '🔧 Adjustable Bed Base' }
+                    ]
+                }
+            ];
+
+            categories.forEach(category => {
+                // Category header
+                const header = document.createElement('div');
+                header.style.fontSize = '11px';
+                header.style.fontWeight = '700';
+                header.style.color = '#667eea';
+                header.style.marginTop = '10px';
+                header.style.marginBottom = '5px';
+                header.textContent = category.title;
+                optionsDiv.appendChild(header);
+
+                // Category items
+                category.items.forEach(item => {
+                    const button = document.createElement('button');
+                    button.className = 'chat-option';
+                    button.textContent = item.label;
+                    button.dataset.value = item.value;
+                    button.dataset.selected = 'false';
+                    button.style.transition = 'all 0.3s ease';
+                    button.style.border = '2px solid #e2e8f0';
+                    button.style.borderRadius = '8px';
+                    button.style.padding = '12px 16px';
+                    button.style.fontSize = '14px';
+
+                    button.onclick = function() {
+                        if (this.dataset.selected === 'false') {
+                            this.dataset.selected = 'true';
+                            this.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+                            this.style.color = 'white';
+                            this.style.borderColor = '#28a745';
+                            this.style.transform = 'scale(1.02)';
+                            if (!chatState.data.selectedSpecialtyItems) chatState.data.selectedSpecialtyItems = [];
+                            chatState.data.selectedSpecialtyItems.push(item.value);
+                        } else {
+                            this.dataset.selected = 'false';
+                            this.style.background = '';
+                            this.style.color = '';
+                            this.style.borderColor = '#e2e8f0';
+                            this.style.transform = '';
+                            chatState.data.selectedSpecialtyItems = chatState.data.selectedSpecialtyItems.filter(s => s !== item.value);
+                        }
+                        saveSession();
+                    };
+
+                    optionsDiv.appendChild(button);
+                });
+            });
+
+            // Add Continue button
+            const continueBtn = document.createElement('button');
+            continueBtn.className = 'chat-option';
+            continueBtn.textContent = '✓ Continue';
+            continueBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            continueBtn.style.color = 'white';
+            continueBtn.style.fontWeight = '600';
+            continueBtn.style.marginTop = '15px';
+            continueBtn.style.padding = '14px 20px';
+            continueBtn.style.borderRadius = '8px';
+            continueBtn.onclick = function() {
+                processResponse('done_specialty');
+            };
+            optionsDiv.appendChild(continueBtn);
         }
 
         function showSpecialtyItemsMultiSelect() {
@@ -3607,14 +3698,77 @@ if (isMobile && send) {
             chatState.data.selectedAppliances = [];
 
             showBotMessage("Do you have any appliances that need to be moved?");
-            showOptions([
-                { text: "🫧 Washer", value: "washer" },
-                { text: "🌀 Dryer", value: "dryer" },
-                { text: "🧊 Refrigerator", value: "refrigerator" },
-                { text: "🔥 Stove", value: "stove" },
-                { text: "❄️ Deep Freezer", value: "freezer" },
-                { text: "✓ Done / No Appliances", value: "done_appliances", primary: true }
-            ]);
+            showBotMessage("✨ Select all that apply, then click 'Continue'", 500);
+
+            setTimeout(() => {
+                showAppliancesMultiSelect();
+            }, 800);
+        }
+
+        function showAppliancesMultiSelect() {
+            const optionsDiv = document.getElementById('wfm-chat-options');
+            optionsDiv.innerHTML = '';
+            optionsDiv.style.display = 'flex';
+            optionsDiv.style.flexDirection = 'column';
+            optionsDiv.style.gap = '10px';
+            optionsDiv.style.padding = '15px';
+
+            const appliances = [
+                { value: 'washer', label: '🫧 Washer' },
+                { value: 'dryer', label: '🌀 Dryer' },
+                { value: 'refrigerator', label: '🧊 Refrigerator' },
+                { value: 'stove', label: '🔥 Stove' },
+                { value: 'freezer', label: '❄️ Deep Freezer' }
+            ];
+
+            appliances.forEach(app => {
+                const button = document.createElement('button');
+                button.className = 'chat-option';
+                button.textContent = app.label;
+                button.dataset.value = app.value;
+                button.dataset.selected = 'false';
+                button.style.transition = 'all 0.3s ease';
+                button.style.border = '2px solid #e2e8f0';
+                button.style.borderRadius = '8px';
+                button.style.padding = '12px 16px';
+
+                button.onclick = function() {
+                    if (this.dataset.selected === 'false') {
+                        this.dataset.selected = 'true';
+                        this.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+                        this.style.color = 'white';
+                        this.style.borderColor = '#28a745';
+                        this.style.transform = 'scale(1.02)';
+                        if (!chatState.data.selectedAppliances) chatState.data.selectedAppliances = [];
+                        chatState.data.selectedAppliances.push(app.value);
+                    } else {
+                        this.dataset.selected = 'false';
+                        this.style.background = '';
+                        this.style.color = '';
+                        this.style.borderColor = '#e2e8f0';
+                        this.style.transform = '';
+                        chatState.data.selectedAppliances = chatState.data.selectedAppliances.filter(a => a !== app.value);
+                    }
+                    saveSession();
+                };
+
+                optionsDiv.appendChild(button);
+            });
+
+            // Add Continue button
+            const continueBtn = document.createElement('button');
+            continueBtn.className = 'chat-option';
+            continueBtn.textContent = '✓ Continue';
+            continueBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            continueBtn.style.color = 'white';
+            continueBtn.style.fontWeight = '600';
+            continueBtn.style.marginTop = '10px';
+            continueBtn.style.padding = '14px 20px';
+            continueBtn.style.borderRadius = '8px';
+            continueBtn.onclick = function() {
+                processResponse('done_appliances');
+            };
+            optionsDiv.appendChild(continueBtn);
         }
 
         // Helper function to proceed after appliances selection
