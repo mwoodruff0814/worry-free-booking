@@ -2392,6 +2392,48 @@ service@worryfreemovers.com</textarea>
     </div>
 
     <script>
+        // ========================================
+        // TIMEZONE UTILITIES - EASTERN TIME
+        // ========================================
+        /**
+         * Parse date string as local date to prevent UTC timezone shifting
+         * For date strings like "2025-11-01", treat as local date (not UTC midnight)
+         * This prevents "2025-11-01" from showing as "10/31/2025" in Eastern timezone
+         */
+        function parseLocalDate(dateString) {
+            if (!dateString) return new Date();
+
+            // If it's a date-only string (YYYY-MM-DD), parse as local date
+            if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+                const [year, month, day] = dateString.split('-').map(Number);
+                return new Date(year, month - 1, day); // month is 0-indexed
+            }
+
+            // Otherwise parse normally (for timestamps)
+            return new Date(dateString);
+        }
+
+        /**
+         * Format date in Eastern timezone
+         */
+        function formatDateET(dateString, options = {}) {
+            const date = parseLocalDate(dateString);
+            return date.toLocaleDateString('en-US', {
+                timeZone: 'America/New_York',
+                ...options
+            });
+        }
+
+        /**
+         * Format datetime in Eastern timezone
+         */
+        function formatDateTimeET(dateString) {
+            const date = parseLocalDate(dateString);
+            return date.toLocaleString('en-US', {
+                timeZone: 'America/New_York'
+            });
+        }
+
         // Configuration
         const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:3001/api'
@@ -6115,14 +6157,14 @@ service@worryfreemovers.com`;
                                 </div>
                                 <div style="color: #6c757d; font-size: 14px; line-height: 1.6;">
                                     <div><strong>Type:</strong> ${req.requestType || 'Vacation'}</div>
-                                    <div><strong>Dates:</strong> ${new Date(req.startDate).toLocaleDateString()} - ${new Date(req.endDate).toLocaleDateString()}</div>
+                                    <div><strong>Dates:</strong> ${formatDateET(req.startDate)} - ${formatDateET(req.endDate)}</div>
                                     <div><strong>Duration:</strong> ${req.daysCount} day(s)</div>
                                     <div><strong>Email:</strong> ${req.crewEmail}</div>
                                     <div><strong>Phone:</strong> ${req.crewPhone}</div>
-                                    <div><strong>Submitted:</strong> ${new Date(req.submittedDate || req.createdAt).toLocaleString()}</div>
+                                    <div><strong>Submitted:</strong> ${formatDateTimeET(req.submittedDate || req.createdAt)}</div>
                                     ${req.reason ? `<div><strong>Reason:</strong> ${req.reason}</div>` : ''}
                                     ${req.responseNote ? `<div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px;"><strong>Response Note:</strong> ${req.responseNote}</div>` : ''}
-                                    ${req.respondedAt ? `<div><strong>Responded:</strong> ${new Date(req.respondedAt).toLocaleString()}</div>` : ''}
+                                    ${req.respondedAt ? `<div><strong>Responded:</strong> ${formatDateTimeET(req.respondedAt)}</div>` : ''}
                                 </div>
                             </div>
                             ${req.status === 'pending' ? `
@@ -6260,13 +6302,13 @@ service@worryfreemovers.com`;
                                         <strong>Duration:</strong> ${req.daysCount} day(s)
                                     </div>
                                     <div>
-                                        <strong>Start Date:</strong> ${new Date(req.startDate).toLocaleDateString()}
+                                        <strong>Start Date:</strong> ${formatDateET(req.startDate)}
                                     </div>
                                     <div>
-                                        <strong>End Date:</strong> ${new Date(req.endDate).toLocaleDateString()}
+                                        <strong>End Date:</strong> ${formatDateET(req.endDate)}
                                     </div>
                                     <div style="grid-column: 1 / -1;">
-                                        <strong>Submitted:</strong> ${new Date(req.submittedDate || req.createdAt).toLocaleString()}
+                                        <strong>Submitted:</strong> ${formatDateTimeET(req.submittedDate || req.createdAt)}
                                     </div>
                                     ${req.reason ? `
                                     <div style="grid-column: 1 / -1; padding: 10px; background: #f8f9fa; border-radius: 5px;">
@@ -6280,7 +6322,7 @@ service@worryfreemovers.com`;
                                     ` : ''}
                                     ${req.respondedAt ? `
                                     <div style="grid-column: 1 / -1;">
-                                        <strong>Responded:</strong> ${new Date(req.respondedAt).toLocaleString()}
+                                        <strong>Responded:</strong> ${formatDateTimeET(req.respondedAt)}
                                     </div>
                                     ` : ''}
                                 </div>

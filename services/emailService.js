@@ -4,6 +4,52 @@ const { formatTimeWindow } = require('../utils/helpers');
 const fs = require('fs').promises;
 const path = require('path');
 
+/**
+ * Parse date string as Eastern timezone to prevent timezone shifting
+ * For date strings like "2025-11-01", treat as local date (not UTC)
+ * This prevents "2025-11-01" from showing as "10/31/2025" in Eastern timezone
+ */
+function parseLocalDate(dateString) {
+    if (!dateString) return new Date();
+
+    // If it's a date-only string (YYYY-MM-DD), parse as local date
+    if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day); // month is 0-indexed
+    }
+
+    // Otherwise parse normally (for timestamps)
+    return new Date(dateString);
+}
+
+/**
+ * Format date in Eastern timezone
+ */
+function formatDateET(dateString, options = {}) {
+    const date = parseLocalDate(dateString);
+    return date.toLocaleDateString('en-US', {
+        timeZone: 'America/New_York',
+        ...options
+    });
+}
+
+/**
+ * Format datetime in Eastern timezone
+ */
+function formatDateTimeET(dateString) {
+    const date = parseLocalDate(dateString);
+    return date.toLocaleString('en-US', {
+        timeZone: 'America/New_York',
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+}
+
 // Helper function to load company-specific settings
 async function loadCompanySettings(companyName) {
     try {
@@ -754,14 +800,14 @@ async function sendCrewTimeOffNotification(details) {
         const transporter = initializeTransporter('Worry Free Moving');
         if (!transporter) return null;
 
-        const formattedStartDate = new Date(startDate).toLocaleDateString('en-US', {
+        const formattedStartDate = formatDateET(startDate, {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
             day: 'numeric'
         });
 
-        const formattedEndDate = new Date(endDate).toLocaleDateString('en-US', {
+        const formattedEndDate = formatDateET(endDate, {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -878,14 +924,14 @@ async function sendCrewTimeOffConfirmation(details) {
         const transporter = initializeTransporter('Worry Free Moving');
         if (!transporter) return null;
 
-        const formattedStartDate = new Date(startDate).toLocaleDateString('en-US', {
+        const formattedStartDate = formatDateET(startDate, {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
             day: 'numeric'
         });
 
-        const formattedEndDate = new Date(endDate).toLocaleDateString('en-US', {
+        const formattedEndDate = formatDateET(endDate, {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -960,14 +1006,14 @@ async function sendCrewTimeOffResponse(details) {
 
         const { to, crewName, requestId, status, startDate, endDate, daysCount, responseNote } = details;
 
-        const formattedStartDate = new Date(startDate).toLocaleDateString('en-US', {
+        const formattedStartDate = formatDateET(startDate, {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
             day: 'numeric'
         });
 
-        const formattedEndDate = new Date(endDate).toLocaleDateString('en-US', {
+        const formattedEndDate = formatDateET(endDate, {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
