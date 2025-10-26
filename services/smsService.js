@@ -223,32 +223,51 @@ async function sendSMSConfirmation(details) {
             day: 'numeric',
             year: 'numeric'
         });
-        const timeWindow = formatTimeWindow(time);
+        const timeWindow = time ? formatTimeWindow(time) : 'All day';
 
-        // Generate Google Calendar link
-        const calendarEventDetails = {
-            summary: `${serviceType || 'Appointment'} - ${companyDisplayName}`,
-            location: pickupAddress || '',
-            start: `${date}T${time}:00`,
-            end: `${date}T${time}:00`
-        };
-        const calendarUrl = generateGoogleCalendarUrl(calendarEventDetails);
+        // Generate Google Calendar link (only for appointments with specific times)
+        let calendarUrl = '';
+        if (time && time.trim() !== '') {
+            const calendarEventDetails = {
+                summary: `${serviceType || 'Appointment'} - ${companyDisplayName}`,
+                location: pickupAddress || '',
+                start: `${date}T${time}:00`,
+                end: `${date}T${time}:00`
+            };
+            calendarUrl = generateGoogleCalendarUrl(calendarEventDetails);
+        }
 
         switch (type) {
             case 'booking':
-                message = `Hi ${customerName}! Your appointment with ${companyDisplayName} is confirmed for ${formattedDate}. Arrival window: ${timeWindow}. Add to calendar: ${calendarUrl} We'll call 24hrs before. Questions? Call ${companyPhone}`;
+                if (calendarUrl) {
+                    message = `Hi ${customerName}! Your appointment with ${companyDisplayName} is confirmed for ${formattedDate}. Arrival window: ${timeWindow}. Add to calendar: ${calendarUrl} We'll call 24hrs before. Questions? Call ${companyPhone}`;
+                } else {
+                    message = `Hi ${customerName}! Your request with ${companyDisplayName} for ${formattedDate} has been received and is pending approval. You'll receive confirmation soon. Questions? Call ${companyPhone}`;
+                }
                 break;
 
             case 'reschedule':
-                message = `Hi ${customerName}! Your appointment has been rescheduled to ${formattedDate}. Arrival window: ${timeWindow}. Add to calendar: ${calendarUrl} We'll call 24hrs before. Call ${companyPhone} for questions.`;
+                if (calendarUrl) {
+                    message = `Hi ${customerName}! Your appointment has been rescheduled to ${formattedDate}. Arrival window: ${timeWindow}. Add to calendar: ${calendarUrl} We'll call 24hrs before. Call ${companyPhone} for questions.`;
+                } else {
+                    message = `Hi ${customerName}! Your request has been rescheduled to ${formattedDate}. Call ${companyPhone} for questions.`;
+                }
                 break;
 
             case 'cancellation':
-                message = `Hi ${customerName}, your appointment scheduled for ${formattedDate} (${timeWindow}) has been cancelled. Need to reschedule? Call ${companyPhone}`;
+                if (time) {
+                    message = `Hi ${customerName}, your appointment scheduled for ${formattedDate} (${timeWindow}) has been cancelled. Need to reschedule? Call ${companyPhone}`;
+                } else {
+                    message = `Hi ${customerName}, your request for ${formattedDate} has been cancelled. Need to reschedule? Call ${companyPhone}`;
+                }
                 break;
 
             case 'reminder':
-                message = `Reminder: Your ${companyDisplayName} appointment is tomorrow ${formattedDate}. Arrival window: ${timeWindow}. Add to calendar: ${calendarUrl} Please be ready 15 mins early. Call ${companyPhone} if you have questions.`;
+                if (calendarUrl) {
+                    message = `Reminder: Your ${companyDisplayName} appointment is tomorrow ${formattedDate}. Arrival window: ${timeWindow}. Add to calendar: ${calendarUrl} Please be ready 15 mins early. Call ${companyPhone} if you have questions.`;
+                } else {
+                    message = `Reminder: Your ${companyDisplayName} request for ${formattedDate} is being processed. Call ${companyPhone} if you have questions.`;
+                }
                 break;
 
             case '2hour-reminder':
@@ -256,7 +275,11 @@ async function sendSMSConfirmation(details) {
                 break;
 
             default:
-                message = `Hi ${customerName}! Appointment update for ${formattedDate}. Arrival window: ${timeWindow}. Call ${companyPhone} for details.`;
+                if (calendarUrl) {
+                    message = `Hi ${customerName}! Appointment update for ${formattedDate}. Arrival window: ${timeWindow}. Call ${companyPhone} for details.`;
+                } else {
+                    message = `Hi ${customerName}! Request update for ${formattedDate}. Call ${companyPhone} for details.`;
+                }
         }
 
         // Send to customer

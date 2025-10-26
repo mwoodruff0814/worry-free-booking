@@ -738,9 +738,6 @@ ${pickupAddress ? `<p><strong>Pickup:</strong> ${pickupAddress}</p>` : ''}
  */
 async function sendCrewTimeOffNotification(details) {
     try {
-        const transporter = initializeTransporter(company);
-        if (!transporter) return null;
-
         const {
             requestId,
             crewName,
@@ -753,6 +750,9 @@ async function sendCrewTimeOffNotification(details) {
             daysCount,
             reason
         } = details;
+
+        const transporter = initializeTransporter('Worry Free Moving');
+        if (!transporter) return null;
 
         const formattedStartDate = new Date(startDate).toLocaleDateString('en-US', {
             weekday: 'long',
@@ -873,10 +873,10 @@ async function sendCrewTimeOffNotification(details) {
  */
 async function sendCrewTimeOffConfirmation(details) {
     try {
-        const transporter = initializeTransporter(company);
-        if (!transporter) return null;
-
         const { to, crewName, requestId, crew, requestType, startDate, endDate, daysCount } = details;
+
+        const transporter = initializeTransporter('Worry Free Moving');
+        if (!transporter) return null;
 
         const formattedStartDate = new Date(startDate).toLocaleDateString('en-US', {
             weekday: 'long',
