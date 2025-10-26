@@ -3717,17 +3717,23 @@ service@worryfreemovers.com</textarea>
                 const data = await response.json();
                 console.log('Data received:', data);
 
-                if (data.success && data.services) {
+                // Support both old and new API response formats
+                if (data.services) {
+                    // Old format: { success: true, services: {...} }
                     servicesConfig = data.services;
-                    console.log('Services config loaded successfully');
-                    displayServices();
-                    console.log('=== SERVICES DISPLAYED SUCCESSFULLY ===');
-
-                    // Hide loading indicator
-                    if (loadingIndicator) loadingIndicator.style.display = 'none';
+                } else if (data.movingServices) {
+                    // New format: returns services directly { movingServices: {...}, laborOnly: {...} }
+                    servicesConfig = data;
                 } else {
                     throw new Error('Invalid services data format');
                 }
+
+                console.log('Services config loaded successfully');
+                displayServices();
+                console.log('=== SERVICES DISPLAYED SUCCESSFULLY ===');
+
+                // Hide loading indicator
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
             } catch (error) {
                 console.error('=== ERROR LOADING SERVICES ===', error);
                 if (loadingIndicator) loadingIndicator.style.display = 'none';
