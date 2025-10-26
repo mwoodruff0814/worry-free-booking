@@ -8707,7 +8707,8 @@ Facebook: facebook.com/worryfreemovers
         to: data.email,
         customerName: `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Customer',
         estimate: {
-            laborCost: parseFloat(data.estimate?.baseCost || 0),
+            // Labor uses 'labor' field, moving uses 'baseCost'
+            laborCost: parseFloat(data.estimate?.labor || data.estimate?.baseCost || data.estimate?.laborCost || 0),
             travelFee: parseFloat(data.estimate?.travelFee || 0),
             stairsFee: parseFloat(data.estimate?.stairFee || 0),
             heavyItems: parseFloat(data.estimate?.heavyItemFees || 0) + parseFloat(data.estimate?.specialItemFee || 0),
@@ -8716,7 +8717,7 @@ Facebook: facebook.com/worryfreemovers
             fvpInsurance: fvpCost,
             serviceCharge: parseFloat(data.estimate?.serviceCharge || 0) + parseFloat(data.estimate?.sameDayFee || 0),
             total: grandTotal,
-            estimatedTime: parseFloat(data.estimate?.totalHours || 0)
+            estimatedTime: parseFloat(data.estimate?.totalHours || data.estimate?.laborHours || 0)
         },
         serviceType: chatState.serviceType || 'Moving Service',
         pickupAddress: data.from || '',
