@@ -305,19 +305,16 @@
         }
 
         #wfm-chat-toggle {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(0,64,133,0.3);
             display: none !important; /* Hide the toggle button */
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            position: absolute !important;
+            width: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            clip: rect(0,0,0,0) !important;
+            border: none !important;
         }
 
         #wfm-chat-toggle:hover {
