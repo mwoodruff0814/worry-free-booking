@@ -1943,12 +1943,23 @@
         function getFallbackConfig() {
             return {
                 movingServices: {
-                    '2-person-crew': { baseRate: 192.50, serviceCharge: 0.14, distanceAdjustment: 0.75 },
-                    '3-person-crew': { baseRate: 247.50, serviceCharge: 0.14, distanceAdjustment: 0.75 },
-                    '4-person-crew': { baseRate: 302.50, serviceCharge: 0.14, distanceAdjustment: 0.75 }
+                    base: 192.50,
+                    distanceAdj: 0.75,
+                    crewAdd: 55,
+                    serviceCharge: 0.14
                 },
-                laborOnly: { baseRate: 115, crewAddRate: 55, travelRate: 1.60, serviceCharge: 0.08 },
-                singleItem: { baseRate: 249, crewRates: { 2: 167, 3: 222, 4: 277 } },
+                laborOnly: {
+                    baseRate: 115,
+                    distanceAdj: 0.50,
+                    crewAddRate: 55,
+                    travelRate: 1.60,
+                    serviceCharge: 0.08
+                },
+                singleItem: {
+                    base: 249,
+                    distance: 1.50,
+                    crewRates: { 2: 167, 3: 222, 4: 277 }
+                },
                 fees: { stairs: { apartment: 35, house: 25 } }
             };
         }
@@ -2175,13 +2186,14 @@
             // Get distance (from distanceData or fallback to 30)
             const fromDistance = distanceData.fromDistance || 30;
 
-            // Calculate base hourly rate with distance adjustment
-            const crewKey = crewSize + '-person-crew';
-            const baseRate = servicesConfig.movingServices[crewKey]?.baseRate || 192.50;
-            const distanceAdj = servicesConfig.movingServices[crewKey]?.distanceAdjustment || 0.75;
-            const serviceChargeRate = servicesConfig.movingServices[crewKey]?.serviceCharge || 0.14;
+            // Calculate base hourly rate with distance adjustment - MATCHES CHATBOT
+            const baseRate = servicesConfig.movingServices.base || 192.50;
+            const distanceAdj = servicesConfig.movingServices.distanceAdj || 0.75;
+            const crewAdd = servicesConfig.movingServices.crewAdd || 55;
+            const serviceChargeRate = servicesConfig.movingServices.serviceCharge || 0.14;
 
-            const hourlyRate = baseRate + (fromDistance * distanceAdj);
+            // Hourly rate = base + (distance × adjustment) + ((crew - 2) × crew add rate)
+            const hourlyRate = baseRate + (fromDistance * distanceAdj) + ((crewSize - 2) * crewAdd);
 
             // Calculate loading/unloading time based on bedrooms
             const bedrooms = parseInt(document.getElementById('location1Bedrooms').value) || 2;
@@ -2379,11 +2391,13 @@
             const fromDistance = distanceData.fromDistance || 30;
 
             const baseRate = servicesConfig.laborOnly.baseRate || 115;
+            const distanceAdj = servicesConfig.laborOnly.distanceAdj || 0.50;
             const crewAddRate = servicesConfig.laborOnly.crewAddRate || 55;
             const travelRate = servicesConfig.laborOnly.travelRate || 1.60;
             const serviceChargeRate = servicesConfig.laborOnly.serviceCharge || 0.08;
 
-            const hourlyRate = baseRate + ((crew - 2) * crewAddRate) + (fromDistance * 0.50);
+            // Hourly rate = base + ((crew - 2) × crew add rate) + (distance × adjustment) - MATCHES CHATBOT
+            const hourlyRate = baseRate + ((crew - 2) * crewAddRate) + (fromDistance * distanceAdj);
             const laborCost = hours * hourlyRate;
             const travelCost = fromDistance * 2 * travelRate;
 
@@ -2465,7 +2479,8 @@
             const driveMinutes = Math.ceil(driveHours * 60);
             const totalMinutes = Math.max(driveMinutes + 30, 60); // Minimum 60 minutes
 
-            const baseRate = servicesConfig.singleItem?.baseRate || 249;
+            const baseRate = servicesConfig.singleItem?.base || 249;
+            const distanceRate = servicesConfig.singleItem?.distance || 1.50;
             const crewRates = servicesConfig.singleItem?.crewRates || { 2: 167, 3: 222, 4: 277 };
             const hourlyRate = crewRates[crewSize] || 167;
 
@@ -2475,7 +2490,7 @@
                 baseCost += additionalHours * hourlyRate;
             }
 
-            const distanceCost = totalDistance * 1.50;
+            const distanceCost = totalDistance * distanceRate;
 
             // Stairs
             const pickupStairs = parseInt(document.getElementById('location1Stairs').value) || 0;
