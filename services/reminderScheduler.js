@@ -4,35 +4,37 @@
  */
 
 const cron = require('node-cron');
-const fs = require('fs').promises;
-const path = require('path');
 const { send24HourReminder } = require('./emailService');
 const { sendSMSConfirmation } = require('./smsService');
-
-const APPOINTMENTS_FILE = path.join(__dirname, '..', 'data', 'appointments.json');
+const {
+    getAppointments: getMongoAppointments,
+    updateAppointment
+} = require('./database');
 
 /**
- * Get all appointments
+ * Get all appointments from MongoDB
  */
 async function getAppointments() {
     try {
-        const data = await fs.readFile(APPOINTMENTS_FILE, 'utf8');
-        return JSON.parse(data);
+        return await getMongoAppointments(); // Gets all appointments without filter
     } catch (error) {
-        console.error('Error reading appointments:', error);
+        console.error('Error reading appointments from MongoDB:', error);
         return [];
     }
 }
 
 /**
- * Save appointments
+ * Update appointment (mark reminder as sent)
  */
-async function saveAppointments(appointments) {
+async function updateAppointmentReminderSent(bookingId) {
     try {
-        await fs.writeFile(APPOINTMENTS_FILE, JSON.stringify(appointments, null, 2));
+        await updateAppointment(bookingId, {
+            reminderSent: true,
+            reminderSentAt: new Date().toISOString()
+        });
         return true;
     } catch (error) {
-        console.error('Error saving appointments:', error);
+        console.error('Error updating appointment in MongoDB:', error);
         return false;
     }
 }
@@ -121,9 +123,8 @@ async function send24HourReminders() {
                         console.error('SMS reminder failed:', error);
                     }
 
-                    // Mark reminder as sent
-                    appointment.reminderSent = true;
-                    appointment.reminderSentAt = new Date().toISOString();
+                    // Mark reminder as sent in MongoDB
+                    await updateAppointmentReminderSent(appointment.bookingId);
 
                     remindersSent++;
                     console.log(`✅ Reminder sent for booking ${appointment.bookingId}`);
@@ -134,9 +135,8 @@ async function send24HourReminders() {
             }
         }
 
-        // Save updated appointments
+        // Log results
         if (remindersSent > 0) {
-            await saveAppointments(appointments);
             console.log(`📧 Total reminders sent: ${remindersSent}`);
         } else {
             console.log('📭 No reminders to send at this time.');
@@ -183,9 +183,11 @@ async function send2HourReminders() {
                         type: '2hour-reminder'
                     });
 
-                    // Mark 2-hour reminder as sent
-                    appointment.twoHourReminderSent = true;
-                    appointment.twoHourReminderSentAt = new Date().toISOString();
+                    // Mark 2-hour reminder as sent in MongoDB
+                    await updateAppointment(appointment.bookingId, {
+                        twoHourReminderSent: true,
+                        twoHourReminderSentAt: new Date().toISOString()
+                    });
 
                     remindersSent++;
                     console.log(`✅ 2-hour SMS reminder sent for booking ${appointment.bookingId}`);
@@ -196,9 +198,8 @@ async function send2HourReminders() {
             }
         }
 
-        // Save updated appointments
+        // Log results
         if (remindersSent > 0) {
-            await saveAppointments(appointments);
             console.log(`📱 Total 2-hour SMS reminders sent: ${remindersSent}`);
         } else {
             console.log('📭 No 2-hour reminders to send at this time.');
