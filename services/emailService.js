@@ -25,11 +25,11 @@ async function loadCompanySettings(companyName) {
             // Default to Worry Free Moving
             return {
                 companyName: 'Worry Free Moving',
-                companyEmail: process.env.EMAIL_USER || 'service@worryfreemovers.com',
+                companyEmail: process.env.EMAIL_FROM || 'support@worryfreemovers.com',
                 companyPhone: '330-435-8686',
                 companyWebsite: 'worryfreemovers.com',
                 ccEmails: getCCList() ? getCCList().split(',').map(e => e.trim()) : [],
-                signature: `Best regards,\nWorry Free Moving Team\n330-435-8686\nservice@worryfreemovers.com`
+                signature: `Best regards,\nWorry Free Moving Team\n330-435-8686\nsupport@worryfreemovers.com`
             };
         }
     } catch (error) {
@@ -37,18 +37,18 @@ async function loadCompanySettings(companyName) {
         // Fallback to Worry Free Moving defaults
         return {
             companyName: 'Worry Free Moving',
-            companyEmail: process.env.EMAIL_USER || 'service@worryfreemovers.com',
+            companyEmail: process.env.EMAIL_FROM || 'support@worryfreemovers.com',
             companyPhone: '330-435-8686',
             companyWebsite: 'worryfreemovers.com',
             ccEmails: getCCList() ? getCCList().split(',').map(e => e.trim()) : [],
-            signature: `Best regards,\nWorry Free Moving Team\n330-435-8686\nservice@worryfreemovers.com`
+            signature: `Best regards,\nWorry Free Moving Team\n330-435-8686\nsupport@worryfreemovers.com`
         };
     }
 }
 
 // Helper function to get CC list from environment variable
 function getCCList() {
-    // You can easily add/remove emails in .env file: EMAIL_CC_LIST=matt@worryfreemovers.com,zlarimer24@gmail.com
+    // You can easily add/remove emails in .env file: EMAIL_CC_LIST=support@worryfreemovers.com,zlarimer24@gmail.com
     const ccList = process.env.EMAIL_CC_LIST || '';
     return ccList.trim() || null; // Return null if empty to avoid sending to empty CC
 }
