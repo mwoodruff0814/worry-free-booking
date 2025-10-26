@@ -2228,6 +2228,24 @@ service@worryfreemovers.com</textarea>
         </div>
     </div>
 
+    <!-- Employee Time Off History Modal -->
+    <div id="employeeTimeOffModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 id="timeOffModalTitle">Time Off History</h2>
+                <button class="btn-close" onclick="closeEmployeeTimeOffModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="employeeTimeOffContent" style="max-height: 500px; overflow-y: auto;">
+                    <p style="text-align: center; padding: 40px; color: #6c757d;">Loading time off history...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-modal btn-cancel" onclick="closeEmployeeTimeOffModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Packing Materials Modal -->
     <div id="materialModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
@@ -5459,6 +5477,9 @@ service@worryfreemovers.com`;
                             <button onclick="editEmployee('${emp.id}')" style="background: #667eea; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px;" title="Edit employee details">
                                 Edit
                             </button>
+                            <button onclick="viewEmployeeTimeOff('${emp.id}', '${emp.firstName} ${emp.lastName}', '${emp.email}')" style="background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px;" title="View time off history">
+                                🗓️ Time Off
+                            </button>
                             <button onclick="sendEmployeePasswordReset('${emp.id}')" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px;" title="Send password reset email">
                                 🔑 Reset Password
                             </button>
@@ -6181,6 +6202,113 @@ service@worryfreemovers.com`;
         document.querySelector('button[onclick="switchTab(\'timeoff\')"]').addEventListener('click', () => {
             loadTimeOffRequests();
         });
+
+        // ========================================
+        // EMPLOYEE TIME OFF HISTORY FUNCTIONS
+        // ========================================
+
+        async function viewEmployeeTimeOff(employeeId, employeeName, employeeEmail) {
+            // Show modal
+            document.getElementById('timeOffModalTitle').textContent = `Time Off History - ${employeeName}`;
+            document.getElementById('employeeTimeOffModal').style.display = 'flex';
+
+            try {
+                // Fetch all time off requests
+                const response = await fetch(`${API_URL}/api/crew-timeoff`);
+                const data = await response.json();
+
+                if (data.success) {
+                    // Filter requests for this employee (match by email)
+                    const employeeRequests = data.requests.filter(req =>
+                        req.crewEmail === employeeEmail
+                    );
+
+                    if (employeeRequests.length === 0) {
+                        document.getElementById('employeeTimeOffContent').innerHTML = `
+                            <p style="text-align: center; padding: 40px; color: #6c757d;">
+                                No time off requests found for ${employeeName}
+                            </p>
+                        `;
+                        return;
+                    }
+
+                    // Display requests
+                    const html = employeeRequests.map(req => {
+                        const statusColor = req.status === 'approved' ? '#28a745' : req.status === 'denied' ? '#dc3545' : '#ffc107';
+                        const statusEmoji = req.status === 'approved' ? '✅' : req.status === 'denied' ? '❌' : '⏳';
+                        const statusText = req.status.charAt(0).toUpperCase() + req.status.slice(1);
+
+                        return `
+                            <div style="border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 15px; background: white;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <span style="font-size: 24px;">${statusEmoji}</span>
+                                        <span style="background: ${statusColor}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                            ${statusText}
+                                        </span>
+                                    </div>
+                                    <div style="font-size: 12px; color: #6c757d;">
+                                        ${req.requestId}
+                                    </div>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
+                                    <div>
+                                        <strong>Type:</strong> ${req.requestType || 'Vacation'}
+                                    </div>
+                                    <div>
+                                        <strong>Duration:</strong> ${req.daysCount} day(s)
+                                    </div>
+                                    <div>
+                                        <strong>Start Date:</strong> ${new Date(req.startDate).toLocaleDateString()}
+                                    </div>
+                                    <div>
+                                        <strong>End Date:</strong> ${new Date(req.endDate).toLocaleDateString()}
+                                    </div>
+                                    <div style="grid-column: 1 / -1;">
+                                        <strong>Submitted:</strong> ${new Date(req.submittedDate || req.createdAt).toLocaleString()}
+                                    </div>
+                                    ${req.reason ? `
+                                    <div style="grid-column: 1 / -1; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                                        <strong>Reason:</strong> ${req.reason}
+                                    </div>
+                                    ` : ''}
+                                    ${req.responseNote ? `
+                                    <div style="grid-column: 1 / -1; padding: 10px; background: ${req.status === 'approved' ? '#d4edda' : '#f8d7da'}; border-radius: 5px;">
+                                        <strong>Admin Response:</strong> ${req.responseNote}
+                                    </div>
+                                    ` : ''}
+                                    ${req.respondedAt ? `
+                                    <div style="grid-column: 1 / -1;">
+                                        <strong>Responded:</strong> ${new Date(req.respondedAt).toLocaleString()}
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    document.getElementById('employeeTimeOffContent').innerHTML = html;
+                } else {
+                    document.getElementById('employeeTimeOffContent').innerHTML = `
+                        <p style="text-align: center; padding: 40px; color: #dc3545;">
+                            Failed to load time off history
+                        </p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading employee time off history:', error);
+                document.getElementById('employeeTimeOffContent').innerHTML = `
+                    <p style="text-align: center; padding: 40px; color: #dc3545;">
+                        Error loading time off history
+                    </p>
+                `;
+            }
+        }
+
+        function closeEmployeeTimeOffModal() {
+            document.getElementById('employeeTimeOffModal').style.display = 'none';
+        }
     </script>
 </body>
 </html>
