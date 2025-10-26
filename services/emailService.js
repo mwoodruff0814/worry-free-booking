@@ -395,7 +395,7 @@ Thank you for choosing ${companySettings.companyName}!
 
         // Send email
         const info = await transporter.sendMail({
-            from: `"${companySettings.companyName}" <${process.env.EMAIL_USER || companySettings.companyEmail}>`,
+            from: `"${companySettings.companyName}" <${process.env.EMAIL_FROM || process.env.EMAIL_USER || companySettings.companyEmail}>`,
             to,
             cc: companySettings.ccEmails.length > 0 ? companySettings.ccEmails.join(',') : getCCList(), // CC list from company settings or .env
             bcc: process.env.COMPANY_EMAIL || companySettings.companyEmail, // Copy to company
@@ -444,7 +444,7 @@ async function sendCancellationEmail(details) {
         });
 
         const info = await transporter.sendMail({
-            from: `"${companySettings.companyName}" <${process.env.EMAIL_USER || companySettings.companyEmail}>`,
+            from: `"${companySettings.companyName}" <${process.env.EMAIL_FROM || process.env.EMAIL_USER || companySettings.companyEmail}>`,
             to,
             cc: companySettings.ccEmails.length > 0 ? companySettings.ccEmails.join(',') : getCCList(),
             subject: `Appointment Cancelled - Booking #${bookingId}`,
@@ -603,7 +603,7 @@ async function sendRescheduleEmail(details) {
         `;
 
         await transporter.sendMail({
-            from: `"${companySettings.companyName}" <${process.env.EMAIL_USER || companySettings.companyEmail}>`,
+            from: `"${companySettings.companyName}" <${process.env.EMAIL_FROM || process.env.EMAIL_USER || companySettings.companyEmail}>`,
             to,
             cc: companySettings.ccEmails.length > 0 ? companySettings.ccEmails.join(',') : getCCList(),
             bcc: process.env.COMPANY_EMAIL || companySettings.companyEmail,
@@ -719,7 +719,7 @@ ${pickupAddress ? `<p><strong>Pickup:</strong> ${pickupAddress}</p>` : ''}
         `;
 
         await transporter.sendMail({
-            from: `"${companySettings.companyName}" <${process.env.EMAIL_USER || companySettings.companyEmail}>`,
+            from: `"${companySettings.companyName}" <${process.env.EMAIL_FROM || process.env.EMAIL_USER || companySettings.companyEmail}>`,
             to,
             cc: companySettings.ccEmails.length > 0 ? companySettings.ccEmails.join(',') : getCCList(),
             subject: `⏰ Reminder: Your move is tomorrow - Arrival window ${formatTimeWindow(time)}`,
@@ -1381,7 +1381,7 @@ ${companySettings.companyName}
 
         // Send email
         const info = await transporter.sendMail({
-            from: `"${companySettings.companyName}" <${process.env.EMAIL_USER || companySettings.companyEmail}>`,
+            from: `"${companySettings.companyName}" <${process.env.EMAIL_FROM || process.env.EMAIL_USER || companySettings.companyEmail}>`,
             to,
             cc: companySettings.ccEmails.length > 0 ? companySettings.ccEmails.join(',') : getCCList(),
             bcc: process.env.COMPANY_EMAIL || companySettings.companyEmail,
