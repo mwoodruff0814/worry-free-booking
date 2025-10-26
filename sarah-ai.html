@@ -4856,15 +4856,15 @@ if (isMobile && send) {
                                 { text: "↩️ Start over", value: "restart" }
                             ]);
                         } else {
-                            // Ask about stairs at pickup location
-                            chatState.stage = 'stairs_from';
+                            // Ask about home type at pickup location
+                            chatState.stage = 'home_type_from';
                             setTimeout(() => {
-                                showBotMessage("Are there any stairs at your current location?");
+                                showBotMessage("What type of place are you moving FROM?");
                                 showOptions([
-                                    { text: "No stairs", value: "0" },
-                                    { text: "1 flight", value: "1" },
-                                    { text: "2 flights", value: "2" },
-                                    { text: "3+ flights", value: "3" }
+                                    { text: "🏠 House", value: "house" },
+                                    { text: "🏢 Apartment", value: "apartment" },
+                                    { text: "🏢 Condo", value: "condo" },
+                                    { text: "📦 Storage Unit", value: "storage" }
                                 ]);
                                 saveSession();
                             }, 800);
@@ -4876,18 +4876,64 @@ if (isMobile && send) {
                         showInput("Enter complete address...");
                     }
                     break;
-                    
+
+                case 'home_type_from':
+                    chatState.data.homeTypeFrom = value;
+                    chatState.stage = 'bedrooms_from';
+                    setTimeout(() => {
+                        showBotMessage("How many bedrooms at this location?");
+                        showOptions([
+                            { text: "Studio/1 Bedroom", value: "1" },
+                            { text: "2 Bedrooms", value: "2" },
+                            { text: "3 Bedrooms", value: "3" },
+                            { text: "4 Bedrooms", value: "4" },
+                            { text: "5+ Bedrooms", value: "5" }
+                        ]);
+                        saveSession();
+                    }, 400);
+                    break;
+
+                case 'bedrooms_from':
+                    chatState.data.bedroomsFrom = parseInt(value);
+                    chatState.stage = 'stairs_from';
+                    setTimeout(() => {
+                        showBotMessage("How many flights of stairs at this location?");
+                        showOptions([
+                            { text: "No stairs", value: "0" },
+                            { text: "1 flight", value: "1" },
+                            { text: "2 flights", value: "2" },
+                            { text: "3+ flights", value: "3" }
+                        ]);
+                        saveSession();
+                    }, 400);
+                    break;
+
                 case 'stairs_from':
                     chatState.data.stairsFrom = parseInt(value);
-                    
+
                     if (chatState.serviceType === 'single') {
                         // For single items, go to destination address
                         chatState.stage = 'location_to';
                         showBotMessage("Great! Now I need the delivery address.");
                         showInput("Start typing delivery address...");
                         saveSession();
+                    } else if (chatState.serviceType === 'labor') {
+                        // Labor only - ask for crew size
+                        chatState.stage = 'crew_size';
+                        showBotMessage("How many movers do you need?");
+                        showOptions([
+                            { text: "👥 2 person crew", value: "2" },
+                            { text: "👥 3 person crew", value: "3" },
+                            { text: "👥 4 person crew", value: "4" }
+                        ]);
+                        saveSession();
                     } else {
-                        proceedAfterFromLocation();
+                        // Moving service - go to destination address
+                        chatState.stage = 'location_to';
+                        showBotMessage("Great! Now I need your destination address.");
+                        showBotMessage("Where are you moving TO?");
+                        showInput("Start typing destination address...");
+                        saveSession();
                     }
                     break;
                     
@@ -4921,16 +4967,16 @@ if (isMobile && send) {
                         if (chatState.data.tollCost > 0) {
                             showBotMessage(`<div class="highlight-box">📍 Note: This route includes toll roads. Estimated toll cost: ${formatMoney(chatState.data.tollCost)}</div>`);
                         }
-                        
-                        // Ask about stairs at destination
-                        chatState.stage = 'stairs_to';
+
+                        // Ask about home type at destination
+                        chatState.stage = 'home_type_to';
                         setTimeout(() => {
-                            showBotMessage("Are there any stairs at your destination?");
+                            showBotMessage("What type of place are you moving TO?");
                             showOptions([
-                                { text: "No stairs", value: "0" },
-                                { text: "1 flight", value: "1" },
-                                { text: "2 flights", value: "2" },
-                                { text: "3+ flights", value: "3" }
+                                { text: "🏠 House", value: "house" },
+                                { text: "🏢 Apartment", value: "apartment" },
+                                { text: "🏢 Condo", value: "condo" },
+                                { text: "📦 Storage Unit", value: "storage" }
                             ]);
                             saveSession();
                         }, 800);
@@ -4940,10 +4986,41 @@ if (isMobile && send) {
                         showInput("Enter complete address...");
                     }
                     break;
-                    
+
+                case 'home_type_to':
+                    chatState.data.homeTypeTo = value;
+                    chatState.stage = 'bedrooms_to';
+                    setTimeout(() => {
+                        showBotMessage("How many bedrooms at the destination?");
+                        showOptions([
+                            { text: "Studio/1 Bedroom", value: "1" },
+                            { text: "2 Bedrooms", value: "2" },
+                            { text: "3 Bedrooms", value: "3" },
+                            { text: "4 Bedrooms", value: "4" },
+                            { text: "5+ Bedrooms", value: "5" }
+                        ]);
+                        saveSession();
+                    }, 400);
+                    break;
+
+                case 'bedrooms_to':
+                    chatState.data.bedroomsTo = parseInt(value);
+                    chatState.stage = 'stairs_to';
+                    setTimeout(() => {
+                        showBotMessage("How many flights of stairs at the destination?");
+                        showOptions([
+                            { text: "No stairs", value: "0" },
+                            { text: "1 flight", value: "1" },
+                            { text: "2 flights", value: "2" },
+                            { text: "3+ flights", value: "3" }
+                        ]);
+                        saveSession();
+                    }, 400);
+                    break;
+
                 case 'stairs_to':
                     chatState.data.stairsTo = parseInt(value);
-                    
+
                     if (chatState.serviceType === 'single') {
                         // For single items, also set the delivery stairs with the correct variable name
                         chatState.data.deliveryStairs = parseInt(value);
@@ -5101,8 +5178,15 @@ if (isMobile && send) {
                         showBotMessage("What's the address of the third location?");
                         showInput("Start typing third location address...");
                     } else {
-                        // No third location, proceed to home type
-                        proceedAfterToLocation();
+                        // No third location, proceed to TV and appliance questions
+                        chatState.stage = 'tv_handling_check';
+                        // Set combined bedrooms value for calculations
+                        chatState.data.bedrooms = Math.max(chatState.data.bedroomsFrom || 0, chatState.data.bedroomsTo || 0);
+                        showBotMessage("Do you have any large TVs (50\" or bigger) that need special handling?");
+                        showOptions([
+                            { text: "Yes, I have large TVs", value: "yes" },
+                            { text: "No large TVs", value: "no" }
+                        ]);
                     }
                     saveSession();
                     break;
@@ -5139,16 +5223,16 @@ if (isMobile && send) {
                         
                         showBotMessage(`Additional distance for third location: ${toThird.distance} miles (${Math.ceil(toThird.duration * 60)} minutes) ✅`);
                         showBotMessage(`Total trip with all stops: ${chatState.data.totalTripDistance.toFixed(1)} miles`);
-                        
-                        // Ask about stairs at third location
-                        chatState.stage = 'stairs_third';
+
+                        // Ask about home type at third location
+                        chatState.stage = 'home_type_third';
                         setTimeout(() => {
-                            showBotMessage("Are there any stairs at the third location?");
+                            showBotMessage("What type of place is the third location?");
                             showOptions([
-                                { text: "No stairs", value: "0" },
-                                { text: "1 flight", value: "1" },
-                                { text: "2 flights", value: "2" },
-                                { text: "3+ flights", value: "3" }
+                                { text: "🏠 House", value: "house" },
+                                { text: "🏢 Apartment", value: "apartment" },
+                                { text: "🏢 Condo", value: "condo" },
+                                { text: "📦 Storage Unit", value: "storage" }
                             ]);
                             saveSession();
                         }, 800);
@@ -5158,25 +5242,41 @@ if (isMobile && send) {
                         showInput("Enter complete address...");
                     }
                     break;
-                    
+
+                case 'home_type_third':
+                    chatState.data.homeTypeThird = value;
+                    chatState.stage = 'bedrooms_third';
+                    setTimeout(() => {
+                        showBotMessage("How many bedrooms at the third location?");
+                        showOptions([
+                            { text: "Studio/1 Bedroom", value: "1" },
+                            { text: "2 Bedrooms", value: "2" },
+                            { text: "3 Bedrooms", value: "3" },
+                            { text: "4 Bedrooms", value: "4" },
+                            { text: "5+ Bedrooms", value: "5" }
+                        ]);
+                        saveSession();
+                    }, 400);
+                    break;
+
+                case 'bedrooms_third':
+                    chatState.data.bedroomsThird = parseInt(value);
+                    chatState.stage = 'stairs_third';
+                    setTimeout(() => {
+                        showBotMessage("How many flights of stairs at the third location?");
+                        showOptions([
+                            { text: "No stairs", value: "0" },
+                            { text: "1 flight", value: "1" },
+                            { text: "2 flights", value: "2" },
+                            { text: "3+ flights", value: "3" }
+                        ]);
+                        saveSession();
+                    }, 400);
+                    break;
+
                 case 'stairs_third':
                     chatState.data.stairsThird = parseInt(value);
-                    
-                    // Ask about type of third location
-                    chatState.stage = 'third_location_type';
-                    showBotMessage("What type of location is your third stop?");
-                    showOptions([
-                        { text: "📦 Storage Unit", value: "storage" },
-                        { text: "🏠 House", value: "house" },
-                        { text: "🏢 Apartment", value: "apartment" },
-                        { text: "🏢 Business/Office", value: "business" }
-                    ]);
-                    saveSession();
-                    break;
-                    
-                case 'third_location_type':
-                    chatState.data.thirdLocationType = value;
-                    
+
                     // Ask if there are items at third location that need moving
                     chatState.stage = 'third_location_items';
                     showBotMessage("Are you picking up or dropping off items at this third location?");
@@ -5187,10 +5287,19 @@ if (isMobile && send) {
                     ]);
                     saveSession();
                     break;
-                    
+
                 case 'third_location_items':
                     chatState.data.thirdLocationAction = value;
-                    proceedAfterToLocation();
+                    // Proceed to TV and appliance questions
+                    chatState.stage = 'tv_handling_check';
+                    // Set combined bedrooms value for calculations
+                    chatState.data.bedrooms = Math.max(chatState.data.bedroomsFrom || 0, chatState.data.bedroomsTo || 0, chatState.data.bedroomsThird || 0);
+                    showBotMessage("Do you have any large TVs (50\" or bigger) that need special handling?");
+                    showOptions([
+                        { text: "Yes, I have large TVs", value: "yes" },
+                        { text: "No large TVs", value: "no" }
+                    ]);
+                    saveSession();
                     break;
                     
                 case 'home_type':
@@ -5264,52 +5373,7 @@ if (isMobile && send) {
                     ]);
                     saveSession();
                     break;
-                    
-                case 'bedrooms_from':
-                    chatState.data.bedrooms = parseInt(value);
-                    
-                    // Check for smart packing recommendation
-                    if (chatState.data.bedrooms >= 3) {
-                        showBotMessage("💡 For a 3+ bedroom move, most customers find our packing materials save time and protect items better");
-                    }
-                    
-                    if (chatState.data.destinationType === 'storage') {
-                        chatState.data.bedroomsTo = 0; // Storage doesn't have bedrooms
-                        
-                        // Ask about TVs before appliances
-                        chatState.stage = 'tv_handling_check';
-                        showBotMessage("Do you have any large TVs (50\" or bigger) that need special handling?");
-                        showOptions([
-                            { text: "Yes, I have large TVs", value: "yes" },
-                            { text: "No large TVs", value: "no" }
-                        ]);
-                    } else {
-                        chatState.stage = 'bedrooms_to';
-                        showBotMessage("And how many bedrooms at your NEW location?");
-                        showOptions([
-                            { text: "Studio/1 Bedroom", value: "1" },
-                            { text: "2 Bedrooms", value: "2" },
-                            { text: "3 Bedrooms", value: "3" },
-                            { text: "4 Bedrooms", value: "4" },
-                            { text: "5+ Bedrooms", value: "5" }
-                        ]);
-                    }
-                    saveSession();
-                    break;
-                    
-                case 'bedrooms_to':
-                    chatState.data.bedroomsTo = parseInt(value);
-                    
-                    // Ask about TVs
-                    chatState.stage = 'tv_handling_check';
-                    showBotMessage("Do you have any large TVs (50\" or bigger) that need special handling?");
-                    showOptions([
-                        { text: "Yes, I have large TVs", value: "yes" },
-                        { text: "No large TVs", value: "no" }
-                    ]);
-                    saveSession();
-                    break;
-                    
+
                 case 'tv_handling_check':
                     if (value === 'yes') {
                         chatState.stage = 'tv_size_details';
