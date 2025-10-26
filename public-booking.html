@@ -860,13 +860,40 @@
             border: 1px solid #ffeaa7;
             text-align: center;
         }
+
+        /* Time Slot Buttons */
+        .time-slot-btn {
+            padding: 12px 20px;
+            border: 2px solid #004085;
+            background: white;
+            color: #004085;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .time-slot-btn:hover {
+            background: #e7f3ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,64,133,0.2);
+        }
+
+        .time-slot-btn.selected {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-color: #28a745;
+            box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+        }
     </style>
 
     <!-- Google Maps API with Places -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAWGIVnh7-2sgDJin_2qgNvwh4JD9UgJDo&libraries=places" async defer></script>
 
     <!-- Square Web SDK -->
-    <script type="text/javascript" src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+    <script type="text/javascript" src="https://web.squarecdn.com/v1/square.js"></script>
 </head>
 <body>
     <div class="container">
@@ -911,11 +938,19 @@
                 </div>
                 <div class="step" data-step="8">
                     <div class="step-circle">8</div>
-                    <div class="step-label">Save Card</div>
+                    <div class="step-label">Estimate</div>
                 </div>
                 <div class="step" data-step="9">
                     <div class="step-circle">9</div>
-                    <div class="step-label">Review</div>
+                    <div class="step-label">Schedule</div>
+                </div>
+                <div class="step" data-step="10">
+                    <div class="step-circle">10</div>
+                    <div class="step-label">Payment</div>
+                </div>
+                <div class="step" data-step="11">
+                    <div class="step-circle">11</div>
+                    <div class="step-label">Confirm</div>
                 </div>
             </div>
         </div>
@@ -1336,12 +1371,70 @@
 
                 <div class="buttons">
                     <button class="btn-secondary" onclick="prevStep()">← Back</button>
-                    <button class="btn-primary" onclick="nextStep()">Next: Save Card (Optional) →</button>
+                    <button class="btn-primary" onclick="goToEstimate()">View Estimate →</button>
                 </div>
             </div>
 
-            <!-- Step 8: Save Card on File (Optional) -->
+            <!-- Step 8: Estimate Display -->
             <div class="form-section" data-section="8">
+                <h2>Your Estimate</h2>
+                <p class="section-subtitle">Here's your personalized moving estimate</p>
+
+                <!-- Estimate Display -->
+                <div class="estimate-box">
+                    <div class="estimate-label">Estimated Total</div>
+                    <div class="estimate-amount" id="estimateAmount">$0</div>
+                    <div class="estimate-disclaimer">Final price may vary based on actual time and services required</div>
+                </div>
+
+                <div class="alert alert-info">
+                    <div>
+                        <strong>📋 What's included in your estimate:</strong>
+                        <p>This estimate is based on the information you provided. Your final price may vary depending on actual time required and any additional services needed on moving day.</p>
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn-primary" onclick="nextStep()">Schedule Your Move →</button>
+                </div>
+            </div>
+
+            <!-- Step 9: Date & Time Selection -->
+            <div class="form-section" data-section="9">
+                <h2>Select Your Move Date & Time</h2>
+                <p class="section-subtitle">Choose an available time slot for your move</p>
+
+                <div class="form-group">
+                    <label>Selected Date:</label>
+                    <div id="selectedDateDisplay" style="font-size: 18px; font-weight: 600; color: #004085; margin-bottom: 20px;">
+                        Loading...
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Available Time Slots <span class="required">*</span></label>
+                    <div id="timeSlotsContainer" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+                        <!-- Time slots will be loaded here -->
+                    </div>
+                    <span class="help-text">Select a time slot that works best for you</span>
+                </div>
+
+                <div id="noSlotsMessage" style="display: none; padding: 20px; background: #fff3cd; border-radius: 8px; margin-top: 20px;">
+                    <p style="margin: 0; color: #856404;">
+                        <strong>⚠️ No available slots for this date</strong><br>
+                        Please go back and select a different date, or call us at <a href="tel:3304358686">330-435-8686</a> to schedule.
+                    </p>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn-primary" id="confirmTimeBtn" onclick="nextStep()" style="display: none;">Continue to Payment →</button>
+                </div>
+            </div>
+
+            <!-- Step 10: Save Card on File (Optional) -->
+            <div class="form-section" data-section="10">
                 <h2>Save card for faster checkout (Optional)</h2>
                 <p class="section-subtitle">Securely save your card with Square for easy payment after your move</p>
 
@@ -1400,8 +1493,8 @@
                 </div>
             </div>
 
-            <!-- Step 9: Review & Confirm -->
-            <div class="form-section" data-section="9">
+            <!-- Step 11: Review & Confirm -->
+            <div class="form-section" data-section="11">
                 <h2>Review your booking</h2>
                 <p class="section-subtitle">Please review the details before confirming</p>
 
@@ -1465,7 +1558,7 @@
 
                 <!-- Payment Summary -->
                 <div class="review-section" id="reviewPaymentSection" style="display: none;">
-                    <h3>Payment Information <button class="edit-btn" onclick="goToStep(8)">Edit</button></h3>
+                    <h3>Payment Information <button class="edit-btn" onclick="goToStep(10)">Edit</button></h3>
                     <div class="review-item">
                         <span class="review-label">Card on File:</span>
                         <span class="review-value" id="reviewCard">-</span>
@@ -1567,6 +1660,7 @@
         let bookingData = {
             serviceType: '',
             moveDate: '',
+            moveTime: '',
             estimatedHours: '',
             pickupAddress: '',
             dropoffAddress: '',
@@ -1802,13 +1896,11 @@
             await proceedToReview();
         }
 
-        // Proceed to review after calculating estimate
-        async function proceedToReview() {
-            // Save current step data if not already saved
-            if (currentStep === 8) {
-                saveCurrentStepData();
-            }
+        // Go to estimate display (Step 8)
+        async function goToEstimate() {
+            if (!validateCurrentStep()) return;
 
+            saveCurrentStepData();
             showLoading();
             try {
                 // Calculate distance and drive time if not already done
@@ -1821,15 +1913,97 @@
                     await calculateEstimate();
                 }
 
-                // Show review page
-                populateReview();
-                currentStep = 9;
-                showStep(9);
+                // Update estimate display
+                document.getElementById('estimateAmount').textContent = '$' + bookingData.estimate.toFixed(2);
+
+                // Show step 8
+                currentStep = 8;
+                showStep(8);
                 updateProgress();
                 scrollToTop();
             } catch (error) {
                 console.error('Error calculating estimate:', error);
                 alert('Unable to calculate estimate. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Load available time slots for selected date
+        async function loadAvailableTimeSlots() {
+            const selectedDate = bookingData.moveDate;
+            if (!selectedDate) {
+                alert('Please select a date first');
+                return;
+            }
+
+            // Display selected date
+            const dateObj = new Date(selectedDate + 'T00:00:00');
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedDate = dateObj.toLocaleDateString('en-US', dateOptions);
+            document.getElementById('selectedDateDisplay').textContent = formattedDate;
+
+            showLoading();
+            try {
+                const response = await fetch(`${API_URL}/api/available-slots?date=${selectedDate}`);
+                const data = await response.json();
+
+                const timeSlotsContainer = document.getElementById('timeSlotsContainer');
+                const noSlotsMessage = document.getElementById('noSlotsMessage');
+                const confirmTimeBtn = document.getElementById('confirmTimeBtn');
+
+                timeSlotsContainer.innerHTML = '';
+
+                if (data.success && data.slots && data.slots.length > 0) {
+                    noSlotsMessage.style.display = 'none';
+
+                    data.slots.forEach(slot => {
+                        const slotBtn = document.createElement('button');
+                        slotBtn.type = 'button';
+                        slotBtn.className = 'time-slot-btn';
+                        slotBtn.textContent = slot.time;
+                        slotBtn.onclick = function() {
+                            // Deselect all slots
+                            document.querySelectorAll('.time-slot-btn').forEach(btn => {
+                                btn.classList.remove('selected');
+                            });
+                            // Select this slot
+                            this.classList.add('selected');
+                            bookingData.moveTime = slot.time;
+                            confirmTimeBtn.style.display = 'block';
+                        };
+                        timeSlotsContainer.appendChild(slotBtn);
+                    });
+                } else {
+                    noSlotsMessage.style.display = 'block';
+                    confirmTimeBtn.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading time slots:', error);
+                alert('Unable to load available time slots. Please try again or call us at 330-435-8686.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Proceed to review after calculating estimate
+        async function proceedToReview() {
+            // Save current step data if not already saved
+            if (currentStep === 10) {
+                saveCurrentStepData();
+            }
+
+            showLoading();
+            try {
+                // Show review page
+                populateReview();
+                currentStep = 11;
+                showStep(11);
+                updateProgress();
+                scrollToTop();
+            } catch (error) {
+                console.error('Error proceeding to review:', error);
+                alert('Unable to proceed to review. Please try again.');
             } finally {
                 hideLoading();
             }
@@ -2110,14 +2284,19 @@
                 }
             });
 
-            // Initialize Square Payments when entering step 8 (card step)
-            if (step === 8 && !squarePayments) {
+            // Load time slots when entering step 9 (schedule)
+            if (step === 9) {
+                loadAvailableTimeSlots();
+            }
+
+            // Initialize Square Payments when entering step 10 (card step)
+            if (step === 10 && !squarePayments) {
                 initializeSquarePayments();
             }
         }
 
         function updateProgress() {
-            const progress = ((currentStep - 1) / 8) * 100;
+            const progress = ((currentStep - 1) / 10) * 100;
             document.getElementById('progressFill').style.width = progress + '%';
         }
 
