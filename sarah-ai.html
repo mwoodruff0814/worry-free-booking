@@ -8707,24 +8707,56 @@ Facebook: facebook.com/worryfreemovers
         to: data.email,
         customerName: `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Customer',
         estimate: {
-            // Labor uses 'labor' field, moving uses 'baseCost'
-            laborCost: parseFloat(data.estimate?.labor || data.estimate?.baseCost || data.estimate?.laborCost || 0),
-            travelFee: parseFloat(data.estimate?.travelFee || 0),
-            stairsFee: parseFloat(data.estimate?.stairFee || 0),
-            heavyItems: parseFloat(data.estimate?.heavyItemFees || 0) + parseFloat(data.estimate?.specialItemFee || 0),
-            additionalServices: parseFloat(data.estimate?.packingCost || 0),
+            // Handle different service types:
+            // - Moving: uses baseCost
+            // - Labor: uses labor
+            // - Single Item: uses base
+            // - Junk Removal: uses baseCost
+            // - Cleanout: uses laborCost or totalLabor
+            laborCost: parseFloat(
+                data.estimate?.labor ||           // Labor Only
+                data.estimate?.baseCost ||        // Moving, Junk Removal
+                data.estimate?.base ||            // Single Item
+                data.estimate?.totalLabor ||      // Cleanout (alternative)
+                data.estimate?.laborCost ||       // Cleanout (primary)
+                0
+            ),
+            travelFee: parseFloat(
+                data.estimate?.travelFee ||       // Moving, Labor
+                data.estimate?.distance ||        // Single Item distance fee
+                data.estimate?.distanceCost ||    // Junk Removal
+                0
+            ),
+            stairsFee: parseFloat(data.estimate?.stairFee || data.estimate?.stairs || 0),
+            heavyItems: parseFloat(
+                (data.estimate?.heavyItemFees || 0) +
+                (data.estimate?.specialItemFee || 0) +
+                (data.estimate?.itemFee || 0) +           // Single Item special handling
+                (data.estimate?.heavyItemFee || 0) +      // Single Item heavy fee
+                (data.estimate?.disposalFee || 0)         // Junk Removal/Cleanout
+            ),
+            additionalServices: parseFloat(
+                (data.estimate?.packingCost || 0) +
+                (data.estimate?.crewUpcharge || 0)        // Cleanout crew upcharge
+            ),
             packingMaterials: parseFloat(data.estimate?.packingMaterialsCost || 0),
             fvpInsurance: fvpCost,
             serviceCharge: parseFloat(data.estimate?.serviceCharge || 0) + parseFloat(data.estimate?.sameDayFee || 0),
             total: grandTotal,
-            estimatedTime: parseFloat(data.estimate?.totalHours || data.estimate?.laborHours || 0)
+            estimatedTime: parseFloat(
+                data.estimate?.totalHours ||      // Moving
+                data.estimate?.laborHours ||      // Labor
+                data.estimate?.hours ||           // Cleanout
+                (data.estimate?.minimumTime ? data.estimate.minimumTime / 60 : 0) || // Single Item (convert minutes to hours)
+                0
+            )
         },
         serviceType: chatState.serviceType || 'Moving Service',
-        pickupAddress: data.from || '',
+        pickupAddress: data.from || data.cleanoutLocation || '',
         dropoffAddress: data.to || '',
         date: data.movingDate || '',
         time: data.movingTime || '',
-        distance: parseFloat(data.tripDistance || 0),
+        distance: parseFloat(data.tripDistance || data.cleanoutDistance || data.fromDistance || 0),
         company: chatState.serviceType && chatState.serviceType.toLowerCase().includes('labor')
             ? 'Quality Moving'
             : 'Worry Free Moving'
