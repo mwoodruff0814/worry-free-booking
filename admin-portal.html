@@ -1197,34 +1197,52 @@
         <!-- CUSTOMERS TAB -->
         <div id="customersTab" class="tab-content">
             <div class="dashboard-content">
+                <h2 style="color: #333; margin-bottom: 25px;">👥 Customer Management</h2>
+
+                <!-- Customer Actions -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <div class="search-filters" style="flex: 1; margin-right: 15px;">
+                        <input type="text" id="customerSearchInput" placeholder="🔍 Search by name, email, or phone..." style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; width: 100%;">
+                    </div>
+                    <button onclick="showAddCustomerModal()" style="padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                        ➕ Add Customer
+                    </button>
+                </div>
+
                 <!-- Customer Stats -->
-                <div class="stats-grid">
+                <div class="stats-grid" style="margin-bottom: 30px;">
                     <div class="stat-card">
                         <h3>Total Customers</h3>
                         <div class="number" id="stat-customers">0</div>
                     </div>
                     <div class="stat-card">
-                        <h3>Active This Month</h3>
-                        <div class="number" id="stat-active-customers">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Repeat Customers</h3>
-                        <div class="number" id="stat-repeat-customers">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>New This Month</h3>
-                        <div class="number" id="stat-new-customers">0</div>
+                        <h3>With Bookings</h3>
+                        <div class="number" id="stat-customers-with-bookings">0</div>
                     </div>
                 </div>
 
-                <!-- Customer Search -->
-                <div class="search-filters">
-                    <input type="text" id="customerSearchInput" placeholder="Search by name, email, phone..." oninput="filterCustomers()">
-                </div>
-
-                <!-- Customer Grid -->
-                <div id="customerGrid" class="customer-grid">
-                    <div class="loading">Loading customers...</div>
+                <!-- Customers Table -->
+                <div style="background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-x: auto;">
+                    <table id="customersTable" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                                <th style="padding: 15px; text-align: left; color: #495057; font-weight: 600;">Name</th>
+                                <th style="padding: 15px; text-align: left; color: #495057; font-weight: 600;">Email</th>
+                                <th style="padding: 15px; text-align: left; color: #495057; font-weight: 600;">Phone</th>
+                                <th style="padding: 15px; text-align: left; color: #495057; font-weight: 600;">Location</th>
+                                <th style="padding: 15px; text-align: left; color: #495057; font-weight: 600;">Created</th>
+                                <th style="padding: 15px; text-align: center; color: #495057; font-weight: 600;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customersTableBody">
+                            <tr>
+                                <td colspan="6" style="padding: 40px; text-align: center; color: #6c757d;">
+                                    <div class="loading-spinner">⏳</div>
+                                    <p>Loading customers...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -1848,6 +1866,72 @@ service@worryfreemovers.com</textarea>
             </div>
             <div class="modal-footer">
                 <button class="btn-modal btn-cancel" onclick="closeCustomerModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD/EDIT CUSTOMER MODAL -->
+    <div id="addCustomerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="addCustomerModalTitle">Add New Customer</h2>
+                <button class="btn-close" onclick="closeAddCustomerModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="customerForm" style="display: grid; gap: 20px;">
+                    <input type="hidden" id="editCustomerId">
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">First Name *</label>
+                            <input type="text" id="customerFirstName" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 15px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">Last Name *</label>
+                            <input type="text" id="customerLastName" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 15px;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">Email *</label>
+                            <input type="email" id="customerEmail" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 15px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">Phone *</label>
+                            <input type="tel" id="customerPhone" required placeholder="(330) 123-4567" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 15px;">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">Address</label>
+                        <input type="text" id="customerAddress" placeholder="123 Main St" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 15px;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">City</label>
+                            <input type="text" id="customerCity" placeholder="Akron" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 15px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">State</label>
+                            <input type="text" id="customerState" placeholder="OH" maxlength="2" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 15px; text-transform: uppercase;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">ZIP</label>
+                            <input type="text" id="customerZip" placeholder="44313" maxlength="5" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 15px;">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">Notes</label>
+                        <textarea id="customerNotes" placeholder="Any additional information about the customer..." rows="3" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 15px; resize: vertical;"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal btn-cancel" onclick="closeAddCustomerModal()">Cancel</button>
+                <button class="btn-modal btn-save" onclick="saveCustomer()">Save Customer</button>
             </div>
         </div>
     </div>
@@ -6543,6 +6627,274 @@ service@worryfreemovers.com`;
         function closeEmployeeTimeOffModal() {
             document.getElementById('employeeTimeOffModal').style.display = 'none';
         }
+
+        // ========================================
+        // CUSTOMER MANAGEMENT FUNCTIONS
+        // ========================================
+
+        let allCustomers = [];
+        let filteredCustomers = [];
+
+        // Load all customers
+        async function loadCustomers() {
+            try {
+                const response = await fetch(`${API_URL}/customers`);
+                const data = await response.json();
+
+                if (data.success) {
+                    allCustomers = data.customers || [];
+                    filteredCustomers = [...allCustomers];
+
+                    // Update stats
+                    document.getElementById('stat-customers').textContent = allCustomers.length;
+
+                    // Count customers with bookings (non-empty email that exists in appointments)
+                    const customersWithBookings = allCustomers.filter(c => c.email).length;
+                    document.getElementById('stat-customers-with-bookings').textContent = customersWithBookings;
+
+                    // Display customers
+                    displayCustomers(filteredCustomers);
+                }
+            } catch (error) {
+                console.error('Error loading customers:', error);
+                document.getElementById('customersTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="6" style="padding: 40px; text-align: center; color: #dc3545;">
+                            <p style="margin-bottom: 10px;">❌ Error loading customers</p>
+                            <p style="font-size: 14px;">${error.message}</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Display customers in table
+        function displayCustomers(customers) {
+            const tbody = document.getElementById('customersTableBody');
+
+            if (customers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="padding: 40px; text-align: center; color: #6c757d;">
+                            <p style="font-size: 18px; margin-bottom: 10px;">👥 No customers found</p>
+                            <p style="font-size: 14px;">Click "Add Customer" to create your first customer record.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = customers.map(customer => {
+                const created = new Date(customer.createdAt || Date.now()).toLocaleDateString();
+                const location = customer.city && customer.state
+                    ? `${customer.city}, ${customer.state}`
+                    : (customer.city || customer.state || '-');
+
+                return `
+                    <tr style="border-bottom: 1px solid #dee2e6;">
+                        <td style="padding: 15px;">
+                            <strong style="color: #333;">${customer.firstName} ${customer.lastName}</strong>
+                        </td>
+                        <td style="padding: 15px;">
+                            <a href="mailto:${customer.email}" style="color: #667eea; text-decoration: none;">${customer.email}</a>
+                        </td>
+                        <td style="padding: 15px;">
+                            <a href="tel:${customer.phone}" style="color: #333; text-decoration: none;">${customer.phone}</a>
+                        </td>
+                        <td style="padding: 15px; color: #6c757d;">${location}</td>
+                        <td style="padding: 15px; color: #6c757d;">${created}</td>
+                        <td style="padding: 15px; text-align: center;">
+                            <button onclick="editCustomer('${customer.customerId}')" style="padding: 6px 12px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;" title="Edit Customer">
+                                ✏️
+                            </button>
+                            <button onclick="deleteCustomer('${customer.customerId}', '${customer.firstName} ${customer.lastName}')" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;" title="Delete Customer">
+                                🗑️
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Filter customers based on search input
+        function filterCustomersTable() {
+            const searchInput = document.getElementById('customerSearchInput').value.toLowerCase();
+
+            if (!searchInput) {
+                filteredCustomers = [...allCustomers];
+            } else {
+                filteredCustomers = allCustomers.filter(customer => {
+                    const fullName = `${customer.firstName} ${customer.lastName}`.toLowerCase();
+                    const email = (customer.email || '').toLowerCase();
+                    const phone = (customer.phone || '').toLowerCase();
+
+                    return fullName.includes(searchInput) ||
+                           email.includes(searchInput) ||
+                           phone.includes(searchInput);
+                });
+            }
+
+            displayCustomers(filteredCustomers);
+        }
+
+        // Attach search filter to input
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('customerSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', filterCustomersTable);
+            }
+        });
+
+        // Show add customer modal
+        function showAddCustomerModal() {
+            document.getElementById('addCustomerModalTitle').textContent = 'Add New Customer';
+            document.getElementById('customerForm').reset();
+            document.getElementById('editCustomerId').value = '';
+            document.getElementById('addCustomerModal').style.display = 'block';
+        }
+
+        // Close add customer modal
+        function closeAddCustomerModal() {
+            document.getElementById('addCustomerModal').style.display = 'none';
+        }
+
+        // Edit customer
+        async function editCustomer(customerId) {
+            try {
+                const response = await fetch(`${API_URL}/customers/${customerId}`);
+                const data = await response.json();
+
+                if (data.success && data.customer) {
+                    const customer = data.customer;
+
+                    document.getElementById('addCustomerModalTitle').textContent = 'Edit Customer';
+                    document.getElementById('editCustomerId').value = customer.customerId;
+                    document.getElementById('customerFirstName').value = customer.firstName || '';
+                    document.getElementById('customerLastName').value = customer.lastName || '';
+                    document.getElementById('customerEmail').value = customer.email || '';
+                    document.getElementById('customerPhone').value = customer.phone || '';
+                    document.getElementById('customerAddress').value = customer.address || '';
+                    document.getElementById('customerCity').value = customer.city || '';
+                    document.getElementById('customerState').value = customer.state || '';
+                    document.getElementById('customerZip').value = customer.zip || '';
+                    document.getElementById('customerNotes').value = customer.notes || '';
+
+                    document.getElementById('addCustomerModal').style.display = 'block';
+                } else {
+                    alert('Failed to load customer data');
+                }
+            } catch (error) {
+                console.error('Error loading customer:', error);
+                alert('Error loading customer data: ' + error.message);
+            }
+        }
+
+        // Save customer (create or update)
+        async function saveCustomer() {
+            const customerId = document.getElementById('editCustomerId').value;
+            const firstName = document.getElementById('customerFirstName').value.trim();
+            const lastName = document.getElementById('customerLastName').value.trim();
+            const email = document.getElementById('customerEmail').value.trim();
+            const phone = document.getElementById('customerPhone').value.trim();
+            const address = document.getElementById('customerAddress').value.trim();
+            const city = document.getElementById('customerCity').value.trim();
+            const state = document.getElementById('customerState').value.trim().toUpperCase();
+            const zip = document.getElementById('customerZip').value.trim();
+            const notes = document.getElementById('customerNotes').value.trim();
+
+            // Validate required fields
+            if (!firstName || !lastName || !email || !phone) {
+                alert('Please fill in all required fields (First Name, Last Name, Email, Phone)');
+                return;
+            }
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+
+            const customerData = {
+                firstName,
+                lastName,
+                email,
+                phone,
+                address,
+                city,
+                state,
+                zip,
+                notes
+            };
+
+            try {
+                let response;
+                if (customerId) {
+                    // Update existing customer
+                    response = await fetch(`${API_URL}/customers/${customerId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(customerData)
+                    });
+                } else {
+                    // Create new customer
+                    response = await fetch(`${API_URL}/customers`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(customerData)
+                    });
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(customerId ? 'Customer updated successfully!' : 'Customer created successfully!');
+                    closeAddCustomerModal();
+                    loadCustomers(); // Reload customer list
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to save customer'));
+                }
+            } catch (error) {
+                console.error('Error saving customer:', error);
+                alert('Error saving customer: ' + error.message);
+            }
+        }
+
+        // Delete customer
+        async function deleteCustomer(customerId, customerName) {
+            if (!confirm(`Are you sure you want to delete ${customerName}? This action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/customers/${customerId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Customer deleted successfully');
+                    loadCustomers(); // Reload customer list
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to delete customer'));
+                }
+            } catch (error) {
+                console.error('Error deleting customer:', error);
+                alert('Error deleting customer: ' + error.message);
+            }
+        }
+
+        // Load customers when the customers tab is opened
+        const originalSwitchTab = switchTab;
+        switchTab = function(tabName) {
+            originalSwitchTab(tabName);
+
+            // Load customers when switching to customers tab
+            if (tabName === 'customers') {
+                loadCustomers();
+            }
+        };
     </script>
 </body>
 </html>

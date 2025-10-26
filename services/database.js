@@ -418,6 +418,131 @@ async function getPendingTimeOffRequests() {
 }
 
 // ========================================
+// CUSTOMERS OPERATIONS
+// ========================================
+
+/**
+ * Get all customers
+ */
+async function getAllCustomers() {
+    const database = getDatabase();
+    return await database.collection('customers').find({}).sort({ createdAt: -1 }).toArray();
+}
+
+/**
+ * Get customer by ID
+ */
+async function getCustomerById(customerId) {
+    const database = getDatabase();
+    return await database.collection('customers').findOne({ customerId });
+}
+
+/**
+ * Get customer by email
+ */
+async function getCustomerByEmail(email) {
+    const database = getDatabase();
+    return await database.collection('customers').findOne({ email: email.toLowerCase() });
+}
+
+/**
+ * Search customers by name, email, or phone
+ */
+async function searchCustomers(searchTerm) {
+    const database = getDatabase();
+    const regex = new RegExp(searchTerm, 'i'); // Case-insensitive search
+
+    return await database.collection('customers').find({
+        $or: [
+            { firstName: regex },
+            { lastName: regex },
+            { email: regex },
+            { phone: regex }
+        ]
+    }).sort({ createdAt: -1 }).toArray();
+}
+
+/**
+ * Create new customer
+ */
+async function createCustomer(customer) {
+    const database = getDatabase();
+
+    // Generate customer ID if not provided
+    if (!customer.customerId) {
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+        customer.customerId = `CUST-${timestamp}-${random}`;
+    }
+
+    // Ensure email is lowercase
+    if (customer.email) {
+        customer.email = customer.email.toLowerCase();
+    }
+
+    const result = await database.collection('customers').insertOne({
+        ...customer,
+        createdAt: customer.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    });
+
+    return {
+        ...customer,
+        _id: result.insertedId
+    };
+}
+
+/**
+ * Update customer
+ */
+async function updateCustomer(customerId, updates) {
+    const database = getDatabase();
+
+    // Ensure email is lowercase if being updated
+    if (updates.email) {
+        updates.email = updates.email.toLowerCase();
+    }
+
+    const result = await database.collection('customers').updateOne(
+        { customerId },
+        {
+            $set: {
+                ...updates,
+                updatedAt: new Date().toISOString()
+            }
+        }
+    );
+
+    return result.modifiedCount > 0;
+}
+
+/**
+ * Delete customer
+ */
+async function deleteCustomer(customerId) {
+    const database = getDatabase();
+    const result = await database.collection('customers').deleteOne({ customerId });
+    return result.deletedCount > 0;
+}
+
+/**
+ * Get customer booking history
+ */
+async function getCustomerBookings(customerId) {
+    const database = getDatabase();
+    const customer = await getCustomerById(customerId);
+
+    if (!customer || !customer.email) {
+        return [];
+    }
+
+    // Find all bookings with this customer's email
+    return await database.collection('appointments').find({
+        email: customer.email
+    }).sort({ date: -1, createdAt: -1 }).toArray();
+}
+
+// ========================================
 // MIGRATION HELPERS
 // ========================================
 
@@ -490,6 +615,16 @@ module.exports = {
     createTimeOffRequest,
     updateTimeOffRequestStatus,
     getPendingTimeOffRequests,
+
+    // Customers
+    getAllCustomers,
+    getCustomerById,
+    getCustomerByEmail,
+    searchCustomers,
+    createCustomer,
+    updateCustomer,
+    deleteCustomer,
+    getCustomerBookings,
 
     // Migration
     bulkInsertAppointments,

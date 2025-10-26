@@ -34,7 +34,15 @@ const {
     getTimeOffRequestById,
     createTimeOffRequest,
     updateTimeOffRequestStatus,
-    getPendingTimeOffRequests
+    getPendingTimeOffRequests,
+    getAllCustomers,
+    getCustomerById,
+    getCustomerByEmail,
+    searchCustomers,
+    createCustomer,
+    updateCustomer,
+    deleteCustomer,
+    getCustomerBookings
 } = require('./services/database');
 
 const app = express();
@@ -1976,6 +1984,284 @@ app.get('/api/crew-timeoff', async (req, res) => {
             success: false,
             error: 'Failed to fetch time-off requests',
             requests: []
+        });
+    }
+});
+
+// ==============================================
+// CUSTOMER MANAGEMENT ENDPOINTS
+// ==============================================
+
+// Get all customers
+app.get('/api/customers', async (req, res) => {
+    try {
+        const customers = await getAllCustomers();
+
+        res.json({
+            success: true,
+            customers,
+            count: customers.length
+        });
+
+        console.log(`✅ Fetched ${customers.length} customers`);
+
+    } catch (error) {
+        console.error('Error fetching customers:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch customers',
+            customers: []
+        });
+    }
+});
+
+// Search customers
+app.get('/api/customers/search', async (req, res) => {
+    try {
+        const { q } = req.query;
+
+        if (!q || q.trim().length < 2) {
+            return res.status(400).json({
+                success: false,
+                error: 'Search term must be at least 2 characters',
+                customers: []
+            });
+        }
+
+        const customers = await searchCustomers(q.trim());
+
+        res.json({
+            success: true,
+            customers,
+            count: customers.length
+        });
+
+        console.log(`✅ Found ${customers.length} customers matching "${q}"`);
+
+    } catch (error) {
+        console.error('Error searching customers:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to search customers',
+            customers: []
+        });
+    }
+});
+
+// Get single customer by ID
+app.get('/api/customers/:customerId', async (req, res) => {
+    try {
+        const { customerId } = req.params;
+        const customer = await getCustomerById(customerId);
+
+        if (!customer) {
+            return res.status(404).json({
+                success: false,
+                error: 'Customer not found'
+            });
+        }
+
+        // Also get their booking history
+        const bookings = await getCustomerBookings(customerId);
+
+        res.json({
+            success: true,
+            customer,
+            bookings,
+            bookingCount: bookings.length
+        });
+
+        console.log(`✅ Fetched customer ${customerId}`);
+
+    } catch (error) {
+        console.error('Error fetching customer:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch customer'
+        });
+    }
+});
+
+// Create new customer
+app.post('/api/customers', async (req, res) => {
+    try {
+        const { firstName, lastName, email, phone, address, city, state, zip, notes } = req.body;
+
+        // Validate required fields
+        if (!firstName || !lastName || !email || !phone) {
+            return res.status(400).json({
+                success: false,
+                error: 'First name, last name, email, and phone are required'
+            });
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid email format'
+            });
+        }
+
+        // Check if customer with this email already exists
+        const existing = await getCustomerByEmail(email);
+        if (existing) {
+            return res.status(409).json({
+                success: false,
+                error: 'Customer with this email already exists',
+                existingCustomer: existing
+            });
+        }
+
+        // Create customer object
+        const customerData = {
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            email: email.trim().toLowerCase(),
+            phone: phone.trim(),
+            address: address?.trim() || '',
+            city: city?.trim() || '',
+            state: state?.trim() || '',
+            zip: zip?.trim() || '',
+            notes: notes?.trim() || ''
+        };
+
+        // Save to MongoDB
+        const customer = await createCustomer(customerData);
+
+        res.json({
+            success: true,
+            message: 'Customer created successfully',
+            customer
+        });
+
+        console.log(`✅ Created customer: ${customer.firstName} ${customer.lastName} (${customer.customerId})`);
+
+    } catch (error) {
+        console.error('Error creating customer:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create customer'
+        });
+    }
+});
+
+// Update customer
+app.put('/api/customers/:customerId', async (req, res) => {
+    try {
+        const { customerId } = req.params;
+        const { firstName, lastName, email, phone, address, city, state, zip, notes } = req.body;
+
+        // Check if customer exists
+        const existing = await getCustomerById(customerId);
+        if (!existing) {
+            return res.status(404).json({
+                success: false,
+                error: 'Customer not found'
+            });
+        }
+
+        // Validate email format if provided
+        if (email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid email format'
+                });
+            }
+
+            // Check if email is being changed to one that already exists
+            if (email.toLowerCase() !== existing.email.toLowerCase()) {
+                const emailExists = await getCustomerByEmail(email);
+                if (emailExists) {
+                    return res.status(409).json({
+                        success: false,
+                        error: 'Another customer with this email already exists'
+                    });
+                }
+            }
+        }
+
+        // Build updates object (only include provided fields)
+        const updates = {};
+        if (firstName !== undefined) updates.firstName = firstName.trim();
+        if (lastName !== undefined) updates.lastName = lastName.trim();
+        if (email !== undefined) updates.email = email.trim().toLowerCase();
+        if (phone !== undefined) updates.phone = phone.trim();
+        if (address !== undefined) updates.address = address.trim();
+        if (city !== undefined) updates.city = city.trim();
+        if (state !== undefined) updates.state = state.trim();
+        if (zip !== undefined) updates.zip = zip.trim();
+        if (notes !== undefined) updates.notes = notes.trim();
+
+        // Update in MongoDB
+        const success = await updateCustomer(customerId, updates);
+
+        if (!success) {
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to update customer'
+            });
+        }
+
+        // Fetch updated customer
+        const updatedCustomer = await getCustomerById(customerId);
+
+        res.json({
+            success: true,
+            message: 'Customer updated successfully',
+            customer: updatedCustomer
+        });
+
+        console.log(`✅ Updated customer ${customerId}`);
+
+    } catch (error) {
+        console.error('Error updating customer:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update customer'
+        });
+    }
+});
+
+// Delete customer
+app.delete('/api/customers/:customerId', async (req, res) => {
+    try {
+        const { customerId } = req.params;
+
+        // Check if customer exists
+        const existing = await getCustomerById(customerId);
+        if (!existing) {
+            return res.status(404).json({
+                success: false,
+                error: 'Customer not found'
+            });
+        }
+
+        // Delete from MongoDB
+        const success = await deleteCustomer(customerId);
+
+        if (!success) {
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to delete customer'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Customer deleted successfully'
+        });
+
+        console.log(`✅ Deleted customer ${customerId} (${existing.firstName} ${existing.lastName})`);
+
+    } catch (error) {
+        console.error('Error deleting customer:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to delete customer'
         });
     }
 });
