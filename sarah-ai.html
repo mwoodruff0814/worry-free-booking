@@ -305,16 +305,19 @@
         }
 
         #wfm-chat-toggle {
-            display: none !important; /* Hide the toggle button */
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            position: absolute !important;
-            width: 0 !important;
-            height: 0 !important;
-            overflow: hidden !important;
-            clip: rect(0,0,0,0) !important;
-            border: none !important;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,64,133,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         #wfm-chat-toggle:hover {
@@ -1153,16 +1156,10 @@
             }
             
             #wfm-chat-toggle {
-                display: none !important;
-                visibility: hidden !important;
-                opacity: 0 !important;
-                pointer-events: none !important;
-                position: absolute !important;
-                width: 0 !important;
-                height: 0 !important;
-                overflow: hidden !important;
-                clip: rect(0,0,0,0) !important;
-                border: none !important;
+                width: 60px;
+                height: 60px;
+                bottom: 20px;
+                right: 20px;
             }
             
             .autocomplete-dropdown {
@@ -1330,7 +1327,7 @@
                 </div>
             </div>
         </div>
-        <button id="wfm-chat-toggle" style="display: none !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; pointer-events: none !important;">
+        <button id="wfm-chat-toggle">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
                 <path d="M12 2C6.48 2 2 6.48 2 12c0 1.54.36 3 .97 4.29L1 23l6.71-1.97C9 21.64 10.46 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.41 0-2.73-.36-3.88-.98l-.28-.15-2.89.85.85-2.89-.15-.28C5.04 14.73 4.68 13.41 4.68 12c0-4.41 3.59-8 8-8s8 3.59 8 8-3.59 8-8 8z"/>
             </svg>
@@ -3342,11 +3339,11 @@ ${chatState.data.to ? `📍 To: ${chatState.data.to}` : ''}
             // Load saved session
             const hasSession = loadSession();
 
-            // EMBEDDED MODE: Start hidden, controlled by header buttons
-            // widget.style.display = 'flex';  // DISABLED - controlled by header
-            // toggle.style.display = 'flex';  // DISABLED - always hidden, controlled by header
-            // chatState.isOpen = true;  // DISABLED - starts closed
-            // container.style.display = 'block'; // Container visible but widget hidden
+            // STANDALONE MODE: Toggle button visible and functional
+            widget.style.display = 'none';  // Start with widget hidden
+            toggle.style.display = 'flex';  // Show toggle button
+            chatState.isOpen = false;  // Start closed
+            container.style.display = 'block'; // Container visible with toggle button
 
             try {
                 // Load pricing from API
@@ -3545,9 +3542,9 @@ if (isMobile && send) {
                     updateNavigationButtons();
                 }
 
-                // EMBEDDED MODE: Hide widget initially, controlled by header buttons
+                // STANDALONE MODE: Widget hidden, toggle visible
                 widget.style.display = 'none';  // Start hidden
-                toggle.style.display = 'none';  // Always hidden (controlled by header)
+                toggle.style.display = 'flex';  // Show toggle button
                 chatState.isOpen = false;  // Start closed
 
             } catch (error) {
@@ -4425,7 +4422,7 @@ if (isMobile && send) {
             // Always show the container when opening
             container.style.display = 'block';
             widget.style.display = 'flex';
-            toggle.style.display = 'none'; // Keep toggle hidden
+            toggle.style.display = 'none'; // Hide toggle when chat is open
             chatState.isOpen = true;
             chatState.hasBeenOpened = true;
             
@@ -4456,8 +4453,7 @@ if (isMobile && send) {
 
         function closeChat() {
             widget.style.display = 'none';
-            toggle.style.display = 'none'; // Keep toggle hidden
-            container.style.display = 'none'; // Hide entire container
+            toggle.style.display = 'flex'; // Show toggle button again
             chatState.isOpen = false;
 
             // Restore body scroll on mobile
