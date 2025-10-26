@@ -1225,6 +1225,9 @@
                         <!-- Quick Actions -->
                         <div class="availability-settings">
                             <h4>Quick Actions</h4>
+                            <button class="quick-action-btn" onclick="openNewAppointmentModal()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; font-weight: 600;">
+                                ➕ New Appointment
+                            </button>
                             <button class="quick-action-btn" onclick="openAvailabilitySettings()">
                                 ⚙️ Availability Settings
                             </button>
@@ -2249,6 +2252,94 @@ service@worryfreemovers.com</textarea>
                         <button type="submit" class="btn-modal btn-save">Save Material</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW APPOINTMENT MODAL (Like Acuity) -->
+    <div id="newAppointmentModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>➕ Create New Appointment</h2>
+                <span class="close" onclick="closeNewAppointmentModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="newAppointmentForm" onsubmit="event.preventDefault(); createNewAppointment();">
+                    <!-- Service Selection -->
+                    <div class="form-group">
+                        <label for="appt-service">Service Type <span style="color: red;">*</span></label>
+                        <select id="appt-service" required onchange="updateAppointmentPricing()">
+                            <option value="">-- Select Service --</option>
+                            <!-- Will be populated from /api/services -->
+                        </select>
+                    </div>
+
+                    <!-- Date & Time -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="appt-date">Date <span style="color: red;">*</span></label>
+                            <input type="date" id="appt-date" required onchange="checkAppointmentAvailability()">
+                        </div>
+                        <div class="form-group">
+                            <label for="appt-time">Time <span style="color: red;">*</span></label>
+                            <select id="appt-time" required>
+                                <option value="">-- Select Date First --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Customer Information -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="appt-firstName">First Name <span style="color: red;">*</span></label>
+                            <input type="text" id="appt-firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="appt-lastName">Last Name <span style="color: red;">*</span></label>
+                            <input type="text" id="appt-lastName" required>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="appt-email">Email <span style="color: red;">*</span></label>
+                            <input type="email" id="appt-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="appt-phone">Phone <span style="color: red;">*</span></label>
+                            <input type="tel" id="appt-phone" required>
+                        </div>
+                    </div>
+
+                    <!-- Addresses -->
+                    <div class="form-group">
+                        <label for="appt-pickup">Pickup Address <span style="color: red;">*</span></label>
+                        <input type="text" id="appt-pickup" required placeholder="123 Main St, Akron OH 44301">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="appt-dropoff">Dropoff Address</label>
+                        <input type="text" id="appt-dropoff" placeholder="456 Oak Ave, Canton OH 44702">
+                    </div>
+
+                    <!-- Pricing Estimate (Auto-calculated) -->
+                    <div id="appt-pricing-display" style="background: #e8f4f8; padding: 15px; border-radius: 8px; margin: 20px 0; display: none;">
+                        <h4 style="margin: 0 0 10px 0; color: #004085;">Estimated Pricing</h4>
+                        <div id="appt-pricing-details"></div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="form-group">
+                        <label for="appt-notes">Notes (Optional)</label>
+                        <textarea id="appt-notes" rows="3" placeholder="Any special instructions or details..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeNewAppointmentModal()">Cancel</button>
+                <button type="button" class="btn-primary" onclick="createNewAppointment()">
+                    <span id="createApptBtnText">Create Appointment</span>
+                </button>
             </div>
         </div>
     </div>
@@ -5593,6 +5684,225 @@ service@worryfreemovers.com`;
                 loadAppointments();
             }
         }, 30000);
+
+        // ========================================
+        // NEW APPOINTMENT MODAL FUNCTIONS
+        // ========================================
+
+        let availableServices = {}; // Will hold services from API
+
+        // Open New Appointment Modal
+        async function openNewAppointmentModal() {
+            document.getElementById('newAppointmentModal').style.display = 'flex';
+
+            // Load services if not already loaded
+            if (Object.keys(availableServices).length === 0) {
+                await loadServicesForAppointment();
+            }
+
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('appt-date').min = today;
+        }
+
+        // Close Modal
+        function closeNewAppointmentModal() {
+            document.getElementById('newAppointmentModal').style.display = 'none';
+            document.getElementById('newAppointmentForm').reset();
+            document.getElementById('appt-pricing-display').style.display = 'none';
+        }
+
+        // Load Services from API
+        async function loadServicesForAppointment() {
+            try {
+                const response = await fetch(`${API_URL}/services`);
+                const data = await response.json();
+                availableServices = data;
+
+                // Populate service dropdown
+                const serviceSelect = document.getElementById('appt-service');
+                serviceSelect.innerHTML = '<option value="">-- Select Service --</option>';
+
+                // Add Moving Services
+                if (data.movingServices) {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = 'Moving Services';
+
+                    Object.entries(data.movingServices).forEach(([key, service]) => {
+                        if (key === 'base' || key === 'distanceAdj' || key === 'crewAdd' || key === 'serviceCharge') return;
+                        if (service.enabled !== false) {
+                            const option = document.createElement('option');
+                            option.value = `moving-${key}`;
+                            option.textContent = service.name || key;
+                            optgroup.appendChild(option);
+                        }
+                    });
+                    serviceSelect.appendChild(optgroup);
+                }
+
+                // Add Other Services
+                const otherServices = ['laborOnly', 'singleItem', 'junkRemoval', 'cleanout'];
+                const otherOptgroup = document.createElement('optgroup');
+                otherOptgroup.label = 'Other Services';
+
+                otherServices.forEach(key => {
+                    if (data[key] && data[key].enabled !== false) {
+                        const option = document.createElement('option');
+                        option.value = key;
+                        option.textContent = data[key].name || key;
+                        otherOptgroup.appendChild(option);
+                    }
+                });
+                serviceSelect.appendChild(otherOptgroup);
+
+            } catch (error) {
+                console.error('Error loading services:', error);
+                alert('Failed to load services. Please try again.');
+            }
+        }
+
+        // Check Available Time Slots
+        async function checkAppointmentAvailability() {
+            const date = document.getElementById('appt-date').value;
+            if (!date) return;
+
+            const timeSelect = document.getElementById('appt-time');
+            timeSelect.innerHTML = '<option value="">Loading...</option>';
+
+            try {
+                const response = await fetch(`${API_URL}/available-slots?date=${date}`);
+                const data = await response.json();
+
+                timeSelect.innerHTML = '<option value="">-- Select Time --</option>';
+
+                if (data.success && data.slots && data.slots.length > 0) {
+                    data.slots.forEach(slot => {
+                        const option = document.createElement('option');
+                        option.value = slot.time;
+                        option.textContent = slot.time;
+                        timeSelect.appendChild(option);
+                    });
+                } else {
+                    timeSelect.innerHTML = '<option value="">No slots available</option>';
+                }
+            } catch (error) {
+                console.error('Error fetching time slots:', error);
+                timeSelect.innerHTML = '<option value="">Error loading slots</option>';
+            }
+        }
+
+        // Update Pricing Estimate
+        function updateAppointmentPricing() {
+            const serviceValue = document.getElementById('appt-service').value;
+            if (!serviceValue) {
+                document.getElementById('appt-pricing-display').style.display = 'none';
+                return;
+            }
+
+            const pricingDisplay = document.getElementById('appt-pricing-display');
+            const pricingDetails = document.getElementById('appt-pricing-details');
+
+            // Parse service type
+            let serviceConfig;
+            let serviceName;
+
+            if (serviceValue.startsWith('moving-')) {
+                const crewKey = serviceValue.replace('moving-', '');
+                serviceConfig = availableServices.movingServices?.[crewKey];
+                serviceName = serviceConfig?.name || 'Moving Service';
+
+                // Calculate moving service pricing
+                const base = availableServices.movingServices?.base || 192.50;
+                const crewSize = serviceConfig?.crew || 2;
+
+                pricingDetails.innerHTML = `
+                    <div style="margin-bottom: 8px;"><strong>Service:</strong> ${serviceName}</div>
+                    <div style="margin-bottom: 8px;"><strong>Base Rate:</strong> $${base}/hour</div>
+                    <div style="margin-bottom: 8px;"><strong>Crew Size:</strong> ${crewSize} movers</div>
+                    <div style="color: #666; font-size: 13px; margin-top: 10px;">
+                        Note: Final pricing will be calculated based on distance and actual time
+                    </div>
+                `;
+            } else {
+                serviceConfig = availableServices[serviceValue];
+                serviceName = serviceConfig?.name || serviceValue;
+
+                const baseRate = serviceConfig?.baseRate || serviceConfig?.baseHourlyRate || 0;
+                pricingDetails.innerHTML = `
+                    <div style="margin-bottom: 8px;"><strong>Service:</strong> ${serviceName}</div>
+                    <div style="margin-bottom: 8px;"><strong>Base Rate:</strong> $${baseRate}${serviceValue === 'singleItem' ? '' : '/hour'}</div>
+                    <div style="color: #666; font-size: 13px; margin-top: 10px;">
+                        Note: Final pricing will be calculated based on specific requirements
+                    </div>
+                `;
+            }
+
+            pricingDisplay.style.display = 'block';
+        }
+
+        // Create New Appointment
+        async function createNewAppointment() {
+            const form = document.getElementById('newAppointmentForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const button = document.querySelector('#createApptBtnText');
+            const originalText = button.textContent;
+            button.textContent = 'Creating...';
+
+            try {
+                const serviceValue = document.getElementById('appt-service').value;
+                let serviceType = serviceValue;
+
+                // Convert service value to readable name
+                if (serviceValue.startsWith('moving-')) {
+                    const crewKey = serviceValue.replace('moving-', '');
+                    serviceType = availableServices.movingServices?.[crewKey]?.name || 'Moving Service';
+                } else {
+                    serviceType = availableServices[serviceValue]?.name || serviceValue;
+                }
+
+                const appointmentData = {
+                    firstName: document.getElementById('appt-firstName').value,
+                    lastName: document.getElementById('appt-lastName').value,
+                    email: document.getElementById('appt-email').value,
+                    phone: document.getElementById('appt-phone').value,
+                    date: document.getElementById('appt-date').value,
+                    time: document.getElementById('appt-time').value,
+                    serviceType: serviceType,
+                    pickupAddress: document.getElementById('appt-pickup').value,
+                    dropoffAddress: document.getElementById('appt-dropoff').value || '',
+                    notes: document.getElementById('appt-notes').value || '',
+                    company: serviceType.toLowerCase().includes('labor') ? 'Quality Moving' : 'Worry Free Moving'
+                };
+
+                const response = await fetch(`${API_URL}/book-appointment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(appointmentData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(`✅ Appointment created successfully!\n\nBooking ID: ${result.bookingId}\n\nConfirmation emails have been sent.`);
+                    closeNewAppointmentModal();
+                    loadAppointments(); // Refresh calendar
+                    renderCalendar();
+                } else {
+                    throw new Error(result.error || 'Failed to create appointment');
+                }
+            } catch (error) {
+                console.error('Error creating appointment:', error);
+                alert(`Failed to create appointment: ${error.message}`);
+            } finally {
+                button.textContent = originalText;
+            }
+        }
     </script>
 </body>
 </html>

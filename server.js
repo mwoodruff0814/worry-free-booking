@@ -1192,10 +1192,9 @@ app.get('/api/services', async (req, res) => {
     try {
         const data = await fs.readFile(SERVICES_FILE, 'utf8');
         const services = JSON.parse(data);
-        res.json({
-            success: true,
-            services: services
-        });
+
+        // Return services directly for easier consumption by chatbot, admin portal, and public booking
+        res.json(services);
     } catch (error) {
         console.error('Error loading services:', error);
         res.status(500).json({
