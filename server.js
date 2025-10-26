@@ -13,6 +13,21 @@ const { createGoogleCalendarEvent, updateGoogleCalendarEvent, deleteGoogleCalend
 // const { createICloudCalendarEvent } = require('./services/icloudCalendar'); // Disabled - using email calendar buttons instead
 const { sendConfirmationEmail } = require('./services/emailService');
 const { generateBookingId } = require('./utils/helpers');
+const {
+    connectDatabase,
+    getAppointments: getMongoAppointments,
+    getAppointmentByBookingId,
+    createAppointment,
+    updateAppointment,
+    deleteAppointment: deleteMongoAppointment,
+    getUserByUsername,
+    getAllUsers,
+    createUser,
+    getAllEmployees,
+    updateEmployees: updateMongoEmployees,
+    getServicesConfig,
+    updateServicesConfig
+} = require('./services/database');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -138,38 +153,26 @@ async function ensureDataDirectory() {
     }
 }
 
-// Get appointments for a specific company
+// ========================================
+// MONGODB DATABASE FUNCTIONS
+// ========================================
+
+// Get appointments for a specific company (MongoDB)
 async function getAppointmentsByCompany(company) {
     try {
-        const file = company === 'Quality Moving' ? QUALITY_APPOINTMENTS_FILE : WORRYFREE_APPOINTMENTS_FILE;
-        const data = await fs.readFile(file, 'utf8');
-        return JSON.parse(data);
+        return await getMongoAppointments(company);
     } catch (error) {
-        console.error(`Error reading ${company} appointments:`, error);
+        console.error(`Error reading ${company} appointments from MongoDB:`, error);
         return [];
-    }
-}
-
-// Save appointments for a specific company
-async function saveAppointmentsByCompany(company, appointments) {
-    const file = company === 'Quality Moving' ? QUALITY_APPOINTMENTS_FILE : WORRYFREE_APPOINTMENTS_FILE;
-    try {
-        await fs.writeFile(file, JSON.stringify(appointments, null, 2));
-        return true;
-    } catch (error) {
-        console.error(`❌ CRITICAL: Failed to save ${company} appointments:`, error);
-        throw new Error(`Failed to save appointment to database: ${error.message}`);
     }
 }
 
 // Get all appointments (from both companies) - used for availability checking
 async function getAllAppointments() {
     try {
-        const worryFree = await getAppointmentsByCompany('Worry Free Moving');
-        const quality = await getAppointmentsByCompany('Quality Moving');
-        return [...worryFree, ...quality];
+        return await getMongoAppointments(); // Gets all without filter
     } catch (error) {
-        console.error('Error reading all appointments:', error);
+        console.error('Error reading all appointments from MongoDB:', error);
         return [];
     }
 }
@@ -177,10 +180,6 @@ async function getAllAppointments() {
 // Legacy functions for backward compatibility
 async function getAppointments() {
     return await getAppointmentsByCompany('Worry Free Moving');
-}
-
-async function saveAppointments(appointments) {
-    return await saveAppointmentsByCompany('Worry Free Moving', appointments);
 }
 
 // Routes
@@ -337,11 +336,9 @@ app.post('/api/book-appointment', async (req, res) => {
         await addCalendarEvent(calendarType, centralCalendarEvent);
         console.log(`📅 Event added to central ${calendarType} calendar: ${bookingId}`);
 
-        // STEP 2: Save to appointments database
-        const appointments = await getAppointmentsByCompany(bookingCompany);
-        appointments.push(appointment);
-        await saveAppointmentsByCompany(bookingCompany, appointments);
-        console.log(`📋 ${bookingCompany} booking saved to database: ${bookingId}`);
+        // STEP 2: Save to MongoDB database
+        const savedAppointment = await createAppointment(appointment);
+        console.log(`📋 ${bookingCompany} booking saved to MongoDB: ${bookingId}`);
 
         // STEP 3: Sync to Google Calendar (Matt's and Zach's personal calendars)
         const eventDetails = {
@@ -355,15 +352,11 @@ app.post('/api/book-appointment', async (req, res) => {
 
         try {
             const googleEventIds = await createGoogleCalendarEvent(eventDetails);
-            appointment.googleEventId = googleEventIds; // { matt: id, zach: id }
 
-            // Update appointment with Google Calendar IDs
-            const updatedAppointments = await getAppointmentsByCompany(bookingCompany);
-            const aptIndex = updatedAppointments.findIndex(a => a.bookingId === bookingId);
-            if (aptIndex !== -1) {
-                updatedAppointments[aptIndex].googleEventId = googleEventIds;
-                await saveAppointmentsByCompany(bookingCompany, updatedAppointments);
-            }
+            // Update appointment in MongoDB with Google Calendar IDs
+            await updateAppointment(bookingId, {
+                googleEventId: googleEventIds
+            });
 
             console.log('✅ Synced to Google Calendars:', googleEventIds);
         } catch (error) {
@@ -472,8 +465,7 @@ app.post('/api/book-appointment', async (req, res) => {
 app.get('/api/appointment/:bookingId', async (req, res) => {
     try {
         const { bookingId } = req.params;
-        const appointments = await getAppointments();
-        const appointment = appointments.find(apt => apt.bookingId === bookingId);
+        const appointment = await getAppointmentByBookingId(bookingId);
 
         if (!appointment) {
             return res.status(404).json({
@@ -484,7 +476,7 @@ app.get('/api/appointment/:bookingId', async (req, res) => {
 
         res.json({ success: true, appointment });
     } catch (error) {
-        console.error('Error fetching appointment:', error);
+        console.error('Error fetching appointment from MongoDB:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to fetch appointment'
@@ -496,8 +488,7 @@ app.get('/api/appointment/:bookingId', async (req, res) => {
 app.post('/api/reschedule-appointment', async (req, res) => {
     try {
         const { bookingId, newDate, newTime } = req.body;
-        const appointments = await getAppointments();
-        const appointment = appointments.find(apt => apt.bookingId === bookingId);
+        const appointment = await getAppointmentByBookingId(bookingId);
 
         if (!appointment) {
             return res.status(404).json({
@@ -509,13 +500,13 @@ app.post('/api/reschedule-appointment', async (req, res) => {
         const oldDate = appointment.date;
         const oldTime = appointment.time;
 
-        appointment.date = newDate;
-        appointment.time = newTime;
-        appointment.rescheduledAt = new Date().toISOString();
-        appointment.previousDate = oldDate;
-        appointment.previousTime = oldTime;
-
-        await saveAppointments(appointments);
+        await updateAppointment(bookingId, {
+            date: newDate,
+            time: newTime,
+            rescheduledAt: new Date().toISOString(),
+            previousDate: oldDate,
+            previousTime: oldTime
+        });
 
         // Send reschedule confirmation email
         const { sendRescheduleEmail } = require('./services/emailService');
@@ -549,9 +540,12 @@ app.post('/api/reschedule-appointment', async (req, res) => {
             console.error('Failed to send SMS:', error);
         }
 
+        // Get updated appointment to return
+        const updatedAppointment = await getAppointmentByBookingId(bookingId);
+
         res.json({
             success: true,
-            appointment,
+            appointment: updatedAppointment,
             message: 'Appointment rescheduled successfully'
         });
     } catch (error) {
@@ -567,8 +561,7 @@ app.post('/api/reschedule-appointment', async (req, res) => {
 app.post('/api/update-appointment', async (req, res) => {
     try {
         const { bookingId, updates } = req.body;
-        const appointments = await getAppointments();
-        const appointment = appointments.find(apt => apt.bookingId === bookingId);
+        const appointment = await getAppointmentByBookingId(bookingId);
 
         if (!appointment) {
             return res.status(404).json({
@@ -579,22 +572,26 @@ app.post('/api/update-appointment', async (req, res) => {
 
         // Allow updating specific fields
         const allowedFields = ['notes', 'pickupAddress', 'dropoffAddress', 'phone', 'email'];
+        const filteredUpdates = {};
         allowedFields.forEach(field => {
             if (updates[field] !== undefined) {
-                appointment[field] = updates[field];
+                filteredUpdates[field] = updates[field];
             }
         });
 
-        appointment.updatedAt = new Date().toISOString();
-        await saveAppointments(appointments);
+        // Update in MongoDB
+        await updateAppointment(bookingId, filteredUpdates);
+
+        // Get updated appointment
+        const updatedAppointment = await getAppointmentByBookingId(bookingId);
 
         res.json({
             success: true,
-            appointment,
+            appointment: updatedAppointment,
             message: 'Appointment updated successfully'
         });
     } catch (error) {
-        console.error('Error updating appointment:', error);
+        console.error('Error updating appointment in MongoDB:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to update appointment'
@@ -615,13 +612,9 @@ app.post('/api/booking-lookup', async (req, res) => {
             });
         }
 
-        const appointments = await getAppointments();
-        const appointment = appointments.find(apt =>
-            apt.bookingId === bookingId &&
-            apt.email.toLowerCase() === email.toLowerCase()
-        );
+        const appointment = await getAppointmentByBookingId(bookingId);
 
-        if (!appointment) {
+        if (!appointment || appointment.email.toLowerCase() !== email.toLowerCase()) {
             return res.status(404).json({
                 success: false,
                 message: 'Booking not found. Please check your booking ID and email address.'
@@ -647,7 +640,7 @@ app.post('/api/booking-lookup', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error looking up booking:', error);
+        console.error('Error looking up booking in MongoDB:', error);
         res.status(500).json({
             success: false,
             message: 'An error occurred while retrieving your booking'
@@ -658,8 +651,7 @@ app.post('/api/booking-lookup', async (req, res) => {
 app.post('/api/cancel-appointment', async (req, res) => {
     try {
         const { bookingId } = req.body;
-        const appointments = await getAppointments();
-        const appointment = appointments.find(apt => apt.bookingId === bookingId);
+        const appointment = await getAppointmentByBookingId(bookingId);
 
         if (!appointment) {
             return res.status(404).json({
@@ -679,9 +671,11 @@ app.post('/api/cancel-appointment', async (req, res) => {
             }
         }
 
-        appointment.status = 'cancelled';
-        appointment.cancelledAt = new Date().toISOString();
-        await saveAppointments(appointments);
+        // Update appointment status in MongoDB
+        await updateAppointment(bookingId, {
+            status: 'cancelled',
+            cancelledAt: new Date().toISOString()
+        });
 
         // Send cancellation email
         const { sendCancellationEmail } = require('./services/emailService');
@@ -719,7 +713,7 @@ app.post('/api/cancel-appointment', async (req, res) => {
             message: 'Appointment cancelled successfully'
         });
     } catch (error) {
-        console.error('Error cancelling appointment:', error);
+        console.error('Error cancelling appointment in MongoDB:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to cancel appointment'
@@ -731,8 +725,7 @@ app.post('/api/cancel-appointment', async (req, res) => {
 app.post('/api/generate-bol', async (req, res) => {
     try {
         const { bookingId, inventoryItems, specialInstructions } = req.body;
-        const appointments = await getAppointments();
-        const appointment = appointments.find(apt => apt.bookingId === bookingId);
+        const appointment = await getAppointmentByBookingId(bookingId);
 
         if (!appointment) {
             return res.status(404).json({
@@ -759,7 +752,7 @@ app.post('/api/generate-bol', async (req, res) => {
         res.send(bolPDF);
 
     } catch (error) {
-        console.error('Error generating BOL:', error);
+        console.error('Error generating BOL from MongoDB:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to generate BOL'
@@ -867,26 +860,20 @@ app.put('/api/appointments/:bookingId', async (req, res) => {
         const { bookingId } = req.params;
         const updates = req.body;
 
-        const appointments = await getAppointments();
-        const index = appointments.findIndex(apt => apt.bookingId === bookingId);
+        const oldAppointment = await getAppointmentByBookingId(bookingId);
 
-        if (index === -1) {
+        if (!oldAppointment) {
             return res.status(404).json({
                 success: false,
                 error: 'Appointment not found'
             });
         }
 
-        const oldAppointment = appointments[index];
+        // Update appointment in MongoDB
+        await updateAppointment(bookingId, updates);
 
-        // Update the appointment
-        appointments[index] = {
-            ...oldAppointment,
-            ...updates,
-            updatedAt: new Date().toISOString()
-        };
-
-        const updatedAppointment = appointments[index];
+        // Get updated appointment
+        const updatedAppointment = await getAppointmentByBookingId(bookingId);
 
         // Update Google Calendar event if exists
         if (oldAppointment.googleEventId) {
@@ -921,15 +908,13 @@ app.put('/api/appointments/:bookingId', async (req, res) => {
             }
         }
 
-        await saveAppointments(appointments);
-
         res.json({
             success: true,
             message: 'Appointment updated successfully',
-            appointment: appointments[index]
+            appointment: updatedAppointment
         });
     } catch (error) {
-        console.error('Error updating appointment:', error);
+        console.error('Error updating appointment in MongoDB:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to update appointment'
@@ -942,8 +927,7 @@ app.delete('/api/appointments/:bookingId', async (req, res) => {
     try {
         const { bookingId } = req.params;
 
-        const appointments = await getAppointments();
-        const appointment = appointments.find(apt => apt.bookingId === bookingId);
+        const appointment = await getAppointmentByBookingId(bookingId);
 
         if (!appointment) {
             return res.status(404).json({
@@ -963,15 +947,15 @@ app.delete('/api/appointments/:bookingId', async (req, res) => {
             }
         }
 
-        const filteredAppointments = appointments.filter(apt => apt.bookingId !== bookingId);
-        await saveAppointments(filteredAppointments);
+        // Delete from MongoDB
+        await deleteMongoAppointment(bookingId);
 
         res.json({
             success: true,
             message: 'Appointment deleted successfully'
         });
     } catch (error) {
-        console.error('Error deleting appointment:', error);
+        console.error('Error deleting appointment from MongoDB:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to delete appointment'
@@ -1251,13 +1235,19 @@ app.post('/api/availability-settings', async (req, res) => {
 // Get all services configuration
 app.get('/api/services', async (req, res) => {
     try {
-        const data = await fs.readFile(SERVICES_FILE, 'utf8');
-        const services = JSON.parse(data);
+        const services = await getServicesConfig();
+
+        if (!services) {
+            return res.status(404).json({
+                success: false,
+                error: 'Services configuration not found'
+            });
+        }
 
         // Return services directly for easier consumption by chatbot, admin portal, and public booking
         res.json(services);
     } catch (error) {
-        console.error('Error loading services:', error);
+        console.error('Error loading services from MongoDB:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to load services'
@@ -1270,14 +1260,14 @@ app.get('/api/services', async (req, res) => {
 app.post('/api/services', async (req, res) => {
     try {
         const services = req.body;
-        await fs.writeFile(SERVICES_FILE, JSON.stringify(services, null, 2));
+        await updateServicesConfig(services);
 
         res.json({
             success: true,
             message: 'Services updated successfully'
         });
     } catch (error) {
-        console.error('Error saving services:', error);
+        console.error('Error saving services to MongoDB:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to save services'
@@ -2109,20 +2099,19 @@ app.post('/api/employee/change-password', async (req, res) => {
 // Helper functions for employee management
 async function loadEmployees() {
     try {
-        const data = await fs.readFile(EMPLOYEES_FILE, 'utf8');
-        return JSON.parse(data);
+        return await getAllEmployees();
     } catch (error) {
-        console.error('Error loading employees:', error);
+        console.error('Error loading employees from MongoDB:', error);
         return [];
     }
 }
 
 async function saveEmployees(employees) {
     try {
-        await fs.writeFile(EMPLOYEES_FILE, JSON.stringify(employees, null, 2));
+        await updateMongoEmployees(employees);
         return true;
     } catch (error) {
-        console.error('Error saving employees:', error);
+        console.error('Error saving employees to MongoDB:', error);
         return false;
     }
 }
@@ -2892,16 +2881,22 @@ async function startServer() {
         res.sendFile(path.join(__dirname, 'sarah-ai.html'));
     });
 
+    // Connect to MongoDB Atlas
+    try {
+        await connectDatabase();
+        console.log('✅ MongoDB Atlas connected successfully');
+    } catch (error) {
+        console.error('❌ MongoDB connection failed:', error.message);
+        console.error('⚠️  Server will continue with limited functionality');
+    }
+
     // Initialize Google Calendar auth (optional, can be done later)
     try {
         await initGoogleAuth();
-        console.log('Google Calendar initialized');
+        console.log('✅ Google Calendar initialized');
     } catch (error) {
-        console.error('Google Calendar initialization failed:', error.message);
+        console.error('❌ Google Calendar initialization failed:', error.message);
     }
-
-    // Initialize Google Calendar
-    await initGoogleAuth();
 
     // Initialize 24-hour reminder scheduler
     const { initReminderScheduler } = require('./services/reminderScheduler');
@@ -2910,7 +2905,7 @@ async function startServer() {
     app.listen(PORT, () => {
         console.log(`\n${'='.repeat(50)}`);
         console.log(`🚀 Booking API server running on http://localhost:${PORT}`);
-        console.log(`📅 Appointments storage: ${APPOINTMENTS_FILE}`);
+        console.log(`💾 Database: MongoDB Atlas (Cloud Storage)`);
         console.log(`📆 Google Calendar sync: ${process.env.GOOGLE_CALENDAR_ID ? 'ACTIVE' : 'Ready (configure credentials.json)'}`);
         console.log(`⏰ 24-hour reminder system: ACTIVE`);
         console.log(`📧 Email notifications: ${process.env.EMAIL_SERVICE || 'NOT CONFIGURED'}`);

@@ -1,1 +1,27 @@
-[]
+[
+  {
+    "bookingId": "WF-1761499503728-0IKBZTQWO",
+    "title": "MongoDB Test",
+    "date": "2025-11-01",
+    "time": "10:00",
+    "serviceType": "Moving Service",
+    "company": "Worry Free Moving",
+    "customer": {
+      "firstName": "MongoDB",
+      "lastName": "Test",
+      "email": "test@mongodb.com",
+      "phone": "3304358686"
+    },
+    "addresses": {
+      "pickup": "123 Test St, Akron OH",
+      "dropoff": "456 Test Ave, Canton OH"
+    },
+    "estimateDetails": null,
+    "estimatedHours": null,
+    "numMovers": null,
+    "estimatedTotal": null,
+    "status": "confirmed",
+    "notes": "",
+    "addedAt": "2025-10-26T17:25:03.728Z"
+  }
+]
