@@ -1,0 +1,226 @@
+{
+  "movingServices": {
+    "base": 192.50,
+    "distanceAdj": 0.75,
+    "crewAdd": 55,
+    "serviceCharge": 0.14,
+    "2-person-crew": {
+      "name": "2 Person Crew",
+      "description": "Perfect for smaller moves or apartments. Ideal for 1-2 bedroom homes with professional movers and 20-26ft truck.",
+      "features": [
+        "2 professional movers",
+        "20-26ft truck with liftgate",
+        "Furniture assembly/disassembly",
+        "All moving equipment included"
+      ],
+      "crew": 2,
+      "enabled": true,
+      "icon": "👥"
+    },
+    "3-person-crew": {
+      "name": "3 Person Crew",
+      "description": "Ideal for medium-sized moves including 2-3 bedroom homes. Increased efficiency with an additional team member.",
+      "features": [
+        "3 professional movers",
+        "24-26ft truck with liftgate",
+        "Faster loading/unloading",
+        "Perfect for medium homes"
+      ],
+      "crew": 3,
+      "enabled": true,
+      "icon": "👥👤"
+    },
+    "4-person-crew": {
+      "name": "4 Person Crew",
+      "description": "Our most efficient option for larger homes or time-sensitive moves. Best for 3+ bedroom homes or complex moves.",
+      "features": [
+        "4 professional movers",
+        "24-26ft truck with liftgate",
+        "Maximum efficiency",
+        "Complex move specialists"
+      ],
+      "crew": 4,
+      "enabled": true,
+      "icon": "👥👥"
+    }
+  },
+  "laborOnly": {
+    "name": "Labor Only",
+    "description": "Professional moving labor when you have your own truck. Perfect for loading, unloading, or rearranging.",
+    "features": [
+      "Professional moving crew",
+      "All moving equipment included",
+      "Furniture protection available",
+      "Flexible scheduling"
+    ],
+    "baseRate": 115,
+    "distanceAdjustment": 0.50,
+    "crewAddRate": 55,
+    "travelRate": 1.60,
+    "serviceCharge": 0.08,
+    "minimumHours": 2,
+    "enabled": true,
+    "icon": "💪"
+  },
+  "singleItem": {
+    "name": "Single Item Move",
+    "description": "Quick and efficient single item delivery. Perfect for furniture, appliances, or specialty items.",
+    "features": [
+      "Professional crew sized for your item",
+      "Proper equipment and protection",
+      "Fast and efficient service",
+      "No minimum move size required"
+    ],
+    "baseRate": 249,
+    "distanceRate": 1.50,
+    "perMinuteRate": 1.67,
+    "crewRates": {
+      "2": 167,
+      "3": 222,
+      "4": 277
+    },
+    "minimumMinutes": 60,
+    "enabled": true,
+    "icon": "📦"
+  },
+  "junkRemoval": {
+    "name": "Junk Removal",
+    "description": "Professional junk removal and hauling services. We handle the heavy lifting and disposal.",
+    "features": [
+      "Professional removal crew",
+      "Proper disposal included",
+      "Eco-friendly when possible",
+      "Same-day service available"
+    ],
+    "baseRate": 250,
+    "distanceRate": 0.50,
+    "disposalFee": 75,
+    "crewAddRate": 100,
+    "serviceCharge": 0.14,
+    "minimumHours": 1,
+    "enabled": true,
+    "icon": "🗑️"
+  },
+  "cleanout": {
+    "name": "Cleanout Service",
+    "description": "Complete property cleanout services. Perfect for estate cleanouts, foreclosures, or major decluttering.",
+    "features": [
+      "Full-service cleanout crew",
+      "Complete disposal service",
+      "2-hour minimum included",
+      "Commercial dumpster available"
+    ],
+    "baseHourlyRate": 219.99,
+    "distanceAdjustment": 0.50,
+    "disposalFee": 200,
+    "crewAddRate": 50,
+    "serviceCharge": 0.14,
+    "minimumHours": 2,
+    "enabled": true,
+    "icon": "🧹"
+  },
+  "packingMaterials": {
+    "smallBox": {
+      "name": "Small Box (1.5 cu ft)",
+      "price": 2.59,
+      "category": "boxes",
+      "enabled": true
+    },
+    "mediumBox": {
+      "name": "Medium Box (3.0 cu ft)",
+      "price": 3.19,
+      "category": "boxes",
+      "enabled": true
+    },
+    "largeBox": {
+      "name": "Large Box (4.5 cu ft)",
+      "price": 3.79,
+      "category": "boxes",
+      "enabled": true
+    },
+    "wardrobeBox": {
+      "name": "Wardrobe Box",
+      "price": 14.59,
+      "category": "boxes",
+      "enabled": true
+    },
+    "movingBlanket": {
+      "name": "Moving Blanket",
+      "price": 14.99,
+      "category": "protection",
+      "enabled": true
+    },
+    "packingPaper": {
+      "name": "Packing Paper (10 lb)",
+      "price": 18.99,
+      "category": "protection",
+      "enabled": true
+    },
+    "packingTape": {
+      "name": "Packing Tape (55yd)",
+      "price": 6.29,
+      "category": "supplies",
+      "enabled": true
+    },
+    "furnitureCover": {
+      "name": "Furniture Cover",
+      "price": 6.59,
+      "category": "protection",
+      "enabled": true
+    },
+    "dishpack": {
+      "name": "Dish Pack",
+      "price": 9.99,
+      "category": "boxes",
+      "enabled": true
+    },
+    "smallBubbleWrap": {
+      "name": "Small Bubble Wrap",
+      "price": 18.99,
+      "category": "protection",
+      "enabled": true
+    },
+    "largeBubbleWrap": {
+      "name": "Large Bubble Wrap",
+      "price": 18.99,
+      "category": "protection",
+      "enabled": true
+    },
+    "twinMattressCover": {
+      "name": "Twin Mattress Cover",
+      "price": 6.59,
+      "category": "protection",
+      "enabled": true
+    },
+    "twinMattressCoverPremium": {
+      "name": "Twin Mattress Cover (Premium)",
+      "price": 24.99,
+      "category": "protection",
+      "enabled": true
+    },
+    "fullMattressCover": {
+      "name": "Full/Queen Mattress Cover",
+      "price": 7.99,
+      "category": "protection",
+      "enabled": true
+    }
+  },
+  "fees": {
+    "stairs": {
+      "name": "Stairs",
+      "apartment": 35,
+      "house": 25,
+      "apartmentTime": 0.35,
+      "houseTime": 0.275,
+      "unit": "per flight",
+      "description": "Additional fee for each flight of stairs (apartment rates are higher due to narrow hallways and building restrictions)",
+      "enabled": true
+    },
+    "sameDayService": {
+      "name": "Same Day Service",
+      "percentage": 0.10,
+      "description": "10% fee for same-day bookings",
+      "enabled": true
+    }
+  }
+}

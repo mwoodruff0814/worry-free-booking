@@ -1245,43 +1245,45 @@ app.post('/api/calculate-estimate', async (req, res) => {
 
         // Moving Service (2/3/4 person crew)
         if (bookingData.serviceType.includes('Person Crew') || bookingData.serviceType.includes('-person-crew')) {
-            const crewKey = bookingData.serviceType.toLowerCase().replace(/ /g, '-').replace('person-crew', 'person-crew');
-            let serviceConfig;
+            let crewSize = 2;
+            if (bookingData.serviceType.includes('3')) crewSize = 3;
+            else if (bookingData.serviceType.includes('4')) crewSize = 4;
 
-            // Try to find matching service
-            if (services.movingServices && services.movingServices['2-person-crew'] && bookingData.serviceType.includes('2')) {
-                serviceConfig = services.movingServices['2-person-crew'];
-            } else if (services.movingServices && services.movingServices['3-person-crew'] && bookingData.serviceType.includes('3')) {
-                serviceConfig = services.movingServices['3-person-crew'];
-            } else if (services.movingServices && services.movingServices['4-person-crew'] && bookingData.serviceType.includes('4')) {
-                serviceConfig = services.movingServices['4-person-crew'];
-            }
-
-            if (serviceConfig) {
-                const baseRate = serviceConfig.baseRate || 0;
-                const distanceRate = serviceConfig.distanceAdjustment || 0;
-                const driveTime = bookingData.driveTime || 20;
+            if (services.movingServices) {
+                // Calculate hourly rate dynamically - MATCHES CHATBOT
+                const baseRate = services.movingServices.base || 192.50;
+                const distanceAdj = services.movingServices.distanceAdj || 0.75;
+                const crewAdd = services.movingServices.crewAdd || 55;
+                const serviceChargeRate = services.movingServices.serviceCharge || 0.14;
                 const distance = bookingData.distance || 10;
+                const driveTime = bookingData.driveTime || 20;
+
+                // Hourly rate = base + (distance × adjustment) + ((crew - 2) × crew add rate)
+                const hourlyRate = baseRate + (distance * distanceAdj) + ((crewSize - 2) * crewAdd);
 
                 estimatedTime = 3 + (driveTime / 60); // 3 hours base + drive time
-                laborCost = baseRate * estimatedTime;
-                travelFee = distance * distanceRate;
-                subtotal = laborCost + travelFee;
+                laborCost = hourlyRate * estimatedTime;
+                subtotal = laborCost;
 
                 // Service charge
-                serviceCharge = subtotal * (serviceConfig.serviceCharge || 0.14);
+                serviceCharge = subtotal * serviceChargeRate;
             }
         }
 
         // Labor Only
         else if (bookingData.serviceType === 'Labor Only' && services.laborOnly) {
             const hours = bookingData.estimatedHours || 2;
+            const crew = bookingData.laborCrewSize || 2;
             const baseRate = services.laborOnly.baseRate || 115;
+            const distanceAdj = services.laborOnly.distanceAdjustment || 0.50;
+            const crewAddRate = services.laborOnly.crewAddRate || 55;
+            const travelRate = services.laborOnly.travelRate || 1.60;
             const distance = bookingData.distance || 10;
-            const distanceRate = services.laborOnly.distanceAdjustment || 0.50;
 
-            laborCost = baseRate * hours;
-            travelFee = distance * distanceRate;
+            // Hourly rate = base + ((crew - 2) × crew add rate) + (distance × adjustment) - MATCHES CHATBOT
+            const hourlyRate = baseRate + ((crew - 2) * crewAddRate) + (distance * distanceAdj);
+            laborCost = hourlyRate * hours;
+            travelFee = distance * 2 * travelRate; // Round trip
             subtotal = laborCost + travelFee;
 
             // Service charge
