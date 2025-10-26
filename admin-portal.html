@@ -3791,8 +3791,54 @@ service@worryfreemovers.com</textarea>
             const movingServices = servicesConfig.movingServices;
             console.log('Moving services:', movingServices);
 
-            let html = '';
+            // Add base configuration section at the top
+            let html = `
+                <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 15px 0; color: #856404;">⚙️ Base Moving Service Configuration</h4>
+                    <p style="margin: 0 0 15px 0; color: #856404; font-size: 13px;">These values apply to all moving services</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div>
+                            <label style="display: block; font-size: 13px; color: #856404; margin-bottom: 5px; font-weight: 600;">Base Rate ($/hour)</label>
+                            <input type="number" step="0.01" value="${movingServices.base || 192.50}"
+                                onchange="servicesConfig.movingServices.base = parseFloat(this.value)"
+                                style="width: 100%; padding: 8px; border: 1px solid #ffc107; border-radius: 6px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; color: #856404; margin-bottom: 5px; font-weight: 600;">Distance Adj ($/mile)</label>
+                            <input type="number" step="0.01" value="${movingServices.distanceAdj || 0.75}"
+                                onchange="servicesConfig.movingServices.distanceAdj = parseFloat(this.value)"
+                                style="width: 100%; padding: 8px; border: 1px solid #ffc107; border-radius: 6px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; color: #856404; margin-bottom: 5px; font-weight: 600;">Crew Add ($/person)</label>
+                            <input type="number" step="0.01" value="${movingServices.crewAdd || 55}"
+                                onchange="servicesConfig.movingServices.crewAdd = parseFloat(this.value)"
+                                style="width: 100%; padding: 8px; border: 1px solid #ffc107; border-radius: 6px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; color: #856404; margin-bottom: 5px; font-weight: 600;">Service Charge (%)</label>
+                            <input type="number" step="0.01" value="${(movingServices.serviceCharge || 0.14) * 100}"
+                                onchange="servicesConfig.movingServices.serviceCharge = parseFloat(this.value) / 100"
+                                style="width: 100%; padding: 8px; border: 1px solid #ffc107; border-radius: 6px;">
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; padding: 10px; background: #fff; border-radius: 6px; font-size: 12px; color: #856404;">
+                        <strong>Formula:</strong> Hourly Rate = Base ($${movingServices.base || 192.50}) + (Distance × $${movingServices.distanceAdj || 0.75}) + ((Crew - 2) × $${movingServices.crewAdd || 55})
+                    </div>
+                </div>
+            `;
+
             for (const [key, service] of Object.entries(movingServices)) {
+                // Skip base configuration properties (base, distanceAdj, crewAdd, serviceCharge)
+                if (key === 'base' || key === 'distanceAdj' || key === 'crewAdd' || key === 'serviceCharge') {
+                    continue;
+                }
+
+                // Only process actual service objects (those with 'name' property)
+                if (!service || typeof service !== 'object' || !service.name) {
+                    continue;
+                }
+
                 html += `
                     <div class="service-card" style="background: white; border-radius: 12px; padding: 20px; border: 2px solid ${service.enabled ? '#667eea' : '#ddd'};">
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
@@ -3808,28 +3854,8 @@ service@worryfreemovers.com</textarea>
                             </label>
                         </div>
                         <p style="color: #666; font-size: 14px; margin-bottom: 15px;">${service.description}</p>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                            <div style="margin-bottom: 10px;">
-                                <label style="display: block; font-size: 13px; color: #666; margin-bottom: 5px;">Base Hourly Rate</label>
-                                <input type="number" step="0.01" value="${service.baseRate}"
-                                    onchange="servicesConfig.movingServices['${key}'].baseRate = parseFloat(this.value)"
-                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
-                            </div>
-                            <div style="margin-bottom: 10px;">
-                                <label style="display: block; font-size: 13px; color: #666; margin-bottom: 5px;">Distance Adjustment (per mile)</label>
-                                <input type="number" step="0.01" value="${service.distanceAdjustment}"
-                                    onchange="servicesConfig.movingServices['${key}'].distanceAdjustment = parseFloat(this.value)"
-                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
-                            </div>
-                            <div>
-                                <label style="display: block; font-size: 13px; color: #666; margin-bottom: 5px;">Service Charge (%)</label>
-                                <input type="number" step="0.01" value="${service.serviceCharge * 100}"
-                                    onchange="servicesConfig.movingServices['${key}'].serviceCharge = parseFloat(this.value) / 100"
-                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
-                            </div>
-                        </div>
-                        <div style="font-size: 12px; color: #999;">
-                            ${service.features.map(f => `• ${f}`).join('<br>')}
+                        <div style="font-size: 12px; color: #999; margin-top: 15px;">
+                            ${service.features ? service.features.map(f => `• ${f}`).join('<br>') : ''}
                         </div>
                     </div>
                 `;
