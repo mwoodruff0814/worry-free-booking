@@ -1724,8 +1724,10 @@
     </div>
 
     <script>
-        // API Configuration
-        const API_URL = 'http://localhost:3001';
+        // API Configuration (auto-detect local vs production)
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3001'
+            : 'https://worry-free-booking.onrender.com';
         const BASE_ADDRESS = '1890 Triplett Blvd, Akron, OH 44312';
 
         // Square Configuration (same as sarah-ai.html)
@@ -3078,9 +3080,7 @@
         // ==============================================
         // LOGIN AUTHENTICATION
         // ==============================================
-        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:3001/api'
-            : 'https://worry-free-booking.onrender.com/api';
+        // API_URL is declared at the top of the script
 
         // Check if already logged in
         function checkAuth() {
@@ -3098,8 +3098,14 @@
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('loginError');
 
+            console.log('🔐 Attempting login...', { username, apiUrl: API_URL });
+            errorDiv.style.display = 'none'; // Hide previous errors
+
             try {
-                const response = await fetch(`${API_URL}/admin/login`, {
+                const loginUrl = `${API_URL}/api/admin/login`;
+                console.log('📡 Sending request to:', loginUrl);
+
+                const response = await fetch(loginUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -3107,19 +3113,23 @@
                     body: JSON.stringify({ username, password })
                 });
 
+                console.log('📥 Response status:', response.status);
                 const data = await response.json();
+                console.log('📥 Response data:', data);
 
                 if (data.success) {
+                    console.log('✅ Login successful!');
                     localStorage.setItem('adminBookingToken', data.token);
                     localStorage.setItem('adminBookingUser', data.user.username);
                     showBookingForm();
                 } else {
+                    console.error('❌ Login failed:', data.error);
                     errorDiv.textContent = data.error || 'Invalid credentials';
                     errorDiv.style.display = 'block';
                 }
             } catch (error) {
-                console.error('Login error:', error);
-                errorDiv.textContent = 'Login failed. Please check your connection.';
+                console.error('❌ Login error:', error);
+                errorDiv.textContent = 'Login failed. Please check your connection. See console for details.';
                 errorDiv.style.display = 'block';
             }
         });
@@ -3153,6 +3163,9 @@
         }
 
         // Check authentication on page load
+        console.log('🔧 Admin Booking loaded');
+        console.log('🌐 API URL:', API_URL);
+        console.log('🔍 Checking for existing auth token...');
         checkAuth();
 
     </script>
