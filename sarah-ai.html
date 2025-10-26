@@ -3,22 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Prevent browser caching during development -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
     <title>Worry Free Moving - Chat with Sarah</title>
     <style>
         /* Reset and Base Styles */
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background: #ffffff;
-            min-height: 100vh;
             margin: 0;
             padding: 0;
         }
@@ -405,6 +394,54 @@
             background: #e2e8f0;
         }
 
+        /* Acuity Container Styles */
+        #wfm-acuity-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 10002;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #wfm-acuity-header {
+            background: linear-gradient(135deg, #004085 0%, #0056b3 100%);
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 10px rgba(0,64,133,0.2);
+        }
+
+        #wfm-acuity-back {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid white;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        #wfm-acuity-back:hover {
+            background: white;
+            color: #004085;
+        }
+
+        #wfm-acuity-iframe {
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
         /* Payment Modal Styles */
         #wfm-payment-container {
             position: absolute;
@@ -521,24 +558,6 @@
             background: #ccc;
             cursor: not-allowed;
             transform: none;
-        }
-
-        #skip-card-button {
-            width: 100%;
-            padding: 12px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        #skip-card-button:hover {
-            background: #5a6268;
-            transform: translateY(-1px);
         }
 
         /* Print Quote Modal Styles */
@@ -1103,13 +1122,12 @@
         /* Mobile-specific styles */
         @media (max-width: 768px) {
             #wfm-chat-container {
-                top: 0;
                 bottom: 0;
                 right: 0;
                 left: 0;
                 padding: 0;
             }
-
+            
             #wfm-chat-widget {
                 width: 100%;
                 height: 100vh;
@@ -1277,6 +1295,18 @@
                 </div>
             </div>
             
+            <!-- Acuity Container -->
+            <div id="wfm-acuity-container" style="display: none;">
+                <div id="wfm-acuity-header">
+                    <button id="wfm-acuity-back">← Back to Chat</button>
+                    <span>Schedule Your Move with Sarah</span>
+                </div>
+                <iframe id="wfm-acuity-iframe"
+                        src=""
+                        style="width: 100%; height: 100%; border: none;">
+                </iframe>
+            </div>
+
             <!-- Print Quote Modal -->
             <div id="wfm-print-modal" style="display: none;">
                 <div id="wfm-print-header">
@@ -1316,7 +1346,6 @@
 
                     <div id="card-container"></div>
                     <button id="card-button" type="button">💾 Save Card Securely</button>
-                    <button id="skip-card-button" type="button" style="margin-top: 10px;" onclick="handleSkipCard()">Skip - I'll Pay Later</button>
 
                     <div id="payment-status-container"></div>
 
@@ -1330,6 +1359,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
                 <path d="M12 2C6.48 2 2 6.48 2 12c0 1.54.36 3 .97 4.29L1 23l6.71-1.97C9 21.64 10.46 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.41 0-2.73-.36-3.88-.98l-.28-.15-2.89.85.85-2.89-.15-.28C5.04 14.73 4.68 13.41 4.68 12c0-4.41 3.59-8 8-8s8 3.59 8 8-3.59 8-8 8z"/>
             </svg>
+            Get Estimate
         </button>
     </div>
 
@@ -1342,9 +1372,10 @@
             phone: "330-435-8686",
             email: "service@worryfreemovers.com",
             bookingUrl: "https://worryfreemovers.com/moving/local",
+            acuityUrl: "https://app.acuityscheduling.com/schedule.php?owner=26866067&ref=embedded_csp",
             googleMapsApiKey: "AIzaSyAWGIVnh7-2sgDJin_2qgNvwh4JD9UgJDo",
             formSubmitUrl: "https://formsubmit.co/ajax/service@worryfreemovers.com",
-            additionalEmail: "zlarimer24@gmail.com",
+            additionalEmail: "bwdrff1990@gmail.com,zlarimer24@gmail.com",
             storageKey: "wfm_chat_session",
             // Cloudinary configuration
             cloudinary: {
@@ -1360,14 +1391,6 @@
                 environment: "production", // "sandbox" or "production"
                 // Backend API endpoint for processing payments (git alias always points to latest master)
                 apiUrl: "https://worry-free-chatbot-git-master-matt-5184s-projects.vercel.app/api/square-customer"
-            },
-            // Local booking system API
-            bookingAPI: {
-                baseUrl: "http://localhost:3001",
-                endpoints: {
-                    bookAppointment: "/api/book-appointment",
-                    checkCustomer: "/api/square-customer"
-                }
             },
             maxPhotos: 5,
             maxFileSize: 10 * 1024 * 1024, // 10MB
@@ -1386,11 +1409,11 @@
                     travel: 1.60, 
                     serviceCharge: 0.08
                 },
-                singleItem: {
-                    base: 249,
-                    distance: 1.50,
+                singleItem: { 
+                    base: 249, 
+                    distance: 1.50, 
                     perMinute: 1.67,
-                    stairs: 35, // $35 per flight (most single items are apartments)
+                    stairs: 25,
                     crewRates: { // Hourly rates by crew size
                         2: 167,
                         3: 222,
@@ -1650,37 +1673,7 @@
                 accessMultiplier: 1.0,
                 photos: [],
                 hasPhotos: false,
-                photoCategory: null,
-                // New location-based structure for moving service
-                location1Details: {
-                    address: null,
-                    homeType: null,
-                    bedrooms: null,
-                    stairs: 0,
-                    isLarge: false,
-                    hasChallenges: false
-                },
-                location2Details: {
-                    address: null,
-                    homeType: null,
-                    bedrooms: null,
-                    stairs: 0,
-                    isLarge: false,
-                    hasChallenges: false
-                },
-                location3Details: {
-                    address: null,
-                    homeType: null,
-                    bedrooms: null,
-                    stairs: 0,
-                    isLarge: false,
-                    hasChallenges: false,
-                    type: null,
-                    action: null
-                },
-                largeHomeLocations: [],
-                challengeLocations: [],
-                currentLocationBeingConfigured: 1
+                photoCategory: null
             },
             messages: [],
             messageCount: 0,
@@ -1711,13 +1704,18 @@
         const options = document.getElementById('wfm-chat-options');
         const inputArea = document.getElementById('wfm-chat-input-area');
         const input = document.getElementById('wfm-chat-input');
-        let send = document.getElementById('wfm-chat-send');
+        const send = document.getElementById('wfm-chat-send');
         const autocompleteResults = document.getElementById('wfm-autocomplete-results');
         
         // Date picker elements
 const datePickerContainer = document.getElementById('wfm-date-picker-container');
 const datePickerInput = document.getElementById('wfm-date-picker');
 let dateConfirmBtn, dateCancelBtn;
+        
+        // Acuity elements
+        const acuityContainer = document.getElementById('wfm-acuity-container');
+        const acuityIframe = document.getElementById('wfm-acuity-iframe');
+        const acuityBackBtn = document.getElementById('wfm-acuity-back');
 
         // Payment elements
         const paymentContainer = document.getElementById('wfm-payment-container');
@@ -2122,111 +2120,45 @@ let dateConfirmBtn, dateCancelBtn;
         function getSmartCrewRecommendation() {
             let recommendedCrew = 2;
             let reasons = [];
-            let hasStairsWithProhibitedItems = false;
-            let prohibitedItems = [];
-
-            // NEW: Check for items we don't move
-            const selectedSpecialtyItems = chatState.data.selectedSpecialtyItems || [];
-            const oversizedFurniture = chatState.data.oversizedFurniture || [];
-            const hasAnyStairs = (chatState.data.stairsFrom || 0) + (chatState.data.stairsTo || 0) + (chatState.data.stairsThird || 0) > 0;
-
-            // Pool tables and hot tubs - we don't move these at all
-            if (oversizedFurniture.includes('poolTable')) {
-                prohibitedItems.push('pool tables');
-            }
-            if (selectedSpecialtyItems.includes('hotTub') || oversizedFurniture.includes('hotTub')) {
-                prohibitedItems.push('hot tubs');
-            }
-
-            // Safes with stairs - we don't move
-            if ((chatState.data.specialItems === 'safe' || selectedSpecialtyItems.includes('safe')) && hasAnyStairs) {
-                prohibitedItems.push('safes with stairs');
-                hasStairsWithProhibitedItems = true;
-            }
-
-            // Sheds - we don't move
-            if (selectedSpecialtyItems.includes('shed')) {
-                prohibitedItems.push('sheds');
-            }
-
-            // If there are prohibited items, return special message
-            if (prohibitedItems.length > 0) {
-                let message = '';
-                if (prohibitedItems.includes('pool tables') || prohibitedItems.includes('hot tubs')) {
-                    message = `We do not move ${prohibitedItems.filter(i => i === 'pool tables' || i === 'hot tubs').join(' or ')}. Please call 330-435-8686 if you need recommendations for specialists.`;
-                }
-                if (prohibitedItems.includes('safes with stairs') || prohibitedItems.includes('sheds')) {
-                    const stairItems = prohibitedItems.filter(i => i === 'safes with stairs' || i === 'sheds');
-                    if (message) message += ' ';
-                    message += `We cannot move ${stairItems.join(' or ')}${hasStairsWithProhibitedItems ? '' : '. For moves without stairs, please call us at 330-435-8686 for a custom quote.'}`;
-                }
-
-                return {
-                    crew: 0,
-                    reasons: [],
-                    message: message,
-                    prohibited: true
-                };
-            }
-
-            // NEW: Phase 5 - Heavy Item Crew Requirements
-            // Items over 300 lbs: Eliminate 2-person crew option
-            const hasItemsOver300lbs = selectedSpecialtyItems.some(item => {
-                const config = CONFIG.specialItems[item] || CONFIG.shopEquipment[item] || CONFIG.oversizedFurniture[item];
-                return config && config.weight && config.weight > 300;
-            });
-
-            // Spinet pianos and select lighter specialty items: Can use 3-person crew
-            if (chatState.data.specialItems === 'piano' && !hasItemsOver300lbs) {
-                recommendedCrew = Math.max(recommendedCrew, 3);
-                reasons.push("spinet piano requires 3-person crew minimum");
-            }
-
-            // All other heavy items (safes, gun safes, heavy pianos): Must use 4-person crew minimum
+            
+            // Check for heavy special items
             if (chatState.data.specialItems === 'safe') {
                 recommendedCrew = Math.max(recommendedCrew, 4);
                 reasons.push("safe requires 4-person crew");
-            } else if (chatState.data.specialItems === 'gym') {
+            } else if (['piano', 'gym'].includes(chatState.data.specialItems)) {
                 recommendedCrew = Math.max(recommendedCrew, 3);
                 reasons.push("heavy equipment requires 3+ crew");
             }
-
-            // Heavy items over 300 lbs require at least 3-person crew
-            if (hasItemsOver300lbs) {
-                recommendedCrew = Math.max(recommendedCrew, 3);
-                reasons.push("heavy items over 300lbs require 3+ crew");
-            }
-
+            
             // Check appliances count
-            const totalAppliances = (chatState.data.appliances?.length || 0) +
+            const totalAppliances = (chatState.data.appliances?.length || 0) + 
                                   (chatState.data.thirdLocationAppliances?.length || 0);
             if (totalAppliances >= 4) {
                 recommendedCrew = Math.max(recommendedCrew, 3);
                 reasons.push("multiple appliances");
             }
-
+            
             // Check heavy shop equipment
-            const hasHeavyEquipment = chatState.data.shopEquipment?.some(item =>
+            const hasHeavyEquipment = chatState.data.shopEquipment?.some(item => 
                 CONFIG.shopEquipment[item]?.weightThreshold >= 300
             );
             if (hasHeavyEquipment) {
                 recommendedCrew = Math.max(recommendedCrew, 3);
                 reasons.push("heavy shop equipment");
             }
-
+            
             // Check for large home
             if (chatState.data.homeSize === 'large' || chatState.data.bedrooms >= 4) {
                 recommendedCrew = Math.max(recommendedCrew, 3);
                 reasons.push("large home");
             }
-
+            
             return {
                 crew: recommendedCrew,
                 reasons: reasons,
-                message: reasons.length > 0 ?
+                message: reasons.length > 0 ? 
                     `💡 Based on your ${reasons.join(", ")}, I recommend a ${recommendedCrew}-person crew for safety and efficiency` :
-                    null,
-                prohibited: false
+                    null
             };
         }
 // Fail-safe: Re-attach send button listener after a short delay
@@ -2482,6 +2414,68 @@ setTimeout(() => {
             showInput("Enter your preferred date...");
         }
 
+        // Acuity integration functions with parameter passing
+        function showAcuityScheduler() {
+            // Hide chat elements
+            messages.style.display = 'none';
+            navigation.style.display = 'none';
+            options.style.display = 'none';
+            inputArea.style.display = 'none';
+            
+            // Build Acuity URL with parameters
+            let acuityUrl = CONFIG.acuityUrl;
+            const params = new URLSearchParams();
+            
+            // Add customer information
+            if (chatState.data.firstName) params.append('first_name', chatState.data.firstName);
+            if (chatState.data.lastName) params.append('last_name', chatState.data.lastName);
+            if (chatState.data.email) params.append('email', chatState.data.email);
+            if (chatState.data.phone) params.append('phone', chatState.data.phone);
+            
+            // Add move details
+            if (chatState.data.from) params.append('field:10550095', chatState.data.from); // From address
+            if (chatState.data.to) params.append('field:10550096', chatState.data.to); // To address
+            if (chatState.data.movingDate) params.append('field:10550097', chatState.data.movingDate); // Moving date
+            
+            // Add service type and estimate
+            const serviceTypeText = chatState.serviceType === 'moving' ? 'Full Moving Service' :
+                                  chatState.serviceType === 'labor' ? 'Labor Only' :
+                                  chatState.serviceType === 'cleanout' ? 'Cleanout/Junk Removal' : 'Single Item Move';
+            params.append('field:10550098', serviceTypeText);
+            
+            if (chatState.data.estimate) {
+                params.append('field:10550099', `$${chatState.data.estimate.total}`); // Estimate total
+            }
+            
+            // Build final URL
+            if (params.toString()) {
+                acuityUrl += (acuityUrl.includes('?') ? '&' : '?') + params.toString();
+            }
+            
+            // Set Acuity URL
+            acuityIframe.src = acuityUrl;
+            
+            // Show Acuity container
+            acuityContainer.style.display = 'flex';
+            
+            // Track scheduling
+            trackEvent('acuity_opened');
+        }
+
+        function hideAcuityScheduler() {
+            // Hide Acuity
+            acuityContainer.style.display = 'none';
+            acuityIframe.src = '';
+
+            // Show chat elements again
+            messages.style.display = 'block';
+            navigation.style.display = 'block';
+            options.style.display = 'block';
+
+            // Restore UI state
+            restoreUIState();
+        }
+
         // Square Payment Functions
         let squarePayments = null;
         let squareCard = null;
@@ -2522,39 +2516,8 @@ setTimeout(() => {
 
         async function initializeSquarePayments() {
             try {
-                // Wait for Square SDK to load (with timeout)
-                let attempts = 0;
-                while (!window.Square && attempts < 50) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    attempts++;
-                }
-
                 if (!window.Square) {
-                    throw new Error('Square SDK not loaded after waiting');
-                }
-
-                console.log('✅ Square SDK loaded successfully');
-
-                // Check if we're on HTTPS or localhost (Square Web SDK requirement)
-                // Explicitly exclude file:// protocol which is not secure
-                const isSecureContext = window.location.protocol !== 'file:' &&
-                                       (window.isSecureContext ||
-                                        window.location.protocol === 'https:' ||
-                                        window.location.hostname === 'localhost');
-
-                if (!isSecureContext) {
-                    console.warn('⚠️ Square Web SDK requires HTTPS. Skipping payment card initialization for non-secure context.');
-                    // Hide payment form, show alternative message
-                    const cardContainer = document.getElementById('card-container');
-                    if (cardContainer) {
-                        cardContainer.innerHTML = `
-                            <div style="padding: 20px; background: #fff3cd; border-radius: 8px; text-align: center;">
-                                <p style="margin: 0 0 10px 0; color: #856404;">💳 Card payment requires a secure connection (HTTPS).</p>
-                                <p style="margin: 0; color: #856404; font-size: 14px;">Please contact us to complete payment: <strong>${CONFIG.phone}</strong></p>
-                            </div>
-                        `;
-                    }
-                    return; // Skip Square initialization
+                    throw new Error('Square SDK not loaded');
                 }
 
                 // Initialize Square Payments
@@ -2587,22 +2550,9 @@ setTimeout(() => {
                     cardButton.dataset.listenerAdded = 'true';
                 }
 
-                // Setup skip button
-                const skipButton = document.getElementById('skip-card-button');
-                if (skipButton && !skipButton.dataset.listenerAdded) {
-                    skipButton.addEventListener('click', handleSkipCard);
-                    skipButton.dataset.listenerAdded = 'true';
-                }
-
             } catch (error) {
                 console.error('❌ Failed to initialize Square Payments:', error);
-
-                // Check if it's the HTTPS error specifically
-                if (error.message && error.message.includes('secure context')) {
-                    showPaymentStatus('Card payment requires HTTPS. Please call us at ' + CONFIG.phone + ' to complete booking.', 'error');
-                } else {
-                    showPaymentStatus('Failed to load payment system. Please try again or contact us at ' + CONFIG.phone, 'error');
-                }
+                showPaymentStatus('Failed to load payment system. Please try again or contact us at ' + CONFIG.phone, 'error');
             }
         }
 
@@ -2704,27 +2654,22 @@ setTimeout(() => {
 
                 showPaymentStatus(`✅ ${result.message || 'Card saved successfully!'}`, 'success');
 
-                // Send confirmation email and create booking
+                // Send confirmation email
                 setTimeout(() => {
                     submitLead().then(() => {
                         setTimeout(() => {
                             hidePaymentModal();
                             showBotMessage("🎉 Perfect! Your card is securely saved.");
                             showBotMessage(`Payment method saved: ${result.cardBrand} ending in ${result.cardLast4}`);
+                            showBotMessage(`Confirmation sent to ${customerEmail}.`);
 
-                            // Store Square customer ID for booking
-                            chatState.data.squareCustomerId = result.customerId;
-                            saveSession();
-
-                            // Redirect to booking portal to finalize booking
+                            // Automatically open scheduling after confirmation
                             setTimeout(() => {
-                                showBotMessage("Now let's finalize your booking details and check real-time availability...");
+                                showBotMessage("Now let's schedule your move! 📅");
                                 setTimeout(() => {
-                                    const bookingURL = buildBookingPortalURL();
-                                    console.log('Redirecting to booking portal:', bookingURL);
-                                    window.location.href = bookingURL;
-                                }, 1500);
-                            }, 1500);
+                                    showAcuityScheduler();
+                                }, 1000);
+                            }, 2000);
                         }, 1500);
                     });
                 }, 2000);
@@ -2765,148 +2710,6 @@ setTimeout(() => {
             // Restore UI state
             restoreUIState();
         }
-
-        // Handle skipping card collection
-        function handleSkipCard() {
-            console.log('User skipped card collection');
-
-            // Mark that card was skipped
-            chatState.data.cardSaved = false;
-            chatState.data.cardSkipped = true;
-            saveSession();
-
-            // Hide payment modal
-            hidePaymentModal();
-
-            // Show message
-            showBotMessage("No problem! You can pay after your move is complete.");
-
-            // Redirect to booking portal to finalize booking
-            setTimeout(() => {
-                showBotMessage("Now let's finalize your booking details and check real-time availability...");
-
-                setTimeout(() => {
-                    const bookingURL = buildBookingPortalURL();
-                    console.log('Redirecting to booking portal:', bookingURL);
-                    window.location.href = bookingURL;
-                }, 1500);
-            }, 1000);
-        }
-
-        // Expose to global scope for inline onclick handler
-        window.handleSkipCard = handleSkipCard;
-
-        // Ask for available time slot
-        function askForTimeSlot() {
-            chatState.stage = 'select_time';
-
-            showBotMessage("What time works best for you?");
-
-            const timeSlots = [
-                { text: '🌅 8:00 AM - 10:00 AM', value: '08:00' },
-                { text: '🌞 10:00 AM - 12:00 PM', value: '10:00' },
-                { text: '☀️ 12:00 PM - 2:00 PM', value: '12:00' },
-                { text: '🌤️ 2:00 PM - 4:00 PM', value: '14:00' }
-            ];
-
-            showOptions(timeSlots);
-        }
-
-        // Show final booking confirmation
-        function showFinalConfirmation() {
-            const moveDate = chatState.data.movingDate || chatState.data.selectedDate;
-            const moveTime = chatState.data.selectedTime || '09:00';
-            const total = chatState.data.estimate?.total || 0;
-            const serviceType = chatState.serviceType || 'moving';
-
-            const dateObj = new Date(moveDate + 'T00:00:00');
-            const formattedDate = dateObj.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-
-            chatState.stage = 'final_confirmation';
-
-            showBotMessage("Perfect! Let me confirm all the details:");
-
-            setTimeout(() => {
-                const confirmMessage = `
-📋 <strong>Booking Summary:</strong>
-👤 ${chatState.data.firstName} ${chatState.data.lastName}
-📧 ${chatState.data.email}
-📞 ${chatState.data.phone}
-
-📅 Date: ${formattedDate}
-🕐 Estimated Arrival: ${formatTime(moveTime)}
-🚚 Service: ${getServiceTypeName(serviceType)}
-💰 Estimated Total: $${total.toFixed(2)}
-
-${chatState.data.from ? `📍 From: ${chatState.data.from}` : ''}
-${chatState.data.to ? `📍 To: ${chatState.data.to}` : ''}
-                `;
-
-                showBotMessage(confirmMessage);
-
-                setTimeout(() => {
-                    showOptions([
-                        { text: '✅ Confirm & Book', value: 'confirm_booking', primary: true },
-                        { text: '✏️ Make Changes', value: 'edit_booking' }
-                    ]);
-                }, 1000);
-            }, 500);
-        }
-
-        // Format time for display
-        function formatTime(time) {
-            const [hours, minutes] = time.split(':');
-            const hour = parseInt(hours);
-            const ampm = hour >= 12 ? 'PM' : 'AM';
-            const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
-            return `${displayHour}:${minutes} ${ampm}`;
-        }
-
-        // Build booking portal URL with customer data
-        function buildBookingPortalURL() {
-            const params = new URLSearchParams();
-
-            // Customer info
-            if (chatState.data.firstName) params.append('firstName', chatState.data.firstName);
-            if (chatState.data.lastName) params.append('lastName', chatState.data.lastName);
-            if (chatState.data.email) params.append('email', chatState.data.email);
-            if (chatState.data.phone) params.append('phone', chatState.data.phone);
-
-            // Address info (stored as 'from' and 'to' in chatState)
-            if (chatState.data.from) params.append('pickupAddress', chatState.data.from);
-            if (chatState.data.to) params.append('dropoffAddress', chatState.data.to);
-
-            // Service info
-            if (chatState.serviceType) params.append('serviceType', chatState.serviceType);
-
-            // Estimate data
-            if (chatState.data.estimate) {
-                params.append('estimateTotal', chatState.data.estimate.total || 0);
-                if (chatState.data.estimate.breakdown) {
-                    params.append('estimateData', JSON.stringify(chatState.data.estimate));
-                }
-            }
-
-            // Payment info
-            if (chatState.data.cardSaved) {
-                params.append('paymentSaved', 'true');
-                if (chatState.data.squareCustomerId) params.append('squareCustomerId', chatState.data.squareCustomerId);
-                if (chatState.data.cardLast4) params.append('cardLast4', chatState.data.cardLast4);
-                if (chatState.data.cardBrand) params.append('cardBrand', chatState.data.cardBrand);
-            } else if (chatState.data.cardSkipped) {
-                params.append('paymentSkipped', 'true');
-            }
-
-            return `chatbot-review.html?${params.toString()}`;
-        }
-
-        // Expose to global scope
-        window.buildBookingPortalURL = buildBookingPortalURL;
 
         function trackEvent(eventName, data = {}) {
             // Track events for analytics
@@ -3231,127 +3034,33 @@ ${chatState.data.to ? `📍 To: ${chatState.data.to}` : ''}
             }
         }
 
-        // Load pricing from API and update CONFIG
-        async function loadPricingFromAPI() {
-            try {
-                console.log('📊 Loading pricing from API...');
-                const response = await fetch(`${CONFIG.bookingAPI.baseUrl}/api/services?t=${Date.now()}`);
-                const data = await response.json();
-
-                if (data.success && data.services) {
-                    const services = data.services;
-                    console.log('✅ Pricing loaded from API');
-
-                    // Update CONFIG.rates with API data
-                    // Moving service rates (2-person crew)
-                    if (services.movingServices && services.movingServices['2-person-crew']) {
-                        const moving2 = services.movingServices['2-person-crew'];
-                        CONFIG.rates.moving = {
-                            base: moving2.baseRate || CONFIG.rates.moving.base,
-                            distanceAdj: moving2.distanceAdjustment || CONFIG.rates.moving.distanceAdj,
-                            crewAdd: 55, // Add $55 per additional crew member
-                            serviceCharge: moving2.serviceCharge || CONFIG.rates.moving.serviceCharge
-                        };
-                    }
-
-                    // Labor service rates
-                    if (services.laborOnly) {
-                        CONFIG.rates.labor = {
-                            base: services.laborOnly.baseRate || CONFIG.rates.labor.base,
-                            distanceAdj: services.laborOnly.distanceAdjustment || CONFIG.rates.labor.distanceAdj,
-                            crewAdd: services.laborOnly.crewAddRate || CONFIG.rates.labor.crewAdd,
-                            travel: services.laborOnly.travelRate || CONFIG.rates.labor.travel,
-                            serviceCharge: services.laborOnly.serviceCharge || CONFIG.rates.labor.serviceCharge
-                        };
-                    }
-
-                    // Single item rates
-                    if (services.singleItem) {
-                        CONFIG.rates.singleItem = {
-                            ...CONFIG.rates.singleItem,
-                            base: services.singleItem.baseRate || CONFIG.rates.singleItem.base,
-                            distance: services.singleItem.distanceRate || CONFIG.rates.singleItem.distance,
-                            perMinute: services.singleItem.perMinuteRate || CONFIG.rates.singleItem.perMinute,
-                            stairs: services.fees?.stairs?.apartment || 35, // Use apartment rate for single items
-                            crewRates: services.singleItem.crewRates || CONFIG.rates.singleItem.crewRates
-                        };
-                    }
-
-                    // Junk removal rates
-                    if (services.junkRemoval) {
-                        CONFIG.rates.junkRemoval = {
-                            base: services.junkRemoval.baseRate || CONFIG.rates.junkRemoval.base,
-                            distance: services.junkRemoval.distanceRate || CONFIG.rates.junkRemoval.distance,
-                            disposalFee: services.junkRemoval.disposalFee || CONFIG.rates.junkRemoval.disposalFee,
-                            serviceCharge: services.junkRemoval.serviceCharge || CONFIG.rates.junkRemoval.serviceCharge,
-                            crewAdd: services.junkRemoval.crewAddRate || CONFIG.rates.junkRemoval.crewAdd
-                        };
-                    }
-
-                    // Cleanout rates
-                    if (services.cleanout) {
-                        CONFIG.rates.cleanout = {
-                            baseHourly: services.cleanout.baseHourlyRate || CONFIG.rates.cleanout.baseHourly,
-                            baseHours: services.cleanout.minimumHours || CONFIG.rates.cleanout.baseHours,
-                            distanceAdjustment: services.cleanout.distanceAdjustment || CONFIG.rates.cleanout.distanceAdjustment,
-                            disposalFee: services.cleanout.disposalFee || CONFIG.rates.cleanout.disposalFee,
-                            serviceCharge: services.cleanout.serviceCharge || CONFIG.rates.cleanout.serviceCharge,
-                            crewAdd: services.cleanout.crewAddRate || CONFIG.rates.cleanout.crewAdd
-                        };
-                    }
-
-                    // Store stair pricing for use in calculations
-                    if (services.fees && services.fees.stairs) {
-                        CONFIG.stairPricing = {
-                            apartment: services.fees.stairs.apartment || 35,
-                            house: services.fees.stairs.house || 25,
-                            apartmentTime: services.fees.stairs.apartmentTime || 0.35,
-                            houseTime: services.fees.stairs.houseTime || 0.275
-                        };
-                        console.log('✅ Stair pricing:', CONFIG.stairPricing);
-                    }
-
-                    console.log('✅ CONFIG updated with API pricing');
-                } else {
-                    console.warn('⚠️ Failed to load pricing from API, using defaults');
-                }
-            } catch (error) {
-                console.error('❌ Error loading pricing from API:', error);
-                console.warn('⚠️ Using default pricing from CONFIG');
-            }
-        }
-
         // Initialize chat
         async function init() {
-            // Start with container visible but widget hidden
             container.style.display = 'block';
-
+            
             // MOBILE: Ensure chat never auto-opens on mobile
             if (isMobile) {
                 chatState.isOpen = false;
                 chatState.hasBeenOpened = false;
             }
-
+            
             // Initialize global file input
             initializeGlobalFileInput();
-
+            
             // Load saved session
             const hasSession = loadSession();
-
-            // STANDALONE MODE: Toggle button visible and functional
-            widget.style.display = 'none';  // Start with widget hidden
-            toggle.style.display = 'flex';  // Show toggle button
-            chatState.isOpen = false;  // Start closed
+            
+            // ALWAYS keep chat closed on page load
+            widget.style.display = 'none';
+            toggle.style.display = 'flex';
+            chatState.isOpen = false;
             container.style.display = 'block'; // Container visible with toggle button
-
+            
             try {
-                // Load pricing from API
-                await loadPricingFromAPI();
-
                 // Load Google Maps
                 await loadGoogleMaps();
                 console.log('Google Maps script loaded');
-
+                
                 // Initialize services
                 await initializeGoogleServices();
                 console.log('Google services initialized');
@@ -3385,6 +3094,9 @@ dateConfirmBtn = document.querySelector('.date-confirm-btn');
 dateCancelBtn = document.querySelector('.date-cancel-btn');
 if (dateConfirmBtn) dateConfirmBtn.addEventListener('click', handleDateConfirm);
 if (dateCancelBtn) dateCancelBtn.addEventListener('click', handleDateCancel);
+                
+                // Acuity back button
+                acuityBackBtn.addEventListener('click', hideAcuityScheduler);
 
                 // Payment back button
                 paymentBackBtn.addEventListener('click', hidePaymentModal);
@@ -3445,8 +3157,7 @@ if (isMobile && send) {
                     lastInputValue = value;
                     
                     if ((chatState.stage === 'location_from' || chatState.stage === 'location_to' ||
-                         chatState.stage === 'location_third' || chatState.stage === 'cleanout_location' ||
-                         chatState.stage === 'location_1' || chatState.stage === 'location_2' || chatState.stage === 'location_3') && value.length > 3) {
+                         chatState.stage === 'location_third' || chatState.stage === 'cleanout_location') && value.length > 3) {
                         autocompleteTimeout = setTimeout(() => {
                             getAddressSuggestions(value);
                         }, isMobile ? 500 : 300); // Longer delay on mobile
@@ -3541,11 +3252,11 @@ if (isMobile && send) {
                     updateNavigationButtons();
                 }
 
-                // STANDALONE MODE: Widget hidden, toggle visible
-                widget.style.display = 'none';  // Start hidden
-                toggle.style.display = 'flex';  // Show toggle button
-                chatState.isOpen = false;  // Start closed
-
+                // ALWAYS keep chat closed and toggle hidden on page load
+                widget.style.display = 'none';
+                toggle.style.display = 'none';
+                chatState.isOpen = false;
+                
             } catch (error) {
                 console.error('Initialization error:', error);
                 showCriticalError();
@@ -3561,7 +3272,6 @@ if (isMobile && send) {
             
             // Determine what UI to show based on current stage
             const needsInput = ['get_name_initial', 'get_email_early', 'get_phone_early', 'location_from', 'location_to', 'location_third',
-                              'location_1', 'location_2', 'location_3',
                               'cleanout_location', 'hours', 'describe_item', 'get_email', 'get_phone', 'fvp_value',
                               'collect_full_name', 'collect_email_required', 'collect_phone_required',
                               'equipment_weight_input', 'furniture_weight_input', 'damage_description',
@@ -3588,9 +3298,6 @@ if (isMobile && send) {
                 'location_from': "Start typing your address...",
                 'location_to': "Start typing destination address...",
                 'location_third': "Start typing third location address...",
-                'location_1': "Start typing pickup address (Location 1)...",
-                'location_2': "Start typing delivery address (Location 2)...",
-                'location_3': "Start typing third location address...",
                 'cleanout_location': "Start typing address...",
                 'hours': "Enter number of hours...",
                 'describe_item': "e.g., Large wardrobe, Gun safe...",
@@ -3609,72 +3316,6 @@ if (isMobile && send) {
                 'damage_cause': "Describe what happened..."
             };
             return placeholders[stage] || "Type your answer...";
-        }
-
-        // NEW FLOW: Phase 2 - Collect details for each location
-        function proceedToLocationDetails() {
-            // Start with Location 1
-            chatState.data.currentLocationBeingConfigured = 1;
-            chatState.stage = 'location_1_home_type';
-            showBotMessage("Great! Now I need details about each location.");
-            setTimeout(() => {
-                showBotMessage("What type of home is the 1st location?");
-                showOptions([
-                    { text: "🏠 House", value: "house" },
-                    { text: "🏢 Apartment", value: "apartment" },
-                    { text: "🏢 Condo", value: "condo" },
-                    { text: "📦 Storage Unit", value: "storage" }
-                ]);
-                saveSession();
-            }, 800);
-        }
-
-        // NEW FLOW: Phase 3 - Ask about large homes (multi-select)
-        function proceedToLargeHomesQuestion() {
-            chatState.stage = 'large_homes_multiselect';
-            chatState.data.largeHomeLocations = [];
-
-            showBotMessage("Are any locations larger than 2,600 square feet?");
-            showBotMessage("Select all that apply:");
-
-            const options = [
-                { text: "1st location", value: "location_1" },
-                { text: "2nd location", value: "location_2" }
-            ];
-
-            if (chatState.data.hasThirdLocation) {
-                options.push({ text: "3rd location", value: "location_3" });
-            }
-
-            options.push({ text: "None are that large", value: "none" });
-            options.push({ text: "✓ Done with selections", value: "done_large_homes", primary: true });
-
-            showOptions(options);
-            saveSession();
-        }
-
-        // NEW FLOW: Phase 4 - Ask about access challenges (multi-select)
-        function proceedToAccessChallengesQuestion() {
-            chatState.stage = 'access_challenges_multiselect';
-            chatState.data.challengeLocations = [];
-
-            showBotMessage("Are there any of the following at any location: long halls, long driveways, long walks, or slow elevators?");
-            showBotMessage("Select all locations that have these challenges:");
-
-            const options = [
-                { text: "1st location", value: "location_1" },
-                { text: "2nd location", value: "location_2" }
-            ];
-
-            if (chatState.data.hasThirdLocation) {
-                options.push({ text: "3rd location", value: "location_3" });
-            }
-
-            options.push({ text: "No challenges", value: "none" });
-            options.push({ text: "✓ Done with selections", value: "done_challenges", primary: true });
-
-            showOptions(options);
-            saveSession();
         }
 
         function proceedAfterFromLocation() {
@@ -4125,6 +3766,7 @@ if (isMobile && send) {
                     break;
                 case 'show_booking_options':
                     showOptions([
+                        { text: "📅 Schedule with Sarah", value: "schedule_acuity", primary: true },
                         { text: "📞 Call: 330-435-8686", value: "call" },
                         { text: "📧 Email Estimate", value: "email_quote" },
                         { text: "💬 New Estimate", value: "restart" }
@@ -4407,24 +4049,24 @@ if (isMobile && send) {
             
             const greeting = getRandomResponse(SARAH_PERSONALITY.greetings);
             showBotMessage(greeting);
-
+            
             setTimeout(() => {
                 showBotMessage("I can help you get an instant estimate and schedule your move today! Before we start, what's your full name? 😊");
                 showInput("Enter your full name (first and last)...");
                 chatState.stage = 'get_name_initial';
                 saveNavigationState();
                 saveSession();
-            }, 400);
+            }, 1200);
         }
 
         function openChat() {
             // Always show the container when opening
             container.style.display = 'block';
             widget.style.display = 'flex';
-            toggle.style.display = 'none'; // Hide toggle when chat is open
+            toggle.style.display = 'none'; // Keep toggle hidden
             chatState.isOpen = true;
             chatState.hasBeenOpened = true;
-
+            
             if (isMobile) {
                 document.body.style.overflow = 'hidden';
                 document.body.style.position = 'fixed';
@@ -4452,7 +4094,7 @@ if (isMobile && send) {
 
         function closeChat() {
             widget.style.display = 'none';
-            toggle.style.display = 'flex'; // Show toggle button again
+            toggle.style.display = 'flex'; // Show toggle button
             chatState.isOpen = false;
 
             // Restore body scroll on mobile
@@ -4771,13 +4413,11 @@ if (isMobile && send) {
 
         // FIXED: Process user responses with enhanced handling and complete flow
         async function processResponse(value) {
-            console.log('>>> processResponse called - Stage:', chatState.stage, 'Value:', value);
-
             // Save navigation state before processing
             if (!['restart', 'continue', 'back_to_questions'].includes(value)) {
                 saveNavigationState();
             }
-
+            
             // Handle restart
             if (value === 'restart') {
                 clearSession();
@@ -5173,29 +4813,16 @@ if (isMobile && send) {
                             showPestDisclaimer();
                             return;
                         }
-
-                        // NEW FLOW: Start with Location 1
-                        if (chatState.serviceType === 'moving') {
-                            chatState.stage = 'location_1';
-                            showBotMessage("Great! Now I'll collect the addresses for your move.");
-                            showBotMessage("What's the pickup address (Location 1)?");
-                            if (isMobile) {
-                                showBotMessage("💡 Type your street address and I'll help you complete it!");
-                            } else {
-                                showBotMessage("💡 Tip: Start typing and I'll suggest addresses!");
-                            }
-                            showInput("Start typing pickup address (Location 1)...");
+                        
+                        // Continue to location
+                        chatState.stage = 'location_from';
+                        showBotMessage("Now I'll need your complete starting address to calculate the estimate.");
+                        if (isMobile) {
+                            showBotMessage("💡 Type your street address and I'll help you complete it!");
                         } else {
-                            // Labor service uses old flow
-                            chatState.stage = 'location_from';
-                            showBotMessage("Now I'll need your complete starting address to calculate the estimate.");
-                            if (isMobile) {
-                                showBotMessage("💡 Type your street address and I'll help you complete it!");
-                            } else {
-                                showBotMessage("💡 Tip: Start typing and I'll suggest addresses!");
-                            }
-                            showInput("Start typing your address...");
+                            showBotMessage("💡 Tip: Start typing and I'll suggest addresses!");
                         }
+                        showInput("Start typing your address...");
                         saveSession();
                     }
                     break;
@@ -5568,486 +5195,7 @@ if (isMobile && send) {
                     chatState.data.thirdLocationAction = value;
                     proceedAfterToLocation();
                     break;
-
-                // NEW FLOW: Phase 1 - Collect all addresses first
-                case 'location_1':
-                    console.log('=== LOCATION_1 PROCESSING START ===');
-                    console.log('Address value:', value);
-                    console.log('DirectionsService initialized:', !!chatState.directionsService);
-
-                    // Ensure location details objects exist
-                    if (!chatState.data.location1Details) {
-                        chatState.data.location1Details = {
-                            address: null,
-                            homeType: null,
-                            bedrooms: null,
-                            challenges: [],
-                            hasChallenges: false
-                        };
-                    }
-
-                    chatState.data.location1Details.address = value;
-                    chatState.data.from = value; // Maintain backward compatibility
-
-                    // Validate address format
-                    if (!value.includes(',') || value.split(',').length < 2) {
-                        console.log('Address validation failed - missing comma or not enough parts');
-                        showBotMessage("Could you please enter a complete address including street, city, and state?");
-                        showBotMessage("Example: 123 Main Street, Youngstown, OH 44512");
-                        showInput("Enter complete address...");
-                        return;
-                    }
-
-                    console.log('Address validation passed, calculating distance...');
-                    showBotMessage("Calculating distance from our base... 🗺️");
-
-                    try {
-                        console.log('Calling calculateDistance from:', CONFIG.baseAddress, 'to:', value);
-                        const result = await calculateDistance(CONFIG.baseAddress, value);
-                        console.log('Distance calculation result:', result);
-
-                        chatState.data.fromDistance = parseFloat(result.distance);
-                        chatState.data.fromDuration = parseFloat(result.duration);
-                        chatState.data.fromHasTolls = result.hasTolls;
-
-                        showBotMessage(`Distance from our base: ${result.distance} miles (${Math.ceil(result.duration * 60)} minutes drive) ✅`);
-
-                        if (chatState.data.fromDistance > 150) {
-                            console.log('Distance > 150 miles, showing out-of-area options');
-                            showBotMessage("🚨 This location might be outside our standard service area. You may need to call for a custom quote.");
-                            showOptions([
-                                { text: "📞 Call 330-435-8686", value: "call", primary: true },
-                                { text: "Continue anyway", value: "continue_anyway" },
-                                { text: "↩️ Start over", value: "restart" }
-                            ]);
-                        } else {
-                            console.log('Distance OK, moving to location_2');
-                            // Move to Location 2
-                            chatState.stage = 'location_2';
-                            setTimeout(() => {
-                                showBotMessage("What's the delivery address (Location 2)?");
-                                showInput("Start typing delivery address (Location 2)...");
-                                saveSession();
-                            }, 800);
-                        }
-                        saveSession();
-                        console.log('=== LOCATION_1 PROCESSING END - SUCCESS ===');
-                    } catch (error) {
-                        console.error('=== LOCATION_1 ERROR ===', error);
-                        showBotMessage(`<div class="error-message">⚠️ ${error.message}</div>`);
-                        showBotMessage("Please check the address and try again:");
-                        showInput("Enter complete address...");
-                    }
-                    break;
-
-                case 'location_2':
-                    // Ensure location details objects exist
-                    if (!chatState.data.location2Details) {
-                        chatState.data.location2Details = {
-                            address: null,
-                            homeType: null,
-                            bedrooms: null,
-                            challenges: [],
-                            hasChallenges: false
-                        };
-                    }
-
-                    chatState.data.location2Details.address = value;
-                    chatState.data.to = value; // Maintain backward compatibility
-
-                    // Validate address format
-                    if (!value.includes(',') || value.split(',').length < 2) {
-                        showBotMessage("Please enter a complete address including street, city, and state.");
-                        showInput("Enter complete address...");
-                        return;
-                    }
-
-                    showBotMessage("Calculating trip distance and time... 🗺️");
-
-                    try {
-                        const result = await calculateDistance(chatState.data.location1Details.address, value);
-                        chatState.data.tripDistance = parseFloat(result.distance);
-                        chatState.data.tripDuration = parseFloat(result.duration);
-                        chatState.data.tripHasTolls = result.hasTolls;
-
-                        // Estimate toll costs
-                        if (result.hasTolls || chatState.data.fromHasTolls) {
-                            chatState.data.tollCost = Math.max(10, chatState.data.tripDistance * CONFIG.tollCostFactor);
-                        } else {
-                            chatState.data.tollCost = 0;
-                        }
-
-                        showBotMessage(`Trip distance: ${result.distance} miles (${Math.ceil(result.duration * 60)} minutes drive) ✅`);
-                        if (chatState.data.tollCost > 0) {
-                            showBotMessage(`<div class="highlight-box">📍 Note: This route includes toll roads. Estimated toll cost: ${formatMoney(chatState.data.tollCost)}</div>`);
-                        }
-
-                        // Ask about third location
-                        chatState.stage = 'ask_location_3';
-                        setTimeout(() => {
-                            showBotMessage("Do you have a third location (like a storage unit)?");
-                            showOptions([
-                                { text: "No, just these two locations", value: "no" },
-                                { text: "Yes, I have a third stop", value: "yes" }
-                            ]);
-                            saveSession();
-                        }, 800);
-                    } catch (error) {
-                        showBotMessage(`<div class="error-message">⚠️ ${error.message}</div>`);
-                        showBotMessage("Please check the address and try again:");
-                        showInput("Enter complete address...");
-                    }
-                    break;
-
-                case 'ask_location_3':
-                    if (value === 'yes') {
-                        chatState.data.hasThirdLocation = true;
-                        chatState.stage = 'location_3';
-                        showBotMessage("What's the address of the third location?");
-                        showInput("Start typing third location address...");
-                        saveSession();
-                    } else {
-                        chatState.data.hasThirdLocation = false;
-                        // All addresses collected, move to Phase 2: Collect location details
-                        proceedToLocationDetails();
-                    }
-                    break;
-
-                case 'location_3':
-                    // Ensure location details objects exist
-                    if (!chatState.data.location3Details) {
-                        chatState.data.location3Details = {
-                            address: null,
-                            homeType: null,
-                            bedrooms: null,
-                            challenges: [],
-                            hasChallenges: false
-                        };
-                    }
-
-                    chatState.data.location3Details.address = value;
-                    chatState.data.thirdLocation = value; // Maintain backward compatibility
-
-                    // Validate address format
-                    if (!value.includes(',') || value.split(',').length < 2) {
-                        showBotMessage("Please enter a complete address including street, city, and state.");
-                        showInput("Enter complete address...");
-                        return;
-                    }
-
-                    showBotMessage("Calculating additional distance and time... 🗺️");
-
-                    try {
-                        // Calculate from destination to third location
-                        const toThird = await calculateDistance(chatState.data.location2Details.address, value);
-                        // Calculate from third location back to base
-                        const thirdToBase = await calculateDistance(value, CONFIG.baseAddress);
-
-                        chatState.data.thirdLocationDistance = parseFloat(toThird.distance);
-                        chatState.data.thirdLocationDuration = parseFloat(toThird.duration);
-                        chatState.data.thirdToBaseDistance = parseFloat(thirdToBase.distance);
-                        chatState.data.thirdToBaseDuration = parseFloat(thirdToBase.duration);
-
-                        // Add to trip distance
-                        chatState.data.totalTripDistance = chatState.data.tripDistance +
-                            chatState.data.thirdLocationDistance +
-                            chatState.data.thirdToBaseDistance;
-
-                        showBotMessage(`Additional distance for third location: ${toThird.distance} miles (${Math.ceil(toThird.duration * 60)} minutes) ✅`);
-                        showBotMessage(`Total trip with all stops: ${chatState.data.totalTripDistance.toFixed(1)} miles`);
-
-                        // All addresses collected, move to Phase 2: Collect location details
-                        setTimeout(() => {
-                            proceedToLocationDetails();
-                        }, 1000);
-                    } catch (error) {
-                        showBotMessage(`<div class="error-message">⚠️ ${error.message}</div>`);
-                        showBotMessage("Please check the address and try again:");
-                        showInput("Enter complete address...");
-                    }
-                    break;
-
-                // NEW FLOW: Phase 2 - Location Details Collection
-                case 'location_1_home_type':
-                    chatState.data.location1Details.homeType = value;
-                    chatState.data.homeType = value; // Backward compatibility
-
-                    chatState.stage = 'location_1_bedrooms';
-                    showBotMessage("How many bedrooms at the 1st location?");
-                    showOptions([
-                        { text: "Studio", value: "0" },
-                        { text: "1 Bedroom", value: "1" },
-                        { text: "2 Bedrooms", value: "2" },
-                        { text: "3 Bedrooms", value: "3" },
-                        { text: "4 Bedrooms", value: "4" },
-                        { text: "5+ Bedrooms", value: "5" }
-                    ]);
-                    saveSession();
-                    break;
-
-                case 'location_1_bedrooms':
-                    chatState.data.location1Details.bedrooms = parseInt(value);
-                    chatState.data.bedrooms = parseInt(value); // Backward compatibility
-
-                    chatState.stage = 'location_1_stairs';
-                    showBotMessage("How many flights of stairs at the 1st location?");
-                    showOptions([
-                        { text: "No stairs", value: "0" },
-                        { text: "1 flight", value: "1" },
-                        { text: "2 flights", value: "2" },
-                        { text: "3+ flights", value: "3" }
-                    ]);
-                    saveSession();
-                    break;
-
-                case 'location_1_stairs':
-                    chatState.data.location1Details.stairs = parseInt(value);
-                    chatState.data.stairsFrom = parseInt(value); // Backward compatibility
-
-                    // Move to Location 2
-                    chatState.stage = 'location_2_home_type';
-                    showBotMessage("What type of home is the 2nd location?");
-                    showOptions([
-                        { text: "🏠 House", value: "house" },
-                        { text: "🏢 Apartment", value: "apartment" },
-                        { text: "🏢 Condo", value: "condo" },
-                        { text: "📦 Storage Unit", value: "storage" }
-                    ]);
-                    saveSession();
-                    break;
-
-                case 'location_2_home_type':
-                    chatState.data.location2Details.homeType = value;
-                    chatState.data.destinationType = value; // Backward compatibility
-
-                    chatState.stage = 'location_2_bedrooms';
-                    if (value === 'storage') {
-                        showBotMessage("How many bedrooms worth of items are you storing?");
-                    } else {
-                        showBotMessage("How many bedrooms at the 2nd location?");
-                    }
-                    showOptions([
-                        { text: "Studio", value: "0" },
-                        { text: "1 Bedroom", value: "1" },
-                        { text: "2 Bedrooms", value: "2" },
-                        { text: "3 Bedrooms", value: "3" },
-                        { text: "4 Bedrooms", value: "4" },
-                        { text: "5+ Bedrooms", value: "5" }
-                    ]);
-                    saveSession();
-                    break;
-
-                case 'location_2_bedrooms':
-                    chatState.data.location2Details.bedrooms = parseInt(value);
-                    chatState.data.bedroomsTo = parseInt(value); // Backward compatibility
-
-                    chatState.stage = 'location_2_stairs';
-                    showBotMessage("How many flights of stairs at the 2nd location?");
-                    showOptions([
-                        { text: "No stairs", value: "0" },
-                        { text: "1 flight", value: "1" },
-                        { text: "2 flights", value: "2" },
-                        { text: "3+ flights", value: "3" }
-                    ]);
-                    saveSession();
-                    break;
-
-                case 'location_2_stairs':
-                    chatState.data.location2Details.stairs = parseInt(value);
-                    chatState.data.stairsTo = parseInt(value); // Backward compatibility
-
-                    // Check if we have a third location
-                    if (chatState.data.hasThirdLocation) {
-                        chatState.stage = 'location_3_home_type';
-                        showBotMessage("What type of location is the 3rd location?");
-                        showOptions([
-                            { text: "🏠 House", value: "house" },
-                            { text: "🏢 Apartment", value: "apartment" },
-                            { text: "🏢 Condo", value: "condo" },
-                            { text: "📦 Storage Unit", value: "storage" }
-                        ]);
-                        saveSession();
-                    } else {
-                        // Move to Phase 3: Large homes
-                        proceedToLargeHomesQuestion();
-                    }
-                    break;
-
-                case 'location_3_home_type':
-                    chatState.data.location3Details.homeType = value;
-                    chatState.data.location3Details.type = value;
-                    chatState.data.thirdLocationType = value; // Backward compatibility
-
-                    chatState.stage = 'location_3_bedrooms';
-                    if (value === 'storage') {
-                        showBotMessage("How many bedrooms worth of items at the 3rd location?");
-                    } else {
-                        showBotMessage("How many bedrooms at the 3rd location?");
-                    }
-                    showOptions([
-                        { text: "Studio", value: "0" },
-                        { text: "1 Bedroom", value: "1" },
-                        { text: "2 Bedrooms", value: "2" },
-                        { text: "3 Bedrooms", value: "3" },
-                        { text: "4 Bedrooms", value: "4" },
-                        { text: "5+ Bedrooms", value: "5" }
-                    ]);
-                    saveSession();
-                    break;
-
-                case 'location_3_bedrooms':
-                    chatState.data.location3Details.bedrooms = parseInt(value);
-
-                    chatState.stage = 'location_3_stairs';
-                    showBotMessage("How many flights of stairs at the 3rd location?");
-                    showOptions([
-                        { text: "No stairs", value: "0" },
-                        { text: "1 flight", value: "1" },
-                        { text: "2 flights", value: "2" },
-                        { text: "3+ flights", value: "3" }
-                    ]);
-                    saveSession();
-                    break;
-
-                case 'location_3_stairs':
-                    chatState.data.location3Details.stairs = parseInt(value);
-                    chatState.data.stairsThird = parseInt(value); // Backward compatibility
-
-                    // Ask what they're doing at third location
-                    chatState.stage = 'location_3_action';
-                    showBotMessage("Are you picking up or dropping off items at the 3rd location?");
-                    showOptions([
-                        { text: "Dropping off items only", value: "drop_only" },
-                        { text: "Picking up items only", value: "pick_only" },
-                        { text: "Both picking up and dropping off", value: "both" }
-                    ]);
-                    saveSession();
-                    break;
-
-                case 'location_3_action':
-                    chatState.data.location3Details.action = value;
-                    chatState.data.thirdLocationAction = value; // Backward compatibility
-
-                    // Move to Phase 3: Large homes
-                    proceedToLargeHomesQuestion();
-                    break;
-
-                // NEW FLOW: Phase 3 - Large Homes Multi-Select
-                case 'large_homes_multiselect':
-                    if (value === 'done_large_homes') {
-                        // Mark locations as large
-                        if (chatState.data.largeHomeLocations.includes('location_1')) {
-                            chatState.data.location1Details.isLarge = true;
-                        }
-                        if (chatState.data.largeHomeLocations.includes('location_2')) {
-                            chatState.data.location2Details.isLarge = true;
-                        }
-                        if (chatState.data.largeHomeLocations.includes('location_3')) {
-                            chatState.data.location3Details.isLarge = true;
-                        }
-
-                        // Set backward compatibility flag
-                        if (chatState.data.largeHomeLocations.length > 0 && chatState.data.largeHomeLocations[0] !== 'none') {
-                            chatState.data.homeSize = 'large';
-                        } else {
-                            chatState.data.homeSize = 'standard';
-                        }
-
-                        // Move to Phase 4: Access challenges
-                        proceedToAccessChallengesQuestion();
-                    } else if (value === 'none') {
-                        // Clear all and mark as none
-                        chatState.data.largeHomeLocations = [];
-                        if (chatState.data.location1Details) chatState.data.location1Details.isLarge = false;
-                        if (chatState.data.location2Details) chatState.data.location2Details.isLarge = false;
-                        if (chatState.data.location3Details) chatState.data.location3Details.isLarge = false;
-                    } else {
-                        // Toggle selection
-                        const index = chatState.data.largeHomeLocations.indexOf(value);
-                        if (index > -1) {
-                            chatState.data.largeHomeLocations.splice(index, 1);
-                        } else {
-                            // Remove 'none' if adding a specific location
-                            const noneIndex = chatState.data.largeHomeLocations.indexOf('none');
-                            if (noneIndex > -1) {
-                                chatState.data.largeHomeLocations.splice(noneIndex, 1);
-                            }
-                            chatState.data.largeHomeLocations.push(value);
-                        }
-                        // Re-show the options (this keeps the UI showing selections)
-                        proceedToLargeHomesQuestion();
-                    }
-                    saveSession();
-                    break;
-
-                // NEW FLOW: Phase 4 - Access Challenges Multi-Select
-                case 'access_challenges_multiselect':
-                    if (value === 'done_challenges') {
-                        // Mark locations with challenges
-                        if (chatState.data.challengeLocations.includes('location_1')) {
-                            chatState.data.location1Details.hasChallenges = true;
-                        }
-                        if (chatState.data.challengeLocations.includes('location_2')) {
-                            chatState.data.location2Details.hasChallenges = true;
-                        }
-                        if (chatState.data.challengeLocations.includes('location_3')) {
-                            chatState.data.location3Details.hasChallenges = true;
-                        }
-
-                        // Calculate access multiplier for backward compatibility
-                        const hasLargeHome = chatState.data.largeHomeLocations.length > 0 &&
-                                           !chatState.data.largeHomeLocations.includes('none');
-                        const hasChallenges = chatState.data.challengeLocations.length > 0 &&
-                                            !chatState.data.challengeLocations.includes('none');
-
-                        if (hasLargeHome && hasChallenges) {
-                            chatState.data.accessMultiplier = CONFIG.accessFactors.combinedAccess.multiplier;
-                            showBotMessage("📏 I've added extra time for large homes and access challenges");
-                        } else if (hasLargeHome) {
-                            chatState.data.accessMultiplier = CONFIG.accessFactors.largeHome.multiplier;
-                            showBotMessage("📏 I've added time for the larger home size");
-                        } else if (hasChallenges) {
-                            chatState.data.accessMultiplier = CONFIG.accessFactors.longWalk.multiplier;
-                            showBotMessage("📏 I've added time for access challenges");
-                        } else {
-                            chatState.data.accessMultiplier = 1.0;
-                        }
-
-                        // Move to TVs check
-                        setTimeout(() => {
-                            chatState.stage = 'tv_handling_check';
-                            showBotMessage("Do you have any large TVs (50\" or bigger) that need special handling?");
-                            showOptions([
-                                { text: "Yes, I have large TVs", value: "yes" },
-                                { text: "No large TVs", value: "no" }
-                            ]);
-                            saveSession();
-                        }, 1000);
-                    } else if (value === 'none') {
-                        // Clear all and mark as none
-                        chatState.data.challengeLocations = [];
-                        if (chatState.data.location1Details) chatState.data.location1Details.hasChallenges = false;
-                        if (chatState.data.location2Details) chatState.data.location2Details.hasChallenges = false;
-                        if (chatState.data.location3Details) chatState.data.location3Details.hasChallenges = false;
-                    } else {
-                        // Toggle selection
-                        const index = chatState.data.challengeLocations.indexOf(value);
-                        if (index > -1) {
-                            chatState.data.challengeLocations.splice(index, 1);
-                        } else {
-                            // Remove 'none' if adding a specific location
-                            const noneIndex = chatState.data.challengeLocations.indexOf('none');
-                            if (noneIndex > -1) {
-                                chatState.data.challengeLocations.splice(noneIndex, 1);
-                            }
-                            chatState.data.challengeLocations.push(value);
-                        }
-                        // Re-show the options (this keeps the UI showing selections)
-                        proceedToAccessChallengesQuestion();
-                    }
-                    saveSession();
-                    break;
-
+                    
                 case 'home_type':
                     chatState.data.homeType = value;
                     
@@ -6741,29 +5889,17 @@ if (isMobile && send) {
                     } else {
                         // Get smart crew recommendation
                         const recommendation = getSmartCrewRecommendation();
-
-                        // NEW: Check if item is prohibited
-                        if (recommendation.prohibited) {
-                            showBotMessage(`<div class="warning-box">⚠️ ${recommendation.message}</div>`);
-                            showOptions([
-                                { text: "📞 Call 330-435-8686", value: "call", primary: true },
-                                { text: "↩️ Start Over", value: "restart" }
-                            ]);
-                            saveSession();
-                            return;
-                        }
-
                         chatState.data.minCrewSize = recommendation.crew;
                         chatState.stage = 'crew_size_moving';
-
+                        
                         if (recommendation.message) {
                             showBotMessage(recommendation.message);
                         }
-
+                        
                         // Add Sarah's expertise about crew size
                         const sarahTip = "💡 Sarah's tip: A larger crew often means a faster, safer move - especially with heavy items!";
                         showBotMessage(sarahTip, 800);
-
+                        
                         setTimeout(() => {
                             showBotMessage("How many movers would you like?");
                             showOptions([
@@ -7422,47 +6558,7 @@ case 'select_heavy_item':
                         saveSession();
                     }, 1500);
                     break;
-
-                case 'select_time':
-                    // Save selected time
-                    chatState.data.selectedTime = value;
-                    saveSession();
-
-                    showBotMessage(`Great! I've scheduled your arrival window around ${formatTime(value)}.`);
-
-                    // Show final confirmation
-                    setTimeout(() => {
-                        showFinalConfirmation();
-                    }, 1000);
-                    break;
-
-                case 'final_confirmation':
-                    if (value === 'confirm_booking') {
-                        showBotMessage("Perfect! Creating your booking now...");
-
-                        // Submit lead and create booking
-                        setTimeout(() => {
-                            submitLead().then(() => {
-                                setTimeout(() => {
-                                    sendBookingToAPI(chatState.data.squareCustomerId || null);
-                                }, 1000);
-                            });
-                        }, 500);
-                    } else if (value === 'edit_booking') {
-                        showBotMessage("No problem! What would you like to change?");
-                        showOptions([
-                            { text: '📅 Change Date', value: 'change_date' },
-                            { text: '🕐 Change Time', value: 'change_time' },
-                            { text: '📞 Update Contact Info', value: 'change_contact' }
-                        ]);
-                    }
-                    break;
-
-                case 'ask_date':
-                    // This is handled by the date picker confirm button
-                    // The handleDateConfirm function saves the date and should call askForTimeSlot
-                    break;
-
+                    
                 default:
                     if (value === 'call') {
                         // Auto-submit quote before calling
@@ -7480,9 +6576,55 @@ case 'select_heavy_item':
                     } else if (value === 'book_now') {
                         // Redirect to worryfreemovers.com/moving/local
                         window.open(CONFIG.bookingUrl, '_blank');
-                    } else if (value === 'pay_deposit') {
-                        // Smart booking flow - check for existing customer first
-                        initiateBooking();
+                    } else if (value === 'schedule_acuity') {
+    // Check if quote already submitted
+    if (chatState.data.quoteSubmitted) {
+        // Quote already sent, go straight to scheduler
+        showBotMessage("✅ Connecting you to scheduling...");
+        setTimeout(() => {
+            showAcuityScheduler();
+        }, 500);
+    } else {
+        // Need to collect info or submit quote first
+        chatState.data.isAutoSubmit = true;
+        chatState.data.isSchedulingAfterEmail = true; // Flag that we're scheduling
+        
+        // Check if we have all contact info
+        if (hasCompleteContactInfo()) {
+            // Have all info, just submit and schedule
+            showBotMessage("Great choice! Let me send your quote first...");
+            submitLead().then(() => {
+                showBotMessage("✅ Quote sent! Now connecting you to scheduling...");
+                setTimeout(() => {
+                    showAcuityScheduler();
+                }, 1000);
+            });
+        } else {
+            // Need to collect missing info
+            showBotMessage("Great choice! I just need a bit more information...");
+            autoSubmitQuote().then(() => {
+                showBotMessage("✅ Quote sent! Now connecting you to scheduling...");
+                setTimeout(() => {
+                    showAcuityScheduler();
+                }, 1000);
+            }).catch(() => {
+                // If auto-submit fails, still try to schedule
+                showBotMessage("Let me connect you to scheduling...");
+                setTimeout(() => {
+                    showAcuityScheduler();
+                }, 500);
+            });
+        }
+    }
+} else if (value === 'pay_deposit') {
+                        // Handle payment - save card on file
+                        showBotMessage("Perfect! Let me set up secure payment for your booking...");
+                        setTimeout(() => {
+                            showBotMessage("💡 Your card will be securely saved. No charges until after your move is complete!");
+                        }, 600);
+                        setTimeout(() => {
+                            showPaymentModal();
+                        }, 1400);
                     } else if (value === 'continue_anyway') {
                         if (chatState.stage.includes('special')) {
                             // If continuing from special items, ask for crew size
@@ -7585,12 +6727,9 @@ case 'select_heavy_item':
                     
                     // Calculate base loading/unloading hours
                     let loadingHours = baseHours[homeType] + ((bedrooms - 1) * bedroomMultiplier[homeType]);
-
-                    // Add stair time - apartments take longer due to narrow hallways and building restrictions
-                    const stairTimePerFlight = homeType === 'apartment'
-                        ? (CONFIG.stairPricing?.apartmentTime || 0.35)
-                        : (CONFIG.stairPricing?.houseTime || 0.275);
-                    loadingHours += totalStairs * stairTimePerFlight;
+                    
+                    // Add stair time
+                    loadingHours += totalStairs * 0.275;
                     
                     // Double for both locations (or add time for third location)
                     if (chatState.data.hasThirdLocation) {
@@ -7706,18 +6845,15 @@ case 'select_heavy_item':
                     const baseRate = CONFIG.rates.moving.base + (fromDistance * CONFIG.rates.moving.distanceAdj);
                     const hourlyRate = baseRate + ((crewSize - 2) * CONFIG.rates.moving.crewAdd);
                     const baseCost = totalHours * hourlyRate;
-
+                    const serviceCharge = baseCost * CONFIG.rates.moving.serviceCharge;
+                    
                     // Calculate all fees
                     const specialItemFee = CONFIG.specialItems[chatState.data.specialItems]?.fee || 0;
                     const heavyItemFees = chatState.data.heavyItemFees || 0;
-
+                    
                     // Calculate stair fees for moving service
-                    // Apartments charge more due to narrow hallways, no elevator access, and building restrictions
-                    const stairRate = homeType === 'apartment'
-                        ? (CONFIG.stairPricing?.apartment || 35)
-                        : (CONFIG.stairPricing?.house || 25);
-                    const stairFee = totalStairs * stairRate;
-
+                    const stairFee = totalStairs * 25; // $25 per flight
+                    
                     // Calculate TV box fees
                     let tvBoxFees = 0;
                     chatState.data.tvBoxes?.forEach(box => {
@@ -7726,7 +6862,7 @@ case 'select_heavy_item':
                             tvBoxFees += boxConfig.fee;
                         }
                     });
-
+                    
                     // Calculate shop equipment fees
                     let shopEquipmentFees = 0;
                     chatState.data.shopEquipment?.forEach(equipment => {
@@ -7735,7 +6871,7 @@ case 'select_heavy_item':
                             shopEquipmentFees += equipConfig.fee;
                         }
                     });
-
+                    
                     // Calculate oversized furniture fees
                     let oversizedFees = 0;
                     chatState.data.oversizedFurniture?.forEach(furniture => {
@@ -7744,44 +6880,41 @@ case 'select_heavy_item':
                             oversizedFees += furnitureConfig.fee;
                         }
                     });
-
+                    
                     // Calculate toll costs based on all trip segments
                     let tollCost = chatState.data.tollCost || 0;
                     if (chatState.data.hasThirdLocation) {
                         // Add additional toll estimates for third location
                         tollCost += Math.max(5, (chatState.data.thirdLocationDistance || 0) * CONFIG.tollCostFactor);
                     }
-
+                    
                     // Calculate packing costs
                     let packingCost = 0;
                     let packingMaterialsCost = 0;
-
+                    
                     if (chatState.data.packingService && chatState.data.packingService !== 'no') {
-                        const packingHours = chatState.data.packingService === 'full' ?
+                        const packingHours = chatState.data.packingService === 'full' ? 
                             loadingHours * 1.75 : loadingHours * 0.75;
                         packingCost = packingHours * CONFIG.packingRate;
                     }
-
+                    
                     if (chatState.data.needsPackingMaterials) {
                         const materials = calculatePackingMaterials(bedrooms);
                         packingMaterialsCost = materials.total;
                         chatState.data.materialsBreakdown = materials;
                     }
-
-                    // SERVICE CHARGE: Apply 14% to ENTIRE JOB minus packing supplies
-                    // Subtotal = baseCost + all fees + packing labor (but NOT packing materials)
-                    const subtotalBeforeServiceCharge = baseCost + specialItemFee + heavyItemFees +
-                                                        tvBoxFees + shopEquipmentFees + oversizedFees +
-                                                        packingCost + tollCost + stairFee;
-                    const serviceCharge = subtotalBeforeServiceCharge * CONFIG.rates.moving.serviceCharge;
-
-                    // Calculate same-day service fee (10%) - AFTER service charge, applied to subtotal + service charge
+                    
+                    // Calculate same-day service fee (10%) - AFTER all other fees are calculated
                     let sameDayFee = 0;
                     if (chatState.data.movingDate && isSameDay(chatState.data.movingDate)) {
-                        sameDayFee = (subtotalBeforeServiceCharge + serviceCharge + packingMaterialsCost) * 0.10;
+                        sameDayFee = (baseCost + serviceCharge + specialItemFee + heavyItemFees + 
+                                      tvBoxFees + shopEquipmentFees + oversizedFees + packingCost + 
+                                      packingMaterialsCost + tollCost + stairFee) * 0.10;
                     }
-
-                    const total = subtotalBeforeServiceCharge + serviceCharge + packingMaterialsCost + sameDayFee;
+                    
+                    const total = baseCost + serviceCharge + specialItemFee + heavyItemFees + 
+                                tvBoxFees + shopEquipmentFees + oversizedFees + packingCost + 
+                                packingMaterialsCost + tollCost + stairFee + sameDayFee;
                     
                     // Build location string
                     let locationString = `${chatState.data.from} → ${chatState.data.to}`;
@@ -7884,8 +7017,7 @@ case 'select_heavy_item':
                     const hours = chatState.data.hours || 2;
                     const distance = chatState.data.fromDistance || 30;
                     const stairs = chatState.data.stairsFrom || 0;
-                    // Most labor jobs are apartments - use apartment rate
-                    const stairFee = stairs * (CONFIG.stairPricing?.apartment || 35);
+                    const stairFee = stairs * 25; // $25 per flight for labor service
 
                     // Calculate heavy item fees for labor service
                     const { fees: heavyItemFees, count: heavyItemCount } = calculateHeavyItemFees();
@@ -7910,18 +7042,15 @@ case 'select_heavy_item':
                     const hourlyRate = baseRate + ((crew - 2) * CONFIG.rates.labor.crewAdd);
                     const laborCost = hours * hourlyRate;
                     const travelCost = distance * 2 * CONFIG.rates.labor.travel;
+                    const serviceCharge = (laborCost + travelCost) * CONFIG.rates.labor.serviceCharge;
 
-                    // SERVICE CHARGE: Apply 8% to ENTIRE JOB (labor + travel + all fees)
-                    const subtotalBeforeServiceCharge = laborCost + travelCost + stairFee + heavyItemFees + shopEquipmentFees + oversizedFees;
-                    const serviceCharge = subtotalBeforeServiceCharge * CONFIG.rates.labor.serviceCharge;
-
-                    // Calculate same-day service fee (10%) - applied AFTER service charge
+                    // Calculate same-day service fee (10%)
                     let sameDayFee = 0;
                     if (chatState.data.movingDate && isSameDay(chatState.data.movingDate)) {
-                        sameDayFee = (subtotalBeforeServiceCharge + serviceCharge) * 0.10;
+                        sameDayFee = (laborCost + travelCost + serviceCharge + stairFee + heavyItemFees + shopEquipmentFees + oversizedFees) * 0.10;
                     }
 
-                    const total = subtotalBeforeServiceCharge + serviceCharge + sameDayFee;
+                    const total = laborCost + travelCost + serviceCharge + stairFee + heavyItemFees + shopEquipmentFees + oversizedFees + sameDayFee;
                     
                     estimate = {
                         type: 'labor',
@@ -8034,17 +7163,13 @@ case 'select_heavy_item':
                         heavyItemFee = CONFIG.heavyItemFee;
                     }
                     
-                    // SERVICE CHARGE: Apply 14% to entire job (same as moving service)
-                    const subtotalBeforeServiceCharge = baseCost + distanceCost + stairFees + itemFee + heavyItemFee;
-                    const serviceCharge = subtotalBeforeServiceCharge * 0.14; // 14% service fee
-
-                    // Calculate same-day service fee (10%) - applied AFTER service charge
+                    // Calculate same-day service fee (10%)
                     let sameDayFee = 0;
                     if (chatState.data.movingDate && isSameDay(chatState.data.movingDate)) {
-                        sameDayFee = (subtotalBeforeServiceCharge + serviceCharge) * 0.10;
+                        sameDayFee = (baseCost + distanceCost + stairFees + itemFee + heavyItemFee) * 0.10;
                     }
-
-                    const total = subtotalBeforeServiceCharge + serviceCharge + sameDayFee;
+                    
+                    const total = baseCost + distanceCost + stairFees + itemFee + heavyItemFee + sameDayFee;
                     
                     estimate = {
                         type: 'single',
@@ -8058,7 +7183,6 @@ case 'select_heavy_item':
                         stairs: stairFees,
                         itemFee: itemFee,
                         heavyItemFee: heavyItemFee,
-                        serviceCharge: serviceCharge.toFixed(2),
                         sameDayFee: sameDayFee,
                         total: total.toFixed(2),
                         totalDistance: totalDistance.toFixed(1),
@@ -8092,7 +7216,6 @@ case 'select_heavy_item':
                         ${stairFees > 0 ? `Stair fees (${totalStairs} flights): $${stairFees}<br>` : ''}
                         ${itemFee > 0 ? `Special handling fee: $${itemFee}<br>` : ''}
                         ${heavyItemFee > 0 ? `Heavy item fee (300+ lbs): $${heavyItemFee}<br>` : ''}
-                        Service fee (14%): $${estimate.serviceCharge}<br>
                         ${sameDayFee > 0 ? `<span style="color: #dc3545;">Same-day service fee (10%): $${sameDayFee.toFixed(2)}</span><br>` : ''}
                         <strong style="color: #004085; font-size: 18px;">Total: $${estimate.total}</strong>
                         
@@ -8291,251 +7414,6 @@ case 'select_heavy_item':
             }, 2000);
         }
 
-        // ==========================================
-        // BOOKING SYSTEM INTEGRATION FUNCTIONS
-        // ==========================================
-
-        // Check if customer exists in Square database
-        async function checkExistingCustomer(email) {
-            try {
-                const url = `${CONFIG.bookingAPI.baseUrl}${CONFIG.bookingAPI.endpoints.checkCustomer}/${encodeURIComponent(email)}`;
-                const response = await fetch(url);
-                const data = await response.json();
-
-                if (data.success && data.hasCard) {
-                    console.log('✅ Returning customer found:', data.customer);
-                    return {
-                        exists: true,
-                        customer: data.customer
-                    };
-                } else {
-                    console.log('📝 New customer - will need to collect card');
-                    return {
-                        exists: false,
-                        customer: null
-                    };
-                }
-            } catch (error) {
-                console.error('Error checking customer:', error);
-                return {
-                    exists: false,
-                    customer: null
-                };
-            }
-        }
-
-        // Main booking initiation function
-        async function initiateBooking() {
-            try {
-                // Always collect payment - no customer check
-                setTimeout(() => {
-                    showBotMessage('I\'ll need to collect your payment information to secure your booking. This will only take a moment.');
-                }, 1000);
-
-                setTimeout(() => {
-                    showBotMessage('💳 Let\'s save your payment method securely with Square.');
-                    chatState.stage = 'payment';
-                    showPaymentModal();
-                }, 2000);
-            } catch (error) {
-                console.error('Error initiating booking:', error);
-                showBotMessage('I\'m having trouble processing your booking. Please try again or call us at 330-435-8686.');
-            }
-        }
-
-        // Send booking data to API
-        async function sendBookingToAPI(squareCustomerId = null) {
-            try {
-                // Get service type name
-                const serviceTypeName = getServiceTypeName(chatState.serviceType);
-
-                // Build comprehensive notes from all collected data
-                const notes = buildNotesFromChatState();
-
-                // Prepare booking data
-                const bookingData = {
-                    // Customer info
-                    firstName: chatState.data.firstName || '',
-                    lastName: chatState.data.lastName || '',
-                    email: chatState.data.email || '',
-                    phone: chatState.data.phone || '',
-
-                    // Service details
-                    serviceType: serviceTypeName,
-                    pickupAddress: chatState.data.from || chatState.data.pickupAddress || '',
-                    dropoffAddress: chatState.data.to || chatState.data.dropoffAddress || '',
-
-                    // Move details
-                    date: chatState.data.movingDate || chatState.data.selectedDate || 'TBD',
-                    time: chatState.data.selectedTime || '09:00',
-
-                    // Estimate details
-                    estimateDetails: {
-                        subtotal: parseFloat(chatState.data.estimate?.subtotal || chatState.data.estimate?.total || 0),
-                        fees: chatState.data.estimate?.fees || {},
-                        total: parseFloat(chatState.data.estimate?.total || 0),
-                        breakdown: chatState.data.estimate || {}
-                    },
-
-                    // Comprehensive notes
-                    notes: notes,
-
-                    // Payment info
-                    payment: squareCustomerId ? {
-                        squareCustomerId: squareCustomerId,
-                        hasCardOnFile: true
-                    } : {
-                        squareCustomerId: chatState.data.squareCustomerId || null,
-                        hasCardOnFile: !!chatState.data.squareCustomerId
-                    }
-                };
-
-                console.log('📤 Sending booking to API:', bookingData);
-
-                // Send to booking API
-                const url = `${CONFIG.bookingAPI.baseUrl}${CONFIG.bookingAPI.endpoints.bookAppointment}`;
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(bookingData)
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showBookingSuccess(data.bookingId);
-                } else {
-                    throw new Error(data.error || 'Booking failed');
-                }
-            } catch (error) {
-                console.error('❌ Error sending booking:', error);
-                showBotMessage('I couldn\'t complete your booking. Please call us at 330-435-8686 and mention your estimate.');
-            }
-        }
-
-        // Helper function to get friendly service name
-        function getServiceTypeName(type) {
-            const serviceNames = {
-                'moving': 'Full Service Moving',
-                'labor': 'Labor Only',
-                'single': 'Single Item Move',
-                'cleanout': 'Cleanout Service',
-                'junk': 'Junk Removal'
-            };
-            return serviceNames[type] || 'Moving Service';
-        }
-
-        // Helper function to build detailed notes from all collected data
-        function buildNotesFromChatState() {
-            let notes = [];
-
-            // Moving service details
-            if (chatState.serviceType === 'moving') {
-                if (chatState.data.bedrooms) notes.push(`Bedrooms: ${chatState.data.bedrooms}`);
-                if (chatState.data.homeType) notes.push(`Home type: ${chatState.data.homeType}`);
-                if (chatState.data.floors) notes.push(`Floors at pickup: ${chatState.data.floors}`);
-                if (chatState.data.deliveryFloors) notes.push(`Floors at dropoff: ${chatState.data.deliveryFloors}`);
-                if (chatState.data.stairsFrom) notes.push(`Stairs from: ${chatState.data.stairsFrom} flights`);
-                if (chatState.data.stairsTo) notes.push(`Stairs to: ${chatState.data.stairsTo} flights`);
-                if (chatState.data.hasElevator !== undefined) notes.push(`Elevator: ${chatState.data.hasElevator ? 'Yes' : 'No'}`);
-                if (chatState.data.hasThirdLocation) notes.push(`Has third location: Yes`);
-            }
-
-            // Distance and drive time
-            if (chatState.data.distance) notes.push(`Distance: ${chatState.data.distance} miles`);
-            if (chatState.data.fromDistance) notes.push(`From base: ${chatState.data.fromDistance} miles`);
-            if (chatState.data.tripDistance) notes.push(`Trip distance: ${chatState.data.tripDistance} miles`);
-
-            // Special items
-            if (chatState.data.specialItems) notes.push(`Special items: ${chatState.data.specialItems}`);
-            if (chatState.data.appliances && chatState.data.appliances.length > 0) {
-                notes.push(`Appliances: ${chatState.data.appliances.join(', ')}`);
-            }
-            if (chatState.data.shopEquipment && chatState.data.shopEquipment.length > 0) {
-                notes.push(`Shop equipment: ${chatState.data.shopEquipment.map(i => i.name).join(', ')}`);
-            }
-            if (chatState.data.oversizedFurniture && chatState.data.oversizedFurniture.length > 0) {
-                notes.push(`Oversized furniture: ${chatState.data.oversizedFurniture.map(i => i.name).join(', ')}`);
-            }
-
-            // Labor service details
-            if (chatState.serviceType === 'labor') {
-                if (chatState.data.laborHours) notes.push(`Labor hours requested: ${chatState.data.laborHours}`);
-            }
-
-            // Single item details
-            if (chatState.serviceType === 'single') {
-                if (chatState.data.itemName) notes.push(`Item: ${chatState.data.itemName}`);
-                if (chatState.data.itemDescription) notes.push(`Description: ${chatState.data.itemDescription}`);
-                if (chatState.data.itemWeight) notes.push(`Weight: ${chatState.data.itemWeight} lbs`);
-            }
-
-            // FVP coverage
-            if (chatState.data.wantsFVP) {
-                notes.push(`Full Value Protection: Yes ($${chatState.data.fvpCost || 0})`);
-            }
-
-            // Packing services
-            if (chatState.data.packingNeeded) notes.push(`Packing needed: ${chatState.data.packingNeeded}`);
-
-            // Customer notes
-            if (chatState.data.notes) notes.push(`Customer notes: ${chatState.data.notes}`);
-
-            // Photos
-            if (chatState.data.photos && chatState.data.photos.length > 0) {
-                notes.push(`Photos uploaded: ${chatState.data.photos.length}`);
-            }
-
-            return notes.join(' | ');
-        }
-
-        // Show success confirmation after booking
-        function showBookingSuccess(bookingId) {
-            const successHTML = `
-                <div style="padding: 25px; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-                            border-radius: 15px; margin: 20px 0; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                    <div style="font-size: 60px; margin-bottom: 15px;">✅</div>
-                    <h2 style="color: #155724; margin-bottom: 15px; font-size: 24px;">Booking Confirmed!</h2>
-                    <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0; box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);">
-                        <div style="color: #666; font-size: 14px; margin-bottom: 8px;">Your Booking ID</div>
-                        <div style="color: #007bff; font-size: 28px; font-weight: 700; letter-spacing: 1px;">${bookingId}</div>
-                    </div>
-                    <p style="margin: 15px 0; color: #155724; line-height: 1.6;">
-                        📧 You'll receive a confirmation email shortly with all the details.<br>
-                        📞 We'll call you 24 hours before your move to confirm.
-                    </p>
-                    <div style="border-top: 2px solid #28a745; margin: 20px 0; padding-top: 20px;">
-                        <p style="font-size: 16px; color: #155724; font-weight: 600; margin-bottom: 10px;">
-                            Questions? We're here to help!
-                        </p>
-                        <p style="font-size: 14px; color: #155724;">
-                            📞 Call us at <strong>330-435-8686</strong><br>
-                            📧 Email <strong>service@worryfreemovers.com</strong>
-                        </p>
-                    </div>
-                </div>
-            `;
-
-            showBotMessage(successHTML);
-
-            // Mark booking as completed
-            chatState.data.bookingId = bookingId;
-            chatState.data.bookingCompleted = true;
-            saveSession();
-
-            // Offer to start new conversation
-            setTimeout(() => {
-                showBotMessage('Would you like to start a new estimate or do you have any questions?');
-                showOptions([
-                    { text: '💬 New Estimate', value: 'restart', primary: true },
-                    { text: '❓ Ask a Question', value: 'questions' },
-                    { text: '👋 All Done', value: 'close' }
-                ]);
-            }, 3000);
-        }
-
         function showFinalBookingOptions() {
             // Add urgency
             setTimeout(() => {
@@ -8549,7 +7427,8 @@ case 'select_heavy_item':
             setTimeout(() => {
                 showBotMessage("How would you like to proceed, " + (chatState.data.firstName || chatState.data.name) + "?");
                 showOptions([
-                    { text: "📅 Book This Move Now", value: "pay_deposit", primary: true },
+                    { text: "💳 Save Card & Secure Booking", value: "pay_deposit", primary: true },
+                    { text: "📅 Schedule with Sarah", value: "schedule_acuity" },
                     { text: "📞 Call: 330-435-8686", value: "call" },
                     { text: "📧 Email Estimate", value: "email_quote" },
                     { text: "📄 View & Print Quote", value: "print_quote" },
@@ -8820,9 +7699,6 @@ Distance Fee: ${formatMoney(data.estimate.distance)}`;
         if (parseFloat(data.estimate.heavyItemFee) > 0) {
             itemizedBreakdown += `\nHeavy Item Fee (300+ lbs): ${formatMoney(data.estimate.heavyItemFee)}`;
         }
-
-        itemizedBreakdown += `\nService Fee (14%): ${formatMoney(data.estimate.serviceCharge)}`;
-
         if (parseFloat(data.estimate.sameDayFee) > 0) {
             itemizedBreakdown += `\nSame-Day Service Fee (10%): ${formatMoney(data.estimate.sameDayFee)}`;
         }
@@ -9089,6 +7965,7 @@ ${closingMessage}
 
 BOOK YOUR MOVE NOW - 3 EASY WAYS:
 📅 ONLINE (Fastest): ${CONFIG.bookingUrl}
+   Direct Scheduling: ${CONFIG.acuityUrl}
 📞 CALL: ${CONFIG.phone} (Friendly team waiting!)
 📧 EMAIL: ${CONFIG.email}
 
@@ -9295,6 +8172,7 @@ Facebook: facebook.com/worryfreemovers
                             showBotMessage("Would you like to view a printable version of your quote?");
                             showOptions([
                                 { text: "📄 View & Print Quote", value: "print_quote", primary: true },
+                                { text: "📅 Schedule with Sarah", value: "schedule_acuity" },
                                 { text: "📞 Call Now: 330-435-8686", value: "call" },
                                 { text: "💬 New Estimate", value: "restart" }
                             ]);
@@ -9485,4 +8363,4 @@ window.openWFMChat = function() {
     })();
     </script>
 </body>
-</html><!-- Force Render Deploy Sat, Oct 25, 2025 10:30:14 PM -->
+</html>
