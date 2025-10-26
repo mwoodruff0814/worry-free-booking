@@ -7334,6 +7334,51 @@ case 'select_heavy_item':
         // We already have contact info, submit the lead
         submitLead();
     }
+} else if (value === 'view_booking') {
+    // Display booking details
+    const data = chatState.data;
+    if (data.bookingId) {
+        showBotMessage(`<div class="estimate-details" style="background: #f0f8ff; border-left-color: #2563eb;">
+            <strong>📋 YOUR BOOKING DETAILS</strong><br><br>
+
+            <strong>Booking Number:</strong> ${data.bookingId}<br>
+            <strong>Status:</strong> ✅ Confirmed<br><br>
+
+            <strong>📅 Scheduled Date & Time:</strong><br>
+            ${data.formattedDate || data.moveDate} at ${data.moveTime}<br><br>
+
+            <strong>👤 Contact Information:</strong><br>
+            ${data.firstName} ${data.lastName}<br>
+            📧 ${data.email}<br>
+            📞 ${data.phone}<br><br>
+
+            <strong>📍 Service Locations:</strong><br>
+            From: ${data.from || data.pickupAddress}<br>
+            To: ${data.to || data.dropoffAddress}<br><br>
+
+            <strong>💰 Estimated Total:</strong> ${formatMoney(data.estimate?.total || 0)}<br><br>
+
+            <strong>📧 Confirmation Email Sent!</strong><br>
+            Check your email for full details and calendar invite.<br><br>
+
+            <strong>📞 Questions?</strong> Call us at <a href="tel:330-435-8686" style="color: #2563eb;">330-435-8686</a>
+        </div>`);
+
+        setTimeout(() => {
+            showOptions([
+                { text: "📞 Call Us", value: "call" },
+                { text: "💬 New Estimate", value: "restart" }
+            ]);
+        }, 1000);
+    } else {
+        showBotMessage("I don't have booking details available. Please call us at 330-435-8686 for assistance.");
+        setTimeout(() => {
+            showOptions([
+                { text: "📞 Call Now", value: "call" },
+                { text: "💬 Start Over", value: "restart" }
+            ]);
+        }, 1000);
+    }
 } else if (value === 'close') {
     closeChat();
 }
