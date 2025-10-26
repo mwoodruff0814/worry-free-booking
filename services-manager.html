@@ -225,7 +225,10 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3001/api';
+        // Auto-detect API URL based on environment
+        const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3001'
+            : 'https://worry-free-booking.onrender.com') + '/api';
 
         // Set load time
         document.getElementById('loadTime').textContent = new Date().toLocaleString();
