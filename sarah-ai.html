@@ -3049,9 +3049,9 @@ setTimeout(() => {
             
             // ALWAYS keep chat closed on page load
             widget.style.display = 'none';
-            toggle.style.display = 'none';
+            toggle.style.display = 'flex';
             chatState.isOpen = false;
-            container.style.display = 'block'; // Container visible but widget hidden
+            container.style.display = 'block'; // Container visible with toggle button
             
             try {
                 // Load Google Maps
@@ -3249,9 +3249,9 @@ if (isMobile && send) {
                     updateNavigationButtons();
                 }
 
-                // ALWAYS keep chat closed and toggle hidden on page load
+                // ALWAYS keep chat closed and toggle visible on page load
                 widget.style.display = 'none';
-                toggle.style.display = 'none';
+                toggle.style.display = 'flex';
                 chatState.isOpen = false;
                 
             } catch (error) {
@@ -4091,8 +4091,7 @@ if (isMobile && send) {
 
         function closeChat() {
             widget.style.display = 'none';
-            toggle.style.display = 'none'; // Keep toggle hidden
-            container.style.display = 'none'; // Hide entire container
+            toggle.style.display = 'flex'; // Show toggle button
             chatState.isOpen = false;
             
             // Restore body scroll on mobile
