@@ -596,13 +596,147 @@
             font-size: 14px;
             line-height: 1.5;
         }
+
+        /* LOGIN SCREEN STYLES */
+        #loginScreen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 450px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .login-header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .login-content {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #1e3c72;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30,60,114,0.3);
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        #bookingContainer {
+            display: none;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>🔒 Admin Booking</h1>
+                <p>Authorized Users Only</p>
+            </div>
+            <div class="login-content">
+                <div id="loginError" class="error-message"></div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn-login">Login</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOOKING CONTAINER (Hidden until login) -->
+    <div id="bookingContainer">
+        <div class="container">
         <div class="header">
             <h1>🔒 Admin Booking Portal</h1>
-            <div class="admin-badge">ADMIN ONLY</div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="admin-badge">ADMIN ONLY</div>
+            </div>
         </div>
 
         <div class="content">
@@ -2941,6 +3075,87 @@
             }
         });
 
+        // ==============================================
+        // LOGIN AUTHENTICATION
+        // ==============================================
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3001/api'
+            : 'https://worry-free-booking.onrender.com/api';
+
+        // Check if already logged in
+        function checkAuth() {
+            const token = localStorage.getItem('adminBookingToken');
+            if (token) {
+                showBookingForm();
+            }
+        }
+
+        // Handle login form submission
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('loginError');
+
+            try {
+                const response = await fetch(`${API_URL}/admin/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('adminBookingToken', data.token);
+                    localStorage.setItem('adminBookingUser', data.user.username);
+                    showBookingForm();
+                } else {
+                    errorDiv.textContent = data.error || 'Invalid credentials';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorDiv.textContent = 'Login failed. Please check your connection.';
+                errorDiv.style.display = 'block';
+            }
+        });
+
+        // Show booking form after successful login
+        function showBookingForm() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('bookingContainer').style.display = 'block';
+
+            // Add logout button to header if not already there
+            const adminBadge = document.querySelector('.admin-badge');
+            if (adminBadge && !document.getElementById('logoutBtn')) {
+                const username = localStorage.getItem('adminBookingUser') || 'Admin';
+                const logoutBtn = document.createElement('button');
+                logoutBtn.id = 'logoutBtn';
+                logoutBtn.className = 'logout-btn';
+                logoutBtn.textContent = `Logout (${username})`;
+                logoutBtn.onclick = logout;
+                // Insert logout button before admin badge
+                adminBadge.parentNode.insertBefore(logoutBtn, adminBadge);
+            }
+        }
+
+        // Logout function
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('adminBookingToken');
+                localStorage.removeItem('adminBookingUser');
+                location.reload();
+            }
+        }
+
+        // Check authentication on page load
+        checkAuth();
+
     </script>
+    </div> <!-- Close bookingContainer -->
 </body>
 </html>
