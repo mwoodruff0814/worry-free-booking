@@ -9,8 +9,10 @@ credentials.json
 token.json
 token-zach.json
 
-# Data files
-data/
+# Data files - DEPLOY TO PRODUCTION
+# Note: appointments.json contains customer data and will grow large
+# Consider migrating to a real database (MongoDB/PostgreSQL) for production
+# data/
 
 # Logs
 *.log

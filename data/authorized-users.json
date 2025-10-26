@@ -1,0 +1,70 @@
+{
+  "users": [
+    {
+      "id": "admin-001",
+      "username": "admin",
+      "passwordHash": "$2b$10$yRzWTndtvLHJsr0BHZHefevisLn3LdtPImqRh8KrYJzAKO6BqkYhe",
+      "firstName": "Matt",
+      "lastName": "Woodruff",
+      "email": "matt@worryfreemovers.com",
+      "role": "admin",
+      "status": "active",
+      "createdAt": "2025-01-20T00:00:00.000Z",
+      "lastLogin": null,
+      "permissions": {
+        "viewBookings": true,
+        "createBookings": true,
+        "editBookings": true,
+        "deleteBookings": true,
+        "viewCustomers": true,
+        "manageUsers": true,
+        "manageSettings": true,
+        "viewReports": true
+      }
+    },
+    {
+      "id": "user-1761336192754-4tz23ywkt",
+      "username": "testuser",
+      "passwordHash": "$2b$10$DuhiZf4NkEucqfL6RlUw6O2fq5QH8u230UZWFfwEQpdywCLPKjE96",
+      "firstName": "Test",
+      "lastName": "User",
+      "email": "test@test.com",
+      "role": "staff",
+      "status": "active",
+      "createdAt": "2025-10-24T20:03:12.754Z",
+      "lastLogin": null,
+      "permissions": {
+        "viewBookings": true,
+        "createBookings": true,
+        "editBookings": true,
+        "deleteBookings": false,
+        "viewCustomers": true,
+        "manageUsers": false,
+        "manageSettings": false,
+        "viewReports": true
+      }
+    },
+    {
+      "id": "user-1761336291831-ci5lo0fb0",
+      "username": "zlarimer24",
+      "passwordHash": "$2b$10$Ie1uTOzBFT8kUKilV43yEuo.LUXTkug1aoi//ZYpsAgXy6adDkTLS",
+      "firstName": "Zach",
+      "lastName": "Larimer",
+      "email": "zlarimer24@gmail.com",
+      "role": "manager",
+      "status": "active",
+      "createdAt": "2025-10-24T20:04:51.831Z",
+      "lastLogin": null,
+      "permissions": {
+        "viewBookings": true,
+        "createBookings": true,
+        "editBookings": true,
+        "deleteBookings": false,
+        "viewCustomers": true,
+        "manageUsers": false,
+        "manageSettings": false,
+        "viewReports": true
+      }
+    }
+  ]
+}

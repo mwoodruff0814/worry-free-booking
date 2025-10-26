@@ -1,0 +1,63 @@
+{
+  "primaryCalendar": {
+    "email": "matt@worryfreemovers.com",
+    "name": "Worry Free Moving - Master Calendar",
+    "timezone": "America/New_York",
+    "enabled": true
+  },
+  "syncTargets": [
+    {
+      "id": "crew-darrel",
+      "name": "Darrel (Crew Lead)",
+      "email": "darrel@worryfreemovers.com",
+      "role": "crew",
+      "permissions": "read",
+      "enabled": true,
+      "notes": "Crew A Lead - Gets all bookings"
+    },
+    {
+      "id": "crew-zack",
+      "name": "Zack (Crew Lead)",
+      "email": "zack@worryfreemovers.com",
+      "role": "crew",
+      "permissions": "read",
+      "enabled": true,
+      "notes": "Crew B Lead - Gets all bookings"
+    },
+    {
+      "id": "manager-matt",
+      "name": "Matt (Manager)",
+      "email": "matt@worryfreemovers.com",
+      "role": "manager",
+      "permissions": "write",
+      "enabled": true,
+      "notes": "Full access - can edit events"
+    }
+  ],
+  "eventSettings": {
+    "defaultDuration": 4,
+    "bufferTimeBefore": 0,
+    "bufferTimeAfter": 0,
+    "colorCoding": {
+      "worryFree": "blue",
+      "quality": "green",
+      "highPriority": "red",
+      "vip": "purple"
+    },
+    "reminders": [
+      {
+        "method": "email",
+        "minutes": 1440
+      },
+      {
+        "method": "popup",
+        "minutes": 60
+      }
+    ]
+  },
+  "sharingInstructions": {
+    "googleCalendar": "Share your Google Calendar with the emails listed above. Go to Google Calendar → Settings → Share with specific people → Add their emails",
+    "icalLink": "Generate an iCal link from your Google Calendar and share it with crew members for read-only access",
+    "appleCalendar": "For Apple Calendar users, they can subscribe to the shared Google Calendar using the iCal link"
+  }
+}

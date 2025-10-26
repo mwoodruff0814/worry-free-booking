@@ -1,0 +1,47 @@
+{
+  "worryFreeMoving": {
+    "companyName": "Worry Free Moving",
+    "companyEmail": "service@worryfreemovers.com",
+    "companyPhone": "330-435-8686",
+    "ccEmails": [
+      "matt@worryfreemovers.com",
+      "zlarimer24@gmail.com"
+    ],
+    "smsFromNumber": "+13304358686",
+    "smsFromName": "Worry Free Moving"
+  },
+  "qualityMoving": {
+    "companyName": "Quality Moving",
+    "companyEmail": "qualitymovingsolution@gmail.com",
+    "companyPhone": "330-720-3529",
+    "ccEmails": [
+      "zlarimer24@gmail.com"
+    ],
+    "smsFromNumber": "+13307203529",
+    "smsFromName": "Quality Moving",
+    "smsTemplate": "Hi {name}! Your Quality Moving appointment is confirmed for {date} at {time}. We'll see you then!",
+    "pricing": {
+      "hourlyRate": 115,
+      "minimumHours": 2,
+      "additionalFees": "None (MovingHelp customers pay through platform)"
+    },
+    "calendar": {
+      "prefix": "QM",
+      "color": "10",
+      "defaultDuration": 4
+    },
+    "email": {
+      "signature": "Best regards,\nQuality Moving Team\n330-720-3529\nqualitymovingsolution@gmail.com",
+      "confirmSubject": "✅ Quality Moving Booking Confirmed - {date}"
+    },
+    "services": {
+      "provided": "✓ Loading/Unloading trucks\n✓ Furniture moving\n✓ Heavy lifting\n✓ Furniture assembly/disassembly\n✓ Packing assistance (customer provides materials)\n✓ Local moves only",
+      "restrictions": "✗ No long-distance moves\n✗ No truck provided\n✗ No packing materials provided\n✗ Customer must be present"
+    },
+    "paymentPolicy": {
+      "prepaidThrough": "MovingHelp.com",
+      "additionalFeesHandling": "Direct with customer on-site",
+      "noPaymentProcessing": true
+    }
+  }
+}

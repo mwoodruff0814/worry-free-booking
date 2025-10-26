@@ -1,0 +1,18 @@
+[
+  {
+    "id": "emp-zach",
+    "username": "zlarimer24",
+    "password": "$2b$10$zxB/R/zAa7ftvAJ47gFcZe8OiBQe4hcalEtW84QMuebJD.RjOpOny",
+    "firstName": "Zach",
+    "lastName": "Larimer",
+    "email": "zlarimer24@gmail.com",
+    "phone": "330-261-7687",
+    "role": "crew",
+    "team": "crew-b",
+    "hireDate": "2018-03-01",
+    "status": "active",
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "lastLogin": "2025-10-24T20:45:32.821Z",
+    "passwordChangedAt": "2025-10-24T20:45:20.686Z"
+  }
+]
