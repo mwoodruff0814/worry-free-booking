@@ -11,7 +11,7 @@ dotenv.config();
 // Import modules
 const { createGoogleCalendarEvent, updateGoogleCalendarEvent, deleteGoogleCalendarEvent, initGoogleAuth } = require('./services/googleCalendar');
 // const { createICloudCalendarEvent } = require('./services/icloudCalendar'); // Disabled - using email calendar buttons instead
-const { sendConfirmationEmail, sendEstimateEmail, sendEmployeePasswordResetEmail } = require('./services/emailService');
+const { sendConfirmationEmail, sendEstimateEmail, sendEmployeePasswordResetEmail, sendAdminUserWelcomeEmail, sendEmployeeWelcomeEmail } = require('./services/emailService');
 const { generateBookingId } = require('./utils/helpers');
 const {
     connectDatabase,
@@ -2674,6 +2674,22 @@ app.post('/api/employees', async (req, res) => {
             });
         }
 
+        // Send welcome email to new employee
+        try {
+            await sendEmployeeWelcomeEmail({
+                email,
+                username,
+                password, // Plain text password (only available now, before hashing)
+                firstName,
+                lastName,
+                role: role || 'crew'
+            });
+            console.log(`✅ Welcome email sent to new employee: ${firstName} ${lastName} (${email})`);
+        } catch (error) {
+            console.error('❌ Failed to send welcome email to employee:', error);
+            // Don't fail the employee creation if email fails
+        }
+
         // Return success (without password)
         const { password: pwd, ...employeeWithoutPassword } = newEmployee;
 
@@ -2991,6 +3007,20 @@ app.post('/api/authorized-users', async (req, res) => {
                 success: false,
                 error: 'Failed to save user'
             });
+        }
+
+        // Send welcome email to new authorized user
+        try {
+            await sendAdminUserWelcomeEmail({
+                email,
+                username,
+                password, // Plain text password (only available now, before hashing)
+                name: `${firstName} ${lastName}`
+            });
+            console.log(`✅ Welcome email sent to new authorized user: ${firstName} ${lastName} (${email})`);
+        } catch (error) {
+            console.error('❌ Failed to send welcome email to authorized user:', error);
+            // Don't fail the user creation if email fails
         }
 
         // Return success (without password hash)

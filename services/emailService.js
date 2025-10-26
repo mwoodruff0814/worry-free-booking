@@ -1547,6 +1547,218 @@ async function sendEmployeePasswordResetEmail(details) {
     }
 }
 
+/**
+ * Send welcome email to new authorized user (admin portal access)
+ */
+async function sendAdminUserWelcomeEmail({ email, username, password, name }) {
+    try {
+        // Load company settings
+        const companySettings = await loadCompanySettings('Worry Free Moving');
+
+        const transporter = await initializeTransporter();
+
+        const adminPortalUrl = process.env.NODE_ENV === 'production'
+            ? 'https://worry-free-booking.onrender.com/admin-portal.html'
+            : 'http://localhost:3001/admin-portal.html';
+
+        const mailOptions = {
+            from: `"${companySettings.companyName}" <${process.env.EMAIL_FROM || process.env.EMAIL_USER || companySettings.companyEmail}>`,
+            to: email,
+            subject: `Welcome to ${companySettings.companyName} Admin Portal`,
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                        .credentials-box { background: white; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 5px; }
+                        .login-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+                        .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 5px; color: #856404; }
+                        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1 style="margin: 0;">🎉 Welcome to ${companySettings.companyName}!</h1>
+                            <p style="margin: 10px 0 0 0;">Admin Portal Access Created</p>
+                        </div>
+                        <div class="content">
+                            <p>Hi ${name || 'there'},</p>
+
+                            <p>Your administrator account has been created for the ${companySettings.companyName} Admin Portal. You now have access to manage bookings, customers, employees, and system settings.</p>
+
+                            <div class="credentials-box">
+                                <h3 style="margin-top: 0; color: #667eea;">📋 Your Login Credentials</h3>
+                                <p style="margin: 10px 0;"><strong>Username:</strong> ${username}</p>
+                                <p style="margin: 10px 0;"><strong>Temporary Password:</strong> <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px; font-size: 16px;">${password}</code></p>
+                                <p style="margin: 10px 0;"><strong>Portal URL:</strong> <a href="${adminPortalUrl}">${adminPortalUrl}</a></p>
+                            </div>
+
+                            <div style="text-align: center;">
+                                <a href="${adminPortalUrl}" class="login-button">🔐 Login to Admin Portal</a>
+                            </div>
+
+                            <div class="warning">
+                                <strong>⚠️ Security Notice:</strong>
+                                <ul style="margin: 10px 0;">
+                                    <li>This is a temporary password - please change it after your first login</li>
+                                    <li>Never share your login credentials with anyone</li>
+                                    <li>Keep this email secure or delete it after changing your password</li>
+                                </ul>
+                            </div>
+
+                            <h3>🚀 Getting Started:</h3>
+                            <ol>
+                                <li>Click the login button above or visit the portal URL</li>
+                                <li>Enter your username and temporary password</li>
+                                <li>You'll be prompted to change your password on first login</li>
+                                <li>Explore the admin dashboard and familiarize yourself with the features</li>
+                            </ol>
+
+                            <p>If you have any questions or need assistance, please contact us:</p>
+                            <p>
+                                📞 Phone: ${companySettings.companyPhone}<br>
+                                📧 Email: ${companySettings.companyEmail}
+                            </p>
+                        </div>
+                        <div class="footer">
+                            <p>${companySettings.companyName}<br>
+                            ${companySettings.companyAddress || ''}<br>
+                            ${companySettings.companyPhone} | ${companySettings.companyEmail}</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+
+        console.log(`✅ Admin user welcome email sent to: ${email} (${username})`);
+        return info;
+
+    } catch (error) {
+        console.error('Error sending admin user welcome email:', error);
+        throw error;
+    }
+}
+
+/**
+ * Send welcome email to new employee (employee portal access)
+ */
+async function sendEmployeeWelcomeEmail({ email, username, password, firstName, lastName, role }) {
+    try {
+        // Load company settings
+        const companySettings = await loadCompanySettings('Worry Free Moving');
+
+        const transporter = await initializeTransporter();
+
+        const employeePortalUrl = process.env.NODE_ENV === 'production'
+            ? 'https://worry-free-booking.onrender.com/employee-portal.html'
+            : 'http://localhost:3001/employee-portal.html';
+
+        const fullName = `${firstName} ${lastName}`;
+
+        const mailOptions = {
+            from: `"${companySettings.companyName}" <${process.env.EMAIL_FROM || process.env.EMAIL_USER || companySettings.companyEmail}>`,
+            to: email,
+            subject: `Welcome to ${companySettings.companyName} - Employee Portal Access`,
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                        .credentials-box { background: white; border-left: 4px solid #28a745; padding: 20px; margin: 20px 0; border-radius: 5px; }
+                        .login-button { display: inline-block; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+                        .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 5px; color: #856404; }
+                        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1 style="margin: 0;">👷 Welcome to the Team!</h1>
+                            <p style="margin: 10px 0 0 0;">${companySettings.companyName}</p>
+                        </div>
+                        <div class="content">
+                            <p>Hi ${firstName},</p>
+
+                            <p>Welcome to ${companySettings.companyName}! We're excited to have you on the team as our new <strong>${role || 'team member'}</strong>.</p>
+
+                            <p>Your employee portal account has been created. You can use the portal to:</p>
+                            <ul>
+                                <li>📅 Request time off</li>
+                                <li>📋 View your schedule</li>
+                                <li>🔑 Update your password</li>
+                                <li>📧 Communicate with the team</li>
+                            </ul>
+
+                            <div class="credentials-box">
+                                <h3 style="margin-top: 0; color: #28a745;">📋 Your Login Credentials</h3>
+                                <p style="margin: 10px 0;"><strong>Username:</strong> ${username}</p>
+                                <p style="margin: 10px 0;"><strong>Temporary Password:</strong> <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px; font-size: 16px;">${password}</code></p>
+                                <p style="margin: 10px 0;"><strong>Portal URL:</strong> <a href="${employeePortalUrl}">${employeePortalUrl}</a></p>
+                            </div>
+
+                            <div style="text-align: center;">
+                                <a href="${employeePortalUrl}" class="login-button">🔐 Login to Employee Portal</a>
+                            </div>
+
+                            <div class="warning">
+                                <strong>⚠️ Security Notice:</strong>
+                                <ul style="margin: 10px 0;">
+                                    <li>This is a temporary password - please change it after your first login</li>
+                                    <li>Never share your login credentials with anyone</li>
+                                    <li>Keep this email secure or delete it after changing your password</li>
+                                </ul>
+                            </div>
+
+                            <h3>🚀 Getting Started:</h3>
+                            <ol>
+                                <li>Click the login button above or visit the portal URL</li>
+                                <li>Enter your username and temporary password</li>
+                                <li>Change your password to something secure and memorable</li>
+                                <li>Complete your profile if needed</li>
+                            </ol>
+
+                            <p>If you have any questions or need assistance, please contact us:</p>
+                            <p>
+                                📞 Phone: ${companySettings.companyPhone}<br>
+                                📧 Email: ${companySettings.companyEmail}
+                            </p>
+
+                            <p>We're glad to have you on board!</p>
+                        </div>
+                        <div class="footer">
+                            <p>${companySettings.companyName}<br>
+                            ${companySettings.companyAddress || ''}<br>
+                            ${companySettings.companyPhone} | ${companySettings.companyEmail}</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+
+        console.log(`✅ Employee welcome email sent to: ${email} (${fullName})`);
+        return info;
+
+    } catch (error) {
+        console.error('Error sending employee welcome email:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     sendConfirmationEmail,
     sendCancellationEmail,
@@ -1557,5 +1769,7 @@ module.exports = {
     sendCrewTimeOffNotification,
     sendCrewTimeOffConfirmation,
     sendCrewTimeOffResponse,
-    sendEmployeePasswordResetEmail
+    sendEmployeePasswordResetEmail,
+    sendAdminUserWelcomeEmail,
+    sendEmployeeWelcomeEmail
 };
