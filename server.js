@@ -11,7 +11,7 @@ dotenv.config();
 // Import modules
 const { createGoogleCalendarEvent, updateGoogleCalendarEvent, deleteGoogleCalendarEvent, initGoogleAuth } = require('./services/googleCalendar');
 // const { createICloudCalendarEvent } = require('./services/icloudCalendar'); // Disabled - using email calendar buttons instead
-const { sendConfirmationEmail } = require('./services/emailService');
+const { sendConfirmationEmail, sendEstimateEmail } = require('./services/emailService');
 const { generateBookingId } = require('./utils/helpers');
 const {
     connectDatabase,
@@ -1439,6 +1439,61 @@ app.post('/api/calculate-estimate', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to calculate estimate'
+        });
+    }
+});
+
+// Send estimate email to customer
+app.post('/api/send-estimate', async (req, res) => {
+    try {
+        const {
+            to,
+            customerName,
+            estimate,
+            serviceType,
+            pickupAddress,
+            dropoffAddress,
+            date,
+            time,
+            distance,
+            company
+        } = req.body;
+
+        // Validate required fields
+        if (!to || !customerName || !estimate) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: to, customerName, estimate'
+            });
+        }
+
+        // Send the estimate email
+        await sendEstimateEmail({
+            to,
+            customerName,
+            estimate,
+            serviceType: serviceType || 'Moving Service',
+            pickupAddress: pickupAddress || '',
+            dropoffAddress: dropoffAddress || '',
+            date: date || '',
+            time: time || '',
+            distance: distance || 0,
+            company: company || 'Worry Free Moving'
+        });
+
+        console.log(`📧 Estimate email sent to ${to} (${customerName}) - Total: $${estimate.total}`);
+
+        res.json({
+            success: true,
+            message: 'Estimate email sent successfully'
+        });
+
+    } catch (error) {
+        console.error('Error sending estimate email:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to send estimate email',
+            details: error.message
         });
     }
 });

@@ -1051,12 +1051,361 @@ async function sendCrewTimeOffResponse(details) {
     }
 }
 
+/**
+ * Send estimate email to customer
+ */
+async function sendEstimateEmail(details) {
+    try {
+        const {
+            to,
+            customerName,
+            estimate,
+            serviceType,
+            pickupAddress,
+            dropoffAddress,
+            date,
+            time,
+            distance,
+            company
+        } = details;
+
+        // Load company-specific settings
+        const companySettings = await loadCompanySettings(company || 'Worry Free Moving');
+
+        const transporter = initializeTransporter(company || 'Worry Free Moving');
+        if (!transporter) {
+            console.warn('Email service not configured. Skipping estimate email.');
+            return null;
+        }
+
+        // Format date if provided
+        let formattedDate = '';
+        if (date) {
+            const [year, month, day] = date.split('-');
+            const localDate = new Date(year, month - 1, day);
+            formattedDate = localDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // Format time if provided
+        let formattedTime = '';
+        if (time) {
+            formattedTime = formatTimeWindow(time);
+        }
+
+        // Format money
+        const formatMoney = (amount) => {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2
+            }).format(amount);
+        };
+
+        // Email HTML template
+        const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+        .estimate-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .detail-row {
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: 600;
+            color: #667eea;
+        }
+        .total-row {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: 700;
+            text-align: center;
+        }
+        .button {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 14px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            margin: 10px 5px;
+            font-weight: 600;
+        }
+        .info-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Your Moving Estimate</h1>
+            <p>From ${companySettings.companyName}</p>
+        </div>
+        <div class="content">
+            <p>Hi ${customerName},</p>
+            <p>Thank you for requesting an estimate! Here's a detailed breakdown of your moving costs:</p>
+
+            <div class="estimate-box">
+                <h2 style="color: #667eea; margin-top: 0;">Service Details</h2>
+                ${serviceType ? `
+                <div class="detail-row">
+                    <span class="label">Service Type:</span>
+                    <span>${serviceType}</span>
+                </div>
+                ` : ''}
+                ${pickupAddress ? `
+                <div class="detail-row">
+                    <span class="label">Pickup Location:</span>
+                    <span>${pickupAddress}</span>
+                </div>
+                ` : ''}
+                ${dropoffAddress ? `
+                <div class="detail-row">
+                    <span class="label">Delivery Location:</span>
+                    <span>${dropoffAddress}</span>
+                </div>
+                ` : ''}
+                ${distance ? `
+                <div class="detail-row">
+                    <span class="label">Distance:</span>
+                    <span>${distance} miles</span>
+                </div>
+                ` : ''}
+                ${formattedDate ? `
+                <div class="detail-row">
+                    <span class="label">Preferred Date:</span>
+                    <span>${formattedDate}</span>
+                </div>
+                ` : ''}
+                ${formattedTime ? `
+                <div class="detail-row">
+                    <span class="label">Preferred Time:</span>
+                    <span>${formattedTime}</span>
+                </div>
+                ` : ''}
+            </div>
+
+            <div class="estimate-box">
+                <h2 style="color: #667eea; margin-top: 0;">Cost Breakdown</h2>
+                ${estimate.laborCost > 0 ? `
+                <div class="detail-row">
+                    <span class="label">Labor:</span>
+                    <span>${formatMoney(estimate.laborCost)}</span>
+                </div>
+                ` : ''}
+                ${estimate.travelFee > 0 ? `
+                <div class="detail-row">
+                    <span class="label">Travel Fee:</span>
+                    <span>${formatMoney(estimate.travelFee)}</span>
+                </div>
+                ` : ''}
+                ${estimate.stairsFee > 0 ? `
+                <div class="detail-row">
+                    <span class="label">Stairs Fee:</span>
+                    <span>${formatMoney(estimate.stairsFee)}</span>
+                </div>
+                ` : ''}
+                ${estimate.heavyItems > 0 ? `
+                <div class="detail-row">
+                    <span class="label">Heavy Items:</span>
+                    <span>${formatMoney(estimate.heavyItems)}</span>
+                </div>
+                ` : ''}
+                ${estimate.additionalServices > 0 ? `
+                <div class="detail-row">
+                    <span class="label">Additional Services:</span>
+                    <span>${formatMoney(estimate.additionalServices)}</span>
+                </div>
+                ` : ''}
+                ${estimate.packingMaterials > 0 ? `
+                <div class="detail-row">
+                    <span class="label">Packing Materials:</span>
+                    <span>${formatMoney(estimate.packingMaterials)}</span>
+                </div>
+                ` : ''}
+                ${estimate.fvpInsurance > 0 ? `
+                <div class="detail-row">
+                    <span class="label">FVP Insurance:</span>
+                    <span>${formatMoney(estimate.fvpInsurance)}</span>
+                </div>
+                ` : ''}
+                ${estimate.serviceCharge > 0 ? `
+                <div class="detail-row">
+                    <span class="label">Service Charge:</span>
+                    <span>${formatMoney(estimate.serviceCharge)}</span>
+                </div>
+                ` : ''}
+
+                <div class="total-row">
+                    ESTIMATED TOTAL: ${formatMoney(estimate.total)}
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>💡 Important Information:</strong>
+                <ul style="margin: 10px 0;">
+                    <li>This is an estimate based on the information provided</li>
+                    <li>Final cost may vary based on actual time and services needed</li>
+                    <li>All estimates are valid for 30 days</li>
+                    ${estimate.estimatedTime ? `<li>Estimated time: ${estimate.estimatedTime} hours</li>` : ''}
+                </ul>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <p><strong>Ready to book your move?</strong></p>
+                <a href="tel:${companySettings.companyPhone.replace(/[^0-9]/g, '')}"
+                   class="button"
+                   style="background: #51cf66; color: white;">
+                    📞 Call ${companySettings.companyPhone}
+                </a>
+                <a href="https://${companySettings.companyWebsite || 'worryfreemovers.com'}"
+                   class="button"
+                   target="_blank">
+                    🌐 Book Online
+                </a>
+            </div>
+
+            <h3 style="color: #667eea;">Why Choose ${companySettings.companyName}?</h3>
+            <ul>
+                <li>✅ Licensed and Insured</li>
+                <li>✅ Professional Crew</li>
+                <li>✅ Transparent Pricing</li>
+                <li>✅ 5-Star Customer Service</li>
+                <li>✅ Modern Equipment</li>
+            </ul>
+
+            <p><strong>Questions?</strong> Feel free to contact us:</p>
+            <p>
+                📞 <a href="tel:${companySettings.companyPhone.replace(/[^0-9]/g, '')}">${companySettings.companyPhone}</a><br>
+                📧 <a href="mailto:${companySettings.companyEmail}">${companySettings.companyEmail}</a><br>
+                ${companySettings.companyWebsite ? `🌐 <a href="https://${companySettings.companyWebsite}" target="_blank">${companySettings.companyWebsite}</a>` : ''}
+            </p>
+        </div>
+
+        <div class="footer">
+            <p><strong>${companySettings.companyName}</strong></p>
+            <p>${companySettings.companyPhone} | ${companySettings.companyEmail}</p>
+            ${companySettings.companyWebsite ? `<p><a href="https://${companySettings.companyWebsite}" target="_blank">${companySettings.companyWebsite}</a></p>` : ''}
+            <p style="font-size: 12px; color: #999; margin-top: 20px;">
+                This estimate was generated by our automated quoting system. For the most accurate pricing, please call us directly.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+        `;
+
+        // Plain text version
+        const textContent = `
+Your Moving Estimate - ${companySettings.companyName}
+
+Hi ${customerName},
+
+Thank you for requesting an estimate!
+
+Service Details:
+${serviceType ? `Service: ${serviceType}` : ''}
+${pickupAddress ? `Pickup: ${pickupAddress}` : ''}
+${dropoffAddress ? `Delivery: ${dropoffAddress}` : ''}
+${distance ? `Distance: ${distance} miles` : ''}
+
+Cost Breakdown:
+${estimate.laborCost > 0 ? `Labor: ${formatMoney(estimate.laborCost)}` : ''}
+${estimate.travelFee > 0 ? `Travel Fee: ${formatMoney(estimate.travelFee)}` : ''}
+${estimate.stairsFee > 0 ? `Stairs Fee: ${formatMoney(estimate.stairsFee)}` : ''}
+${estimate.heavyItems > 0 ? `Heavy Items: ${formatMoney(estimate.heavyItems)}` : ''}
+${estimate.serviceCharge > 0 ? `Service Charge: ${formatMoney(estimate.serviceCharge)}` : ''}
+
+ESTIMATED TOTAL: ${formatMoney(estimate.total)}
+
+This is an estimate based on the information provided. Final cost may vary.
+
+Ready to book? Call us at ${companySettings.companyPhone}
+
+Thank you,
+${companySettings.companyName}
+        `;
+
+        // Send email
+        const info = await transporter.sendMail({
+            from: `"${companySettings.companyName}" <${process.env.EMAIL_USER || companySettings.companyEmail}>`,
+            to,
+            cc: companySettings.ccEmails.length > 0 ? companySettings.ccEmails.join(',') : getCCList(),
+            bcc: process.env.COMPANY_EMAIL || companySettings.companyEmail,
+            subject: `Your ${companySettings.companyName} Estimate - ${formatMoney(estimate.total)}`,
+            text: textContent,
+            html: htmlContent
+        });
+
+        console.log('Estimate email sent:', info.messageId);
+        return info;
+
+    } catch (error) {
+        console.error('Error sending estimate email:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     sendConfirmationEmail,
     sendCancellationEmail,
     sendRescheduleEmail,
     sendCompanyNotification,
     send24HourReminder,
+    sendEstimateEmail,
     sendCrewTimeOffNotification,
     sendCrewTimeOffConfirmation,
     sendCrewTimeOffResponse

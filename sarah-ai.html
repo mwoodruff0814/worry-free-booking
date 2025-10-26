@@ -8702,35 +8702,54 @@ Website: www.worryfreemovers.com
 Facebook: facebook.com/worryfreemovers
 `;
 
-    const customerEmailData = {
-        email: data.email,
-        from_name: 'Worry Free Moving',
-        subject: `Your Moving Quote - ${formatMoney(grandTotal)} - ${data.formattedDate || 'TBD'}`,
-        message: plainTextQuote,
-        _replyto: CONFIG.email,
-        _cc: CONFIG.email,
-        _template: 'box',
-        _captcha: 'false',
-        _autoresponse: 'true'
+    // Prepare estimate data for backend API
+    const estimateData = {
+        to: data.email,
+        customerName: `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Customer',
+        estimate: {
+            laborCost: parseFloat(data.estimate?.baseCost || 0),
+            travelFee: parseFloat(data.estimate?.travelFee || 0),
+            stairsFee: parseFloat(data.estimate?.stairFee || 0),
+            heavyItems: parseFloat(data.estimate?.heavyItemFees || 0) + parseFloat(data.estimate?.specialItemFee || 0),
+            additionalServices: parseFloat(data.estimate?.packingCost || 0),
+            packingMaterials: parseFloat(data.estimate?.packingMaterialsCost || 0),
+            fvpInsurance: fvpCost,
+            serviceCharge: parseFloat(data.estimate?.serviceCharge || 0) + parseFloat(data.estimate?.sameDayFee || 0),
+            total: grandTotal,
+            estimatedTime: parseFloat(data.estimate?.totalHours || 0)
+        },
+        serviceType: chatState.serviceType || 'Moving Service',
+        pickupAddress: data.from || '',
+        dropoffAddress: data.to || '',
+        date: data.movingDate || '',
+        time: data.movingTime || '',
+        distance: parseFloat(data.tripDistance || 0),
+        company: chatState.serviceType && chatState.serviceType.toLowerCase().includes('labor')
+            ? 'Quality Moving'
+            : 'Worry Free Moving'
     };
-    
+
     try {
-        const response = await fetch(CONFIG.formSubmitUrl, {
+        const response = await fetch(`${CONFIG.apiUrl}/api/send-estimate`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify(customerEmailData)
+            body: JSON.stringify(estimateData)
         });
-        
-        if (!response.ok) {
-            console.error('Failed to send customer quote email');
-        } else {
-            console.log('Customer quote sent successfully to:', data.email);
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            console.error('Failed to send estimate email:', result.error || 'Unknown error');
+            throw new Error(result.error || 'Failed to send email');
         }
+
+        console.log('✅ Estimate email sent successfully to:', data.email);
     } catch (error) {
-        console.error('Error sending customer quote:', error);
+        console.error('❌ Error sending estimate email:', error);
+        throw error;
     }
 }
         // ========================================
