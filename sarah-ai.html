@@ -1127,7 +1127,7 @@
                 left: 0;
                 padding: 0;
             }
-
+            
             #wfm-chat-widget {
                 width: 100%;
                 height: 100vh;
@@ -1173,10 +1173,7 @@
             }
             
             #wfm-chat-toggle {
-                width: 60px;
-                height: 60px;
-                bottom: 20px;
-                right: 20px;
+                display: flex;
             }
             
             .autocomplete-dropdown {
@@ -1268,7 +1265,7 @@
 <body>
     <!-- Enhanced Moving Chat Widget with Sarah AI Assistant -->
     <div id="wfm-chat-container" style="display: none;">
-        <div id="wfm-chat-widget" style="display: none;">
+        <div id="wfm-chat-widget">
             <div id="wfm-chat-header">
                 <img src="https://res.cloudinary.com/dhiukpg4d/image/upload/w_50/v1743554600/WorryFreeMoving_coverart2_e0ed3i.jpg" alt="WFM">
                 <span>Sarah - Get Your Moving Estimate & Book</span>
@@ -3052,9 +3049,9 @@ setTimeout(() => {
             
             // ALWAYS keep chat closed on page load
             widget.style.display = 'none';
-            toggle.style.display = 'flex';
+            toggle.style.display = 'none';
             chatState.isOpen = false;
-            container.style.display = 'block'; // Container visible with toggle button
+            container.style.display = 'block'; // Container visible but widget hidden
             
             try {
                 // Load Google Maps
@@ -4049,14 +4046,14 @@ if (isMobile && send) {
             
             const greeting = getRandomResponse(SARAH_PERSONALITY.greetings);
             showBotMessage(greeting);
-
+            
             setTimeout(() => {
                 showBotMessage("I can help you get an instant estimate and schedule your move today! Before we start, what's your full name? 😊");
                 showInput("Enter your full name (first and last)...");
                 chatState.stage = 'get_name_initial';
                 saveNavigationState();
                 saveSession();
-            }, 400);
+            }, 1200);
         }
 
         function openChat() {
@@ -4094,9 +4091,10 @@ if (isMobile && send) {
 
         function closeChat() {
             widget.style.display = 'none';
-            toggle.style.display = 'flex'; // Show toggle button
+            toggle.style.display = 'none'; // Keep toggle hidden
+            container.style.display = 'none'; // Hide entire container
             chatState.isOpen = false;
-
+            
             // Restore body scroll on mobile
             if (isMobile) {
                 const scrollY = document.body.style.top;
@@ -4106,7 +4104,7 @@ if (isMobile && send) {
                 document.body.style.width = '';
                 window.scrollTo(0, parseInt(scrollY || '0') * -1);
             }
-
+            
             saveSession();
         }
 
