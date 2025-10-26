@@ -2387,21 +2387,42 @@ setTimeout(() => {
     const selectedDate = datePickerInput.value;
     if (selectedDate) {
         hideDatePicker();
-        
+
         // Format the date nicely
         const date = new Date(selectedDate + 'T00:00:00');
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const formattedDate = date.toLocaleDateString('en-US', options);
-        
+
         // Show in chat
         showUserMessage(formattedDate);
-        
-        // Debug log
-        console.log('Current stage:', chatState.stage);
-        console.log('Service type:', chatState.serviceType);
-        
-        // Process the date
-        processResponse(formattedDate);
+
+        // Store the date
+        chatState.data.movingDate = selectedDate;
+        chatState.data.formattedDate = formattedDate;
+        saveSession();
+
+        // Check if we're scheduling after estimate (post-estimate flow)
+        if (chatState.data.isSchedulingAfterEstimate) {
+            // Post-estimate flow: Date → Payment → Confirmation
+            showBotMessage(`Perfect! I have ${formattedDate} noted for your move.`);
+            setTimeout(() => {
+                showBotMessage("Now let's save a card for easy payment after your move is complete!");
+                setTimeout(() => {
+                    showBotMessage("💡 Your card will be securely saved. No charges until after your move is complete!");
+                    setTimeout(() => {
+                        showPaymentModal();
+                    }, 1000);
+                }, 1000);
+            }, 800);
+        } else {
+            // Normal flow: Continue with address collection
+            // Debug log
+            console.log('Current stage:', chatState.stage);
+            console.log('Service type:', chatState.serviceType);
+
+            // Process the date through normal flow
+            processResponse(formattedDate);
+        }
     }
 }
 
@@ -2656,17 +2677,30 @@ setTimeout(() => {
                     submitLead().then(() => {
                         setTimeout(() => {
                             hidePaymentModal();
-                            showBotMessage("🎉 Perfect! Your card is securely saved.");
+                            showBotMessage("🎉 Perfect! Your card is securely saved and your booking is complete!");
                             showBotMessage(`Payment method saved: ${result.cardBrand} ending in ${result.cardLast4}`);
-                            showBotMessage(`Confirmation sent to ${customerEmail}.`);
 
-                            // Automatically open scheduling after confirmation
+                            // Show confirmation screen
                             setTimeout(() => {
-                                showBotMessage("Now let's schedule your move! 📅");
+                                showBotMessage("✅ BOOKING CONFIRMED!");
                                 setTimeout(() => {
-                                    showDatePicker();
+                                    showBotMessage(`📧 Confirmation email sent to ${customerEmail}`);
+                                    setTimeout(() => {
+                                        showBotMessage("📞 A member of our team will reach out to you within 24-48 hours to confirm all details and answer any questions.");
+                                        setTimeout(() => {
+                                            showBotMessage("If you need immediate assistance, call us at 330-435-8686");
+                                            // Show options for what's next
+                                            setTimeout(() => {
+                                                showOptions([
+                                                    { text: "📋 View My Booking", value: "view_booking" },
+                                                    { text: "📞 Call Us Now", value: "call" },
+                                                    { text: "💬 Start New Estimate", value: "restart" }
+                                                ]);
+                                            }, 1500);
+                                        }, 1500);
+                                    }, 1500);
                                 }, 1000);
-                            }, 2000);
+                            }, 1000);
                         }, 1500);
                     });
                 }, 2000);
@@ -6792,35 +6826,47 @@ case 'select_heavy_item':
                         // Redirect to worryfreemovers.com/moving/local
                         window.open(CONFIG.bookingUrl, '_blank');
                     } else if (value === 'schedule_acuity') {
+    // Set flag that we're scheduling after estimate (not during initial flow)
+    chatState.data.isSchedulingAfterEstimate = true;
+
     // Check if quote already submitted
     if (chatState.data.quoteSubmitted) {
-        // Quote already sent, go straight to scheduler
-        showBotMessage("✅ Connecting you to scheduling...");
+        // Quote already sent, go straight to date picker
+        showBotMessage("✅ Great! Let's schedule your move.");
         setTimeout(() => {
-            showDatePicker();
+            showBotMessage("📅 Please select your preferred date:");
+            setTimeout(() => {
+                showDatePicker();
+            }, 500);
         }, 500);
     } else {
         // Need to collect info or submit quote first
         chatState.data.isAutoSubmit = true;
         chatState.data.isSchedulingAfterEmail = true; // Flag that we're scheduling
-        
+
         // Check if we have all contact info
         if (hasCompleteContactInfo()) {
             // Have all info, just submit and schedule
             showBotMessage("Great choice! Let me send your quote first...");
             submitLead().then(() => {
-                showBotMessage("✅ Quote sent! Now connecting you to scheduling...");
+                showBotMessage("✅ Quote sent! Now let's schedule your move.");
                 setTimeout(() => {
-                    showDatePicker();
+                    showBotMessage("📅 Please select your preferred date:");
+                    setTimeout(() => {
+                        showDatePicker();
+                    }, 500);
                 }, 1000);
             });
         } else {
             // Need to collect missing info
             showBotMessage("Great choice! I just need a bit more information...");
             autoSubmitQuote().then(() => {
-                showBotMessage("✅ Quote sent! Now connecting you to scheduling...");
+                showBotMessage("✅ Quote sent! Now let's schedule your move.");
                 setTimeout(() => {
-                    showDatePicker();
+                    showBotMessage("📅 Please select your preferred date:");
+                    setTimeout(() => {
+                        showDatePicker();
+                    }, 500);
                 }, 1000);
             }).catch(() => {
                 // If auto-submit fails, still try to schedule
