@@ -2269,7 +2269,7 @@ app.delete('/api/customers/:customerId', async (req, res) => {
 // ==============================================
 // TWILIO VOICE AI ENDPOINTS (Cheaper Alternative!)
 // ==============================================
-const twilioVoice = require('./services/twilioSimpleVoice');
+const twilioVoice = require('./services/twilioSmartVoice');
 
 // Main voice endpoint - handles incoming calls
 app.post('/api/twilio/voice', (req, res) => {
@@ -2319,13 +2319,13 @@ app.post('/api/twilio/booking-date', (req, res) => {
     twilioVoice.handleBookingDate(req, res);
 });
 
-// FAQ endpoints
-app.post('/api/twilio/faq', (req, res) => {
-    twilioVoice.handleFAQ(req, res);
+// Returning customer endpoints
+app.post('/api/twilio/returning-customer-menu', (req, res) => {
+    twilioVoice.handleReturningCustomerMenu(req, res);
 });
 
-app.post('/api/twilio/faq-answer', (req, res) => {
-    twilioVoice.handleFAQAnswer(req, res);
+app.post('/api/twilio/booking-confirm-menu', (req, res) => {
+    twilioVoice.handleBookingConfirmMenu(req, res);
 });
 
 // ==============================================

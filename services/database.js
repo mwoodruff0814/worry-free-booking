@@ -446,6 +446,18 @@ async function getCustomerByEmail(email) {
 }
 
 /**
+ * Get customer by phone number
+ */
+async function getCustomerByPhone(phone) {
+    const database = getDatabase();
+    // Normalize phone number (remove spaces, dashes, etc.)
+    const normalizedPhone = phone.replace(/[\s\-\(\)]/g, '');
+    return await database.collection('customers').findOne({
+        phone: { $regex: normalizedPhone.slice(-10), $options: 'i' }
+    });
+}
+
+/**
  * Search customers by name, email, or phone
  */
 async function searchCustomers(searchTerm) {
@@ -620,6 +632,7 @@ module.exports = {
     getAllCustomers,
     getCustomerById,
     getCustomerByEmail,
+    getCustomerByPhone,
     searchCustomers,
     createCustomer,
     updateCustomer,
