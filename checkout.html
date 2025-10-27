@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Save Card - Worry Free Moving</title>
+    <script type="text/javascript" src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .booking-info {
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .booking-info h3 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .booking-info p {
+            color: #666;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .booking-info strong {
+            color: #333;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section h3 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 6px;
+        }
+
+        .note p {
+            color: #856404;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        #card-container {
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .success {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .success .checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #4caf50;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+        }
+
+        .success h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .success p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .error {
+            display: none;
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .secure-badge {
+            text-align: center;
+            margin-top: 20px;
+            color: #999;
+            font-size: 13px;
+        }
+
+        .secure-badge::before {
+            content: "🔒";
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>Worry Free Moving</h1>
+            <p>Secure Card On File</p>
+        </div>
+
+        <div id="booking-details" class="booking-info">
+            <h3>Booking Details</h3>
+            <p><strong>Booking ID:</strong> <span id="booking-id">-</span></p>
+            <p><strong>Customer:</strong> <span id="customer-name">-</span></p>
+            <p><strong>Estimated Total:</strong> $<span id="amount">-</span></p>
+        </div>
+
+        <div class="note">
+            <p><strong>No charge today!</strong> We're only saving your card on file for your convenience. You'll be charged after your move is complete.</p>
+        </div>
+
+        <div id="error-message" class="error"></div>
+
+        <div id="payment-form">
+            <div class="form-section">
+                <h3>Payment Information</h3>
+                <div id="card-container"></div>
+            </div>
+
+            <button id="card-button" class="btn">Save Card Securely</button>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Securely saving your card...</p>
+        </div>
+
+        <div id="success-message" class="success">
+            <div class="checkmark">✓</div>
+            <h2>Card Saved Successfully!</h2>
+            <p>Your booking is confirmed and your card has been securely saved. We'll only charge you after your move is complete.</p>
+            <p style="margin-top: 20px; font-weight: 600;">Thank you for choosing Worry Free Moving!</p>
+        </div>
+
+        <div class="secure-badge">
+            Secured by Square - PCI DSS Compliant
+        </div>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const amount = urlParams.get('amount') || '0';
+        const bookingId = urlParams.get('booking') || 'N/A';
+        const customerEmail = urlParams.get('email') || '';
+        const customerName = urlParams.get('name') || 'Customer';
+
+        // Display booking details
+        document.getElementById('booking-id').textContent = bookingId;
+        document.getElementById('customer-name').textContent = customerName;
+        document.getElementById('amount').textContent = amount;
+
+        // Square Application ID - PRODUCTION
+        const applicationId = 'sq0idp-7GJn4RN8zcdsw3S1kJaNOA';
+        const locationId = 'L6WP06SMJKJSB';
+
+        let card;
+
+        // Initialize Square Payments
+        async function initializeCard() {
+            try {
+                const payments = Square.payments(applicationId, locationId);
+
+                card = await payments.card();
+                await card.attach('#card-container');
+
+                console.log('✅ Square card initialized');
+
+            } catch (error) {
+                console.error('❌ Square initialization error:', error);
+                showError('Failed to load payment form. Please try again or call (330) 661-9985.');
+            }
+        }
+
+        // Handle card submission
+        document.getElementById('card-button').addEventListener('click', async function(event) {
+            event.preventDefault();
+
+            const cardButton = document.getElementById('card-button');
+            cardButton.disabled = true;
+
+            // Show loading
+            document.getElementById('payment-form').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                // Tokenize card
+                const result = await card.tokenize();
+
+                if (result.status === 'OK') {
+                    const token = result.token;
+
+                    // Split customer name
+                    const nameParts = customerName.split(' ');
+                    const firstName = nameParts[0] || 'Customer';
+                    const lastName = nameParts.slice(1).join(' ') || '';
+
+                    // Call backend API to save card
+                    const response = await fetch('https://worry-free-chatbot-git-master-matt-5184s-projects.vercel.app/api/square-customer', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            sourceId: token,
+                            customer: {
+                                firstName: firstName,
+                                lastName: lastName,
+                                email: customerEmail,
+                                phone: '',
+                                bookingId: bookingId
+                            }
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Show success
+                        document.getElementById('loading').style.display = 'none';
+                        document.getElementById('success-message').style.display = 'block';
+                        document.getElementById('booking-details').style.display = 'none';
+
+                        console.log('✅ Card saved successfully!', data);
+
+                        // Optional: Notify backend about successful card save
+                        try {
+                            await fetch('/api/update-booking-payment', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    bookingId: bookingId,
+                                    squareCustomerId: data.customerId,
+                                    cardLast4: data.cardLast4,
+                                    cardBrand: data.cardBrand
+                                })
+                            });
+                        } catch (e) {
+                            console.log('Backend notification skipped:', e.message);
+                        }
+
+                    } else {
+                        throw new Error(data.error || 'Failed to save card');
+                    }
+
+                } else {
+                    throw new Error('Card tokenization failed');
+                }
+
+            } catch (error) {
+                console.error('Payment error:', error);
+
+                // Hide loading, show form again
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('payment-form').style.display = 'block';
+                cardButton.disabled = false;
+
+                showError('Failed to save card: ' + error.message + '. Please try again or call (330) 661-9985.');
+            }
+        });
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Initialize on page load
+        initializeCard();
+    </script>
+</body>
+</html>
