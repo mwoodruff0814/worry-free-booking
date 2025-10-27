@@ -804,10 +804,26 @@ app.get('/api/company-info', async (req, res) => {
 // Admin login
 app.post('/api/admin/login', async (req, res) => {
     try {
+        console.log('🔐 Admin login attempt received');
+        console.log('📥 Request body:', req.body);
+        console.log('📥 Expected credentials:', {
+            username: process.env.ADMIN_USERNAME,
+            passwordSet: !!process.env.ADMIN_PASSWORD
+        });
+
         const { username, password } = req.body;
+
+        if (!username || !password) {
+            console.error('❌ Missing username or password');
+            return res.status(400).json({
+                success: false,
+                error: 'Username and password are required'
+            });
+        }
 
         // Check credentials against environment variables
         if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
+            console.log('✅ Login successful for:', username);
             // Generate a simple session token (in production, use JWT)
             const sessionToken = Buffer.from(`${username}:${Date.now()}`).toString('base64');
 
@@ -821,16 +837,18 @@ app.post('/api/admin/login', async (req, res) => {
                 }
             });
         } else {
+            console.error('❌ Invalid credentials - username or password incorrect');
             res.status(401).json({
                 success: false,
                 error: 'Invalid username or password'
             });
         }
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error.message);
+        console.error('Stack:', error.stack);
         res.status(500).json({
             success: false,
-            error: 'Login failed'
+            error: 'Login failed: ' + error.message
         });
     }
 });
