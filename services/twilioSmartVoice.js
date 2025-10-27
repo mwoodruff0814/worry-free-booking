@@ -468,8 +468,9 @@ function handleMainMenu(req, res) {
             break;
 
         case '2': // Send online booking link (skip phone call)
-            response.say("Perfect! I'll send you a text right now with a link to our online booking form. It's super easy and only takes a couple minutes.");
-            response.redirect('/api/twilio/send-online-booking-link');
+            response.say("Perfect! I'll send you a text with a link to our online booking form.");
+            response.pause({ length: 1 });
+            response.redirect('/api/twilio/confirm-phone-for-sms');
             break;
 
         case '9': // Hidden transfer option
@@ -1437,12 +1438,55 @@ async function handleEmailQuoteSend(req, res) {
 }
 
 /**
- * Send online booking link at beginning (skip phone call)
+ * Confirm phone number before sending SMS
  */
-async function handleSendOnlineBookingLink(req, res) {
+function handleConfirmPhoneForSMS(req, res) {
     const { CallSid, From } = req.body;
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const response = new VoiceResponse();
+
+    // Format phone number for speech (e.g., +13306619985 -> "330-661-9985")
+    const phoneDigits = From.replace(/^\+1/, ''); // Remove +1
+    const areaCode = phoneDigits.substring(0, 3);
+    const exchange = phoneDigits.substring(3, 6);
+    const number = phoneDigits.substring(6, 10);
+    const formattedPhone = `${areaCode} ${exchange} ${number}`;
+
+    response.say(`The number you're calling from is ${formattedPhone}.`);
+    response.pause({ length: 1 });
+
+    const gather = response.gather({
+        input: 'dtmf speech',
+        action: '/api/twilio/send-online-booking-link',
+        method: 'POST',
+        numDigits: 1,
+        speechTimeout: 'auto',
+        timeout: 10
+    });
+
+    gather.say("Is this the number where you'd like to receive the text? Press 1 for yes, or press 9 if you need to speak with someone.");
+
+    response.redirect('/api/twilio/voice');
+
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Send online booking link at beginning (skip phone call)
+ */
+async function handleSendOnlineBookingLink(req, res) {
+    const { CallSid, From, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    // Check if customer confirmed
+    if (Digits === '9') {
+        response.say("Let me connect you with our team.");
+        response.dial(process.env.TRANSFER_NUMBER || '+13304358686');
+        res.type('text/xml');
+        return res.send(response.toString());
+    }
 
     console.log(`📱 Attempting to send booking link SMS to ${From} from ${process.env.TWILIO_PHONE_NUMBER}`);
 
@@ -1832,6 +1876,7 @@ module.exports = {
     handleRecordingComplete,
     handleTranscriptionComplete,
     handleMainMenu,
+    handleConfirmPhoneForSMS,
     handleSendOnlineBookingLink,
     handleQuoteServiceType,
     handleQuotePickupAddress,

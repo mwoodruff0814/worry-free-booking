@@ -2281,6 +2281,11 @@ app.post('/api/twilio/main-menu', (req, res) => {
     twilioVoice.handleMainMenu(req, res);
 });
 
+// Confirm phone number before sending SMS
+app.post('/api/twilio/confirm-phone-for-sms', (req, res) => {
+    twilioVoice.handleConfirmPhoneForSMS(req, res);
+});
+
 // Send online booking link (skip phone call)
 app.post('/api/twilio/send-online-booking-link', (req, res) => {
     twilioVoice.handleSendOnlineBookingLink(req, res);
