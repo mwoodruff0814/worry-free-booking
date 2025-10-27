@@ -2353,6 +2353,10 @@ app.post('/api/twilio/quote-packing-services', (req, res) => {
     twilioVoice.handleQuotePackingServices(req, res);
 });
 
+app.post('/api/twilio/quote-insurance', (req, res) => {
+    twilioVoice.handleQuoteInsurance(req, res);
+});
+
 app.post('/api/twilio/quote-calculate-distance', (req, res) => {
     twilioVoice.handleQuoteCalculateDistance(req, res);
 });

@@ -1047,7 +1047,7 @@ async function handleQuotePackingServices(req, res) {
 
     const gather = response.gather({
         input: 'dtmf speech',
-        action: '/api/twilio/quote-calculate-distance',
+        action: '/api/twilio/quote-insurance',
         method: 'POST',
         numDigits: 1,
         speechTimeout: 'auto',
@@ -1055,6 +1055,61 @@ async function handleQuotePackingServices(req, res) {
     });
 
     gather.say("Would you like help with packing? Press 1 for yes, or press 2 for no.");
+
+    conversations.set(CallSid, conv);
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Ask about Full Value Protection insurance
+ */
+async function handleQuoteInsurance(req, res) {
+    const { CallSid, SpeechResult, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    // Save packing preference
+    const needsPacking = Digits === '1';
+    conv.data.needsPacking = needsPacking;
+
+    if (needsPacking) {
+        const packingTimeline = await generateNaturalResponse(
+            'Customer wants packing services',
+            'Briefly acknowledge packing will be scheduled 1-2 days before move. Keep it under 2 sentences.'
+        );
+        if (packingTimeline) {
+            response.say(packingTimeline);
+            response.pause({ length: 1 });
+        }
+    }
+
+    // Use Claude to explain FVP insurance naturally
+    const fvpIntro = await generateNaturalResponse(
+        'Explaining Full Value Protection insurance option',
+        'Briefly explain FVP insurance protects the full value of items vs basic coverage. Keep it educational and under 3 sentences.'
+    );
+
+    if (fvpIntro) {
+        response.say(fvpIntro);
+        response.pause({ length: 1 });
+    } else {
+        response.say("One more thing. We offer Full Value Protection insurance. This covers the full replacement value of your items, unlike our basic coverage which is just 60 cents per pound.");
+        response.pause({ length: 1 });
+    }
+
+    const gather = response.gather({
+        input: 'dtmf speech',
+        action: '/api/twilio/quote-calculate-distance',
+        method: 'POST',
+        numDigits: 1,
+        speechTimeout: 'auto',
+        timeout: 10
+    });
+
+    gather.say("Would you like Full Value Protection insurance? Press 1 for yes, or press 2 for basic coverage.");
 
     conversations.set(CallSid, conv);
     res.type('text/xml');
@@ -1071,22 +1126,30 @@ async function handleQuoteCalculateDistance(req, res) {
 
     const conv = conversations.get(CallSid);
 
-    // Save packing preference
-    const needsPacking = Digits === '1';
-    conv.data.needsPacking = needsPacking;
+    // Save FVP insurance preference
+    const wantsFVP = Digits === '1';
+    conv.data.wantsFVP = wantsFVP;
 
-    if (needsPacking) {
-        // Use Claude to acknowledge and explain packing timeline
-        const packingTimeline = await generateNaturalResponse(
-            'Customer wants packing services',
-            'Briefly acknowledge and mention packing is typically scheduled 1-2 days before the move date. Keep it under 2 sentences.'
+    if (wantsFVP) {
+        // Estimate FVP value based on bedroom count (typical household values)
+        const totalBedrooms = (conv.data.pickupBedrooms || 2) + (conv.data.deliveryBedrooms || 2);
+        const avgBedrooms = Math.ceil(totalBedrooms / 2);
+
+        // Typical values: 1BR=$15k, 2BR=$25k, 3BR=$40k, 4BR=$60k, 5BR=$80k
+        const estimatedValues = { 1: 15000, 2: 25000, 3: 40000, 4: 60000, 5: 80000 };
+        conv.data.fvpValue = estimatedValues[Math.min(avgBedrooms, 5)] || 25000;
+
+        // Use Claude to acknowledge FVP selection
+        const fvpConfirm = await generateNaturalResponse(
+            `Customer selected Full Value Protection for estimated ${avgBedrooms}-bedroom home`,
+            'Briefly acknowledge their smart choice for full protection. Keep it reassuring and under 2 sentences.'
         );
 
-        if (packingTimeline) {
-            response.say(packingTimeline);
+        if (fvpConfirm) {
+            response.say(fvpConfirm);
             response.pause({ length: 1 });
         } else {
-            response.say("Great! We'll schedule the packing for a day or two before your move date.");
+            response.say("Great choice! That gives you full peace of mind.");
             response.pause({ length: 1 });
         }
     }
@@ -1184,12 +1247,13 @@ async function handleQuoteFinalize(req, res) {
                 hotTub: false,
                 safe: false
             } : {},
-            // Packing services in the format the API expects
+            // Packing and insurance services in the format the API expects
             additionalServices: {
                 packing: conv.data.needsPacking || false,
                 packingMaterials: {},
                 movingBlankets: false,
-                fvp: false
+                fvp: conv.data.wantsFVP || false,
+                fvpValue: conv.data.fvpValue || 0
             }
         };
 
@@ -1769,6 +1833,7 @@ module.exports = {
     handleQuoteHeavyItems,
     handleQuoteHeavyItemsDetails,
     handleQuotePackingServices,
+    handleQuoteInsurance,
     handleQuoteCalculateDistance,
     handleQuoteFinalize,
     handleQuoteDecision,
