@@ -269,14 +269,7 @@ function handleIncomingCall(req, res) {
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const response = new VoiceResponse();
 
-    // ENABLE CALL RECORDING
-    response.record({
-        recordingStatusCallback: '/api/twilio/recording-complete',
-        recordingStatusCallbackMethod: 'POST',
-        timeout: 10,
-        transcribe: false,
-        maxLength: 3600 // 1 hour max
-    });
+    console.log(`📞 Incoming call from ${From}, CallSid: ${CallSid}`);
 
     // Initialize conversation
     conversations.set(CallSid, {
@@ -288,7 +281,7 @@ function handleIncomingCall(req, res) {
         conversationHistory: []
     });
 
-    // Use Claude for natural greeting
+    // Greeting
     response.say({
         voice: 'Polly.Joanna'
     }, "Hi! Thanks for calling Worry Free Moving. This is Sarah.");
