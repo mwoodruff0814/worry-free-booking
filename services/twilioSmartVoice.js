@@ -689,34 +689,49 @@ async function handleQuoteFinalize(req, res) {
     response.pause({ length: 2 });
 
     try {
-        // Use EXACT pricing API from server
+        // Determine estimated hours based on distance and drive time
+        const driveHours = (conv.data.driveTime || 20) / 60;
+        const estimatedHours = conv.data.serviceCategory === 'moving'
+            ? Math.max(3, 3 + driveHours) // Moving: 3 hours base + drive time
+            : Math.max(2, 2 + (driveHours / 2)); // Labor: 2 hours base + half drive time
+
+        // Use EXACT pricing API format from server
         const quoteRequest = {
             serviceType: conv.data.serviceCategory === 'moving'
-                ? `${crewSize}-person-crew`
+                ? `${crewSize}-Person Crew Moving`  // Match exact format: "2-Person Crew Moving"
                 : 'Labor Only',
-            distance: conv.data.distance,
-            driveTime: conv.data.driveTime,
-            estimatedHours: 3, // Default for moving
+            distance: conv.data.distance || 10,
+            driveTime: conv.data.driveTime || 20,
+            estimatedHours: Math.round(estimatedHours),
             laborCrewSize: conv.data.serviceCategory === 'labor' ? crewSize : null,
             pickupDetails: { homeType: 'house', stairs: 0 },
             dropoffDetails: { homeType: 'house', stairs: 0 }
         };
 
+        console.log('📊 Requesting quote:', JSON.stringify(quoteRequest, null, 2));
+
         // Call real pricing API
         const quoteResponse = await axios.post(`${BASE_URL}/api/calculate-estimate`, quoteRequest);
         const quote = quoteResponse.data;
 
-        // Save quote
+        console.log('💰 Quote received:', JSON.stringify(quote, null, 2));
+
+        // Save quote and additional data for emails/bookings
         conv.data.quote = quote;
+        conv.data.estimatedTotal = quote.total;
+        conv.data.estimatedHours = quote.estimatedTime || estimatedHours;
+        conv.data.numMovers = crewSize;
+        conv.data.serviceType = quoteRequest.serviceType;
         conversations.set(CallSid, conv);
 
         // Present quote
         const total = Math.round(quote.total);
+        const hours = Math.round(quote.estimatedTime || estimatedHours);
 
         if (conv.data.serviceCategory === 'moving') {
             response.say(`Great news! Your estimated total is $${total} for ${crewSize} movers with a truck.`);
             response.pause({ length: 1 });
-            response.say(`This includes approximately ${Math.round(quote.estimatedTime)} hours of service. The final cost depends on actual time needed.`);
+            response.say(`This includes approximately ${hours} hours of service. The final cost depends on actual time needed.`);
         } else {
             response.say(`Your estimated total is $${total} for ${crewSize} helpers.`);
             response.pause({ length: 1 });
