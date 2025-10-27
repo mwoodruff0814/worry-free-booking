@@ -2300,8 +2300,52 @@ app.post('/api/twilio/quote-pickup-address', (req, res) => {
     twilioVoice.handleQuotePickupAddress(req, res);
 });
 
+app.post('/api/twilio/quote-pickup-home-type', (req, res) => {
+    twilioVoice.handleQuotePickupHomeType(req, res);
+});
+
+app.post('/api/twilio/quote-pickup-bedrooms', (req, res) => {
+    twilioVoice.handleQuotePickupBedrooms(req, res);
+});
+
+app.post('/api/twilio/quote-pickup-stairs', (req, res) => {
+    twilioVoice.handleQuotePickupStairs(req, res);
+});
+
 app.post('/api/twilio/quote-delivery-address', (req, res) => {
     twilioVoice.handleQuoteDeliveryAddress(req, res);
+});
+
+app.post('/api/twilio/quote-delivery-home-type', (req, res) => {
+    twilioVoice.handleQuoteDeliveryHomeType(req, res);
+});
+
+app.post('/api/twilio/quote-delivery-bedrooms', (req, res) => {
+    twilioVoice.handleQuoteDeliveryBedrooms(req, res);
+});
+
+app.post('/api/twilio/quote-delivery-stairs', (req, res) => {
+    twilioVoice.handleQuoteDeliveryStairs(req, res);
+});
+
+app.post('/api/twilio/quote-appliances', (req, res) => {
+    twilioVoice.handleQuoteAppliances(req, res);
+});
+
+app.post('/api/twilio/quote-appliances-details', (req, res) => {
+    twilioVoice.handleQuoteAppliancesDetails(req, res);
+});
+
+app.post('/api/twilio/quote-heavy-items', (req, res) => {
+    twilioVoice.handleQuoteHeavyItems(req, res);
+});
+
+app.post('/api/twilio/quote-heavy-items-details', (req, res) => {
+    twilioVoice.handleQuoteHeavyItemsDetails(req, res);
+});
+
+app.post('/api/twilio/quote-packing-services', (req, res) => {
+    twilioVoice.handleQuotePackingServices(req, res);
 });
 
 app.post('/api/twilio/quote-calculate-distance', (req, res) => {
@@ -2319,6 +2363,11 @@ app.post('/api/twilio/quote-decision', (req, res) => {
 // Email quote endpoint
 app.post('/api/twilio/email-quote-send', (req, res) => {
     twilioVoice.handleEmailQuoteSend(req, res);
+});
+
+// SMS booking link endpoint (fast online booking)
+app.post('/api/twilio/sms-booking-link', (req, res) => {
+    twilioVoice.handleSMSBookingLink(req, res);
 });
 
 // Booking flow endpoints

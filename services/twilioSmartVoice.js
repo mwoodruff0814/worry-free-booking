@@ -553,7 +553,7 @@ function handleQuotePickupAddress(req, res) {
 
     const gather = response.gather({
         input: 'speech',
-        action: '/api/twilio/quote-delivery-address',
+        action: '/api/twilio/quote-pickup-home-type',
         method: 'POST',
         speechTimeout: 'auto',
         timeout: 15
@@ -566,9 +566,9 @@ function handleQuotePickupAddress(req, res) {
 }
 
 /**
- * Get delivery address with AI parsing
+ * Ask pickup home type - with Claude explanation
  */
-async function handleQuoteDeliveryAddress(req, res) {
+async function handleQuotePickupHomeType(req, res) {
     const { CallSid, SpeechResult } = req.body;
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const response = new VoiceResponse();
@@ -589,15 +589,30 @@ async function handleQuoteDeliveryAddress(req, res) {
         conv.data.pickupAddress = SpeechResult;
     }
 
+    // Use Claude to generate natural transition
+    const naturalResponse = await generateNaturalResponse(
+        `Customer provided pickup address: ${conv.data.pickupAddress}`,
+        'Acknowledge the address naturally and explain why you need to know the home type (helps estimate crew size and time)'
+    );
+
+    if (naturalResponse.success) {
+        response.say(naturalResponse.reply);
+    } else {
+        response.say("Perfect. This helps me figure out the right crew size for you.");
+    }
+
+    response.pause({ length: 1 });
+
     const gather = response.gather({
-        input: 'speech',
-        action: '/api/twilio/quote-calculate-distance',
+        input: 'dtmf speech',
+        action: '/api/twilio/quote-pickup-bedrooms',
         method: 'POST',
+        numDigits: 1,
         speechTimeout: 'auto',
-        timeout: 15
+        timeout: 10
     });
 
-    gather.say("Perfect. And where are you moving to? Please say the delivery address.");
+    gather.say("What type of place are you moving FROM? Press 1 for a house. Press 2 for an apartment or condo. Or press 3 for a storage unit.");
 
     conversations.set(CallSid, conv);
     res.type('text/xml');
@@ -605,9 +620,122 @@ async function handleQuoteDeliveryAddress(req, res) {
 }
 
 /**
- * Calculate distance THEN ask crew size
+ * Ask pickup bedrooms - Claude suggests crew size
  */
-async function handleQuoteCalculateDistance(req, res) {
+async function handleQuotePickupBedrooms(req, res) {
+    const { CallSid, SpeechResult, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    // Parse home type
+    const homeTypeChoice = Digits || parseHomeTypeChoice(SpeechResult);
+    if (homeTypeChoice === '1') conv.data.pickupHomeType = 'house';
+    else if (homeTypeChoice === '2') conv.data.pickupHomeType = 'apartment';
+    else if (homeTypeChoice === '3') conv.data.pickupHomeType = 'storage';
+    else conv.data.pickupHomeType = 'house';
+
+    const gather = response.gather({
+        input: 'dtmf speech',
+        action: '/api/twilio/quote-pickup-stairs',
+        method: 'POST',
+        numDigits: 1,
+        speechTimeout: 'auto',
+        timeout: 10
+    });
+
+    gather.say("How many bedrooms at this location? Press 1 for studio or 1 bedroom. Press 2 for 2 bedrooms. Press 3 for 3 bedrooms. Press 4 for 4 bedrooms. Or press 5 for 5 or more.");
+
+    conversations.set(CallSid, conv);
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Ask pickup stairs - with fee warning from Claude
+ */
+async function handleQuotePickupStairs(req, res) {
+    const { CallSid, SpeechResult, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+    const bedrooms = parseInt(Digits) || 2;
+    conv.data.pickupBedrooms = bedrooms;
+
+    // Use Claude to provide personalized crew recommendation
+    const crewAdvice = await generateNaturalResponse(
+        `Customer has ${bedrooms} bedrooms at pickup location, home type: ${conv.data.pickupHomeType}`,
+        `Give brief, friendly advice about recommended crew size for a ${bedrooms} bedroom ${conv.data.pickupHomeType}. Keep it under 2 sentences.`
+    );
+
+    if (crewAdvice.success && bedrooms >= 3) {
+        response.say(crewAdvice.reply);
+        response.pause({ length: 1 });
+    }
+
+    const gather = response.gather({
+        input: 'dtmf speech',
+        action: '/api/twilio/quote-delivery-address',
+        method: 'POST',
+        numDigits: 1,
+        speechTimeout: 'auto',
+        timeout: 10
+    });
+
+    gather.say("How many flights of stairs at the pickup location? Press 0 for no stairs or ground floor. Press 1 for one flight. Press 2 for two flights. Or press 3 for three or more flights.");
+
+    conversations.set(CallSid, conv);
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Get delivery address
+ */
+async function handleQuoteDeliveryAddress(req, res) {
+    const { CallSid, SpeechResult, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    // Save pickup stairs
+    const pickupStairs = parseInt(Digits) || 0;
+    conv.data.pickupStairs = pickupStairs;
+
+    // Claude gives stair fee warning if applicable
+    if (pickupStairs > 0) {
+        const stairWarning = await generateNaturalResponse(
+            `Customer has ${pickupStairs} flights of stairs at pickup`,
+            'Briefly mention there is a stair fee (keep it friendly, under 1 sentence)'
+        );
+        if (stairWarning.success) {
+            response.say(stairWarning.reply);
+            response.pause({ length: 1 });
+        }
+    }
+
+    const gather = response.gather({
+        input: 'speech',
+        action: '/api/twilio/quote-delivery-home-type',
+        method: 'POST',
+        speechTimeout: 'auto',
+        timeout: 15
+    });
+
+    gather.say("Great. Now, where are you moving TO? Please say the delivery address.");
+
+    conversations.set(CallSid, conv);
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Ask delivery home type
+ */
+async function handleQuoteDeliveryHomeType(req, res) {
     const { CallSid, SpeechResult } = req.body;
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const response = new VoiceResponse();
@@ -628,7 +756,342 @@ async function handleQuoteCalculateDistance(req, res) {
         conv.data.deliveryAddress = SpeechResult;
     }
 
-    response.say("Great! Let me calculate the distance.");
+    const gather = response.gather({
+        input: 'dtmf speech',
+        action: '/api/twilio/quote-delivery-bedrooms',
+        method: 'POST',
+        numDigits: 1,
+        speechTimeout: 'auto',
+        timeout: 10
+    });
+
+    gather.say("Got it. What type of place are you moving TO? Press 1 for a house. Press 2 for an apartment or condo. Or press 3 for a storage unit.");
+
+    conversations.set(CallSid, conv);
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Ask delivery bedrooms
+ */
+function handleQuoteDeliveryBedrooms(req, res) {
+    const { CallSid, SpeechResult, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    // Parse home type
+    const homeTypeChoice = Digits || parseHomeTypeChoice(SpeechResult);
+    if (homeTypeChoice === '1') conv.data.deliveryHomeType = 'house';
+    else if (homeTypeChoice === '2') conv.data.deliveryHomeType = 'apartment';
+    else if (homeTypeChoice === '3') conv.data.deliveryHomeType = 'storage';
+    else conv.data.deliveryHomeType = 'house';
+
+    const gather = response.gather({
+        input: 'dtmf speech',
+        action: '/api/twilio/quote-delivery-stairs',
+        method: 'POST',
+        numDigits: 1,
+        speechTimeout: 'auto',
+        timeout: 10
+    });
+
+    gather.say("How many bedrooms at the destination? Press 1 for studio or 1 bedroom. Press 2 for 2 bedrooms. Press 3 for 3 bedrooms. Press 4 for 4 bedrooms. Or press 5 for 5 or more.");
+
+    conversations.set(CallSid, conv);
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Ask delivery stairs - then flow to appliances
+ */
+async function handleQuoteDeliveryStairs(req, res) {
+    const { CallSid, SpeechResult, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+    conv.data.deliveryBedrooms = parseInt(Digits) || 2;
+
+    const gather = response.gather({
+        input: 'dtmf speech',
+        action: '/api/twilio/quote-appliances',
+        method: 'POST',
+        numDigits: 1,
+        speechTimeout: 'auto',
+        timeout: 10
+    });
+
+    gather.say("How many flights of stairs at the delivery location? Press 0 for no stairs. Press 1 for one flight. Press 2 for two flights. Or press 3 for three or more flights.");
+
+    conversations.set(CallSid, conv);
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Ask about appliances - with Claude-powered disconnection warning
+ */
+async function handleQuoteAppliances(req, res) {
+    const { CallSid, SpeechResult, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    // Save delivery stairs
+    const deliveryStairs = parseInt(Digits) || 0;
+    conv.data.deliveryStairs = deliveryStairs;
+
+    // Claude gives stair fee warning if applicable
+    if (deliveryStairs > 0) {
+        const stairWarning = await generateNaturalResponse(
+            `Customer has ${deliveryStairs} flights of stairs at delivery`,
+            'Briefly mention there is a stair fee (keep it friendly, under 1 sentence)'
+        );
+        if (stairWarning) {
+            response.say(stairWarning);
+            response.pause({ length: 1 });
+        }
+    }
+
+    // Use Claude to naturally transition to appliances question
+    const applianceIntro = await generateNaturalResponse(
+        'Moving on to discuss what items they are moving',
+        'Explain briefly why you are asking about appliances (helps with time estimate and preparation). Keep it natural and under 2 sentences.'
+    );
+
+    if (applianceIntro) {
+        response.say(applianceIntro);
+        response.pause({ length: 1 });
+    } else {
+        response.say("Now let me ask about what you're moving so we can prepare properly.");
+        response.pause({ length: 1 });
+    }
+
+    const gather = response.gather({
+        input: 'dtmf speech',
+        action: '/api/twilio/quote-appliances-details',
+        method: 'POST',
+        numDigits: 1,
+        speechTimeout: 'auto',
+        timeout: 10
+    });
+
+    gather.say("Do you have any large appliances to move? Things like a washer, dryer, refrigerator, stove, or freezer? Press 1 for yes, or press 2 for no.");
+
+    conversations.set(CallSid, conv);
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Appliances details and CRITICAL disconnection warning
+ */
+async function handleQuoteAppliancesDetails(req, res) {
+    const { CallSid, SpeechResult, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    const hasAppliances = Digits === '1';
+    conv.data.hasAppliances = hasAppliances;
+
+    if (hasAppliances) {
+        // Initialize appliances array if not exists
+        conv.data.appliances = [];
+
+        // Use Claude to deliver the critical disconnection warning
+        const disconnectionWarning = await generateNaturalResponse(
+            'Customer has appliances to move',
+            'Give CRITICAL warning: All gas, water, and electrical connections MUST be disconnected BEFORE movers arrive. Movers do NOT disconnect utilities. Be firm but friendly. Ask if they understand this requirement.'
+        );
+
+        if (disconnectionWarning) {
+            response.say(disconnectionWarning);
+        } else {
+            // Fallback warning
+            response.say("This is very important. All gas lines, water lines, and electrical connections must be completely disconnected before we arrive. We don't disconnect utilities. This is critical for safety and to stay on schedule.");
+        }
+
+        response.pause({ length: 1 });
+
+        const gather = response.gather({
+            input: 'dtmf speech',
+            action: '/api/twilio/quote-heavy-items',
+            method: 'POST',
+            numDigits: 1,
+            speechTimeout: 'auto',
+            timeout: 10
+        });
+
+        gather.say("Do you understand that all appliances must be disconnected before we arrive? Press 1 for yes.");
+    } else {
+        // No appliances, move to heavy items
+        response.redirect('/api/twilio/quote-heavy-items');
+    }
+
+    conversations.set(CallSid, conv);
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Ask about heavy/special items with Claude-powered fee warnings
+ */
+async function handleQuoteHeavyItems(req, res) {
+    const { CallSid, SpeechResult, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    // Customer confirmed they understand appliance disconnection
+    if (Digits === '1') {
+        conv.data.applianceDisconnectionConfirmed = true;
+    }
+
+    // Use Claude to introduce heavy items question
+    const heavyItemsIntro = await generateNaturalResponse(
+        'Need to ask about special heavy items that require extra care',
+        'Naturally transition to asking about heavy items like pianos or pool tables. Explain these need special handling. Keep it brief.'
+    );
+
+    if (heavyItemsIntro) {
+        response.say(heavyItemsIntro);
+        response.pause({ length: 1 });
+    }
+
+    const gather = response.gather({
+        input: 'dtmf speech',
+        action: '/api/twilio/quote-heavy-items-details',
+        method: 'POST',
+        numDigits: 1,
+        speechTimeout: 'auto',
+        timeout: 10
+    });
+
+    gather.say("Do you have any heavy specialty items? Things like a piano, pool table, or gun safe? Press 1 for yes, or press 2 for no.");
+
+    conversations.set(CallSid, conv);
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Heavy items details with fee warnings from Claude
+ */
+async function handleQuoteHeavyItemsDetails(req, res) {
+    const { CallSid, SpeechResult, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    const hasHeavyItems = Digits === '1';
+    conv.data.hasHeavyItems = hasHeavyItems;
+
+    if (hasHeavyItems) {
+        conv.data.heavyItems = [];
+
+        // Use Claude to warn about heavy item fees naturally
+        const heavyItemWarning = await generateNaturalResponse(
+            'Customer has heavy specialty items to move',
+            'Briefly mention that items like pianos and pool tables have additional fees due to special handling. Keep it friendly and under 2 sentences.'
+        );
+
+        if (heavyItemWarning) {
+            response.say(heavyItemWarning);
+            response.pause({ length: 1 });
+        } else {
+            response.say("Just so you know, specialty items like pianos and pool tables do have additional fees because they require extra care and equipment.");
+            response.pause({ length: 1 });
+        }
+    }
+
+    // Move to packing services
+    response.redirect('/api/twilio/quote-packing-services');
+
+    conversations.set(CallSid, conv);
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Ask about packing services with Claude explanation
+ */
+async function handleQuotePackingServices(req, res) {
+    const { CallSid, SpeechResult, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    // Use Claude to introduce packing services
+    const packingIntro = await generateNaturalResponse(
+        'Asking if customer needs help packing before their move',
+        'Explain that packing is usually done 1-2 days before the move. Keep it natural and helpful, under 2 sentences.'
+    );
+
+    if (packingIntro) {
+        response.say(packingIntro);
+        response.pause({ length: 1 });
+    } else {
+        response.say("One last thing. We can help you pack too, usually a day or two before your move.");
+        response.pause({ length: 1 });
+    }
+
+    const gather = response.gather({
+        input: 'dtmf speech',
+        action: '/api/twilio/quote-calculate-distance',
+        method: 'POST',
+        numDigits: 1,
+        speechTimeout: 'auto',
+        timeout: 10
+    });
+
+    gather.say("Would you like help with packing? Press 1 for yes, or press 2 for no.");
+
+    conversations.set(CallSid, conv);
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Calculate distance THEN ask crew size
+ */
+async function handleQuoteCalculateDistance(req, res) {
+    const { CallSid, SpeechResult, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    // Save packing preference
+    const needsPacking = Digits === '1';
+    conv.data.needsPacking = needsPacking;
+
+    if (needsPacking) {
+        // Use Claude to acknowledge and explain packing timeline
+        const packingTimeline = await generateNaturalResponse(
+            'Customer wants packing services',
+            'Briefly acknowledge and mention packing is typically scheduled 1-2 days before the move date. Keep it under 2 sentences.'
+        );
+
+        if (packingTimeline) {
+            response.say(packingTimeline);
+            response.pause({ length: 1 });
+        } else {
+            response.say("Great! We'll schedule the packing for a day or two before your move date.");
+            response.pause({ length: 1 });
+        }
+    }
+
+    response.say("Let me calculate the distance for your move.");
     response.pause({ length: 2 });
 
     try {
@@ -695,7 +1158,7 @@ async function handleQuoteFinalize(req, res) {
             ? Math.max(3, 3 + driveHours) // Moving: 3 hours base + drive time
             : Math.max(2, 2 + (driveHours / 2)); // Labor: 2 hours base + half drive time
 
-        // Use EXACT pricing API format from server
+        // Use EXACT pricing API format from server with ALL collected data
         const quoteRequest = {
             serviceType: conv.data.serviceCategory === 'moving'
                 ? `${crewSize}-Person Crew Moving`  // Match exact format: "2-Person Crew Moving"
@@ -704,8 +1167,30 @@ async function handleQuoteFinalize(req, res) {
             driveTime: conv.data.driveTime || 20,
             estimatedHours: Math.round(estimatedHours),
             laborCrewSize: conv.data.serviceCategory === 'labor' ? crewSize : null,
-            pickupDetails: { homeType: 'house', stairs: 0 },
-            dropoffDetails: { homeType: 'house', stairs: 0 }
+            pickupDetails: {
+                homeType: conv.data.pickupHomeType || 'house',
+                bedrooms: conv.data.pickupBedrooms || 2,
+                stairs: conv.data.pickupStairs || 0
+            },
+            dropoffDetails: {
+                homeType: conv.data.deliveryHomeType || 'house',
+                bedrooms: conv.data.deliveryBedrooms || 2,
+                stairs: conv.data.deliveryStairs || 0
+            },
+            // Heavy items in the format the API expects
+            inventory: conv.data.hasHeavyItems ? {
+                piano: true,  // Assume piano if heavy items mentioned (API charges $200 + 45min)
+                poolTable: false,
+                hotTub: false,
+                safe: false
+            } : {},
+            // Packing services in the format the API expects
+            additionalServices: {
+                packing: conv.data.needsPacking || false,
+                packingMaterials: {},
+                movingBlankets: false,
+                fvp: false
+            }
         };
 
         console.log('📊 Requesting quote:', JSON.stringify(quoteRequest, null, 2));
@@ -749,7 +1234,7 @@ async function handleQuoteFinalize(req, res) {
             timeout: 10
         });
 
-        gather.say("Would you like to book this move? Press 1 to schedule now. Press 2 to receive this quote by email. Or press 9 to speak with someone.");
+        gather.say("Would you like to book this move? Press 1 to schedule now over the phone. Press 2 to receive this quote by email. Press 3 to get a text with a fast online booking link. Or press 9 to speak with someone.");
 
     } catch (error) {
         console.error('Quote calculation error:', error);
@@ -773,7 +1258,7 @@ async function handleQuoteDecision(req, res) {
     const choice = Digits || (SpeechResult ? parseDecisionChoice(SpeechResult) : null);
 
     if (choice === '1') {
-        // Book now
+        // Book now (phone)
         response.say("Excellent! Let me get some information to complete your booking.");
         response.redirect('/api/twilio/booking-start');
     } else if (choice === '2') {
@@ -786,6 +1271,10 @@ async function handleQuoteDecision(req, res) {
             timeout: 15
         });
         gather.say("Sure! What's your email address? Please say it slowly.");
+    } else if (choice === '3') {
+        // SMS with booking link (faster option)
+        response.say("Perfect! I'll text you a link where you can book in just a few taps. Much faster!");
+        response.redirect('/api/twilio/sms-booking-link');
     } else if (choice === '9') {
         response.say("Let me transfer you now.");
         response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
@@ -833,6 +1322,69 @@ async function handleEmailQuoteSend(req, res) {
         response.say(`Perfect! I've sent your quote to ${email}. Thanks for calling Worry Free Moving!`);
     } catch (error) {
         response.say("I'm having trouble sending the email. Let me connect you with someone who can help.");
+        response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
+    }
+
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Send SMS with fast online booking link
+ */
+async function handleSMSBookingLink(req, res) {
+    const { CallSid, From } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    try {
+        // Create booking link with quote data
+        const bookingUrl = `https://worryfreemovers.com/public-booking?` +
+            `service=${encodeURIComponent(conv.data.serviceCategory)}` +
+            `&from=${encodeURIComponent(conv.data.pickupAddress)}` +
+            `&to=${encodeURIComponent(conv.data.deliveryAddress)}` +
+            `&distance=${conv.data.distance}` +
+            `&crew=${conv.data.crewSize}` +
+            `&estimate=${Math.round(conv.data.estimatedTotal)}` +
+            `&phone=${encodeURIComponent(From)}`;
+
+        // Send SMS with booking link
+        const message = `Hi! Here's your moving quote from Worry Free Moving:\n\n` +
+            `📦 Service: ${conv.data.serviceCategory === 'moving' ? 'Movers + Truck' : 'Labor Only'}\n` +
+            `📍 Distance: ${Math.round(conv.data.distance)} miles\n` +
+            `👥 Crew: ${conv.data.crewSize} movers\n` +
+            `💰 Estimate: $${Math.round(conv.data.estimatedTotal)}\n\n` +
+            `Book online in 2 minutes: ${bookingUrl}\n\n` +
+            `Worry Free Moving\n(330) 661-9985`;
+
+        await twilioClient.messages.create({
+            body: message,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: From
+        });
+
+        console.log(`📱 Booking link SMS sent to ${From}`);
+
+        // Use Claude to generate natural confirmation
+        const confirmation = await generateNaturalResponse(
+            'Just sent customer a text with online booking link',
+            'Confirm that the text was sent and encourage them to book soon. Mention its fast and easy. Keep it friendly and brief.'
+        );
+
+        if (confirmation) {
+            response.say(confirmation);
+        } else {
+            response.say("Perfect! I just sent you a text with your quote and a link to book online. It's super quick - just takes a couple minutes!");
+        }
+
+        response.pause({ length: 1 });
+        response.say("Thanks for calling Worry Free Moving! Have a great day!");
+
+    } catch (error) {
+        console.error('Error sending booking link SMS:', error);
+        response.say("I'm having trouble sending the text. Let me connect you with someone who can help.");
         response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
     }
 
@@ -1145,6 +1697,7 @@ function parseDecisionChoice(speech) {
     const lower = speech.toLowerCase();
     if (lower.includes('book') || lower.includes('schedule') || lower.includes('yes')) return '1';
     if (lower.includes('email') || lower.includes('send')) return '2';
+    if (lower.includes('text') || lower.includes('sms') || lower.includes('link') || lower.includes('online')) return '3';
     if (lower.includes('speak') || lower.includes('person') || lower.includes('agent')) return '9';
     return null;
 }
@@ -1170,6 +1723,14 @@ function parseTimeSlotChoice(speech) {
     return null;
 }
 
+function parseHomeTypeChoice(speech) {
+    const lower = speech.toLowerCase();
+    if (lower.includes('house') || lower.includes('home')) return '1';
+    if (lower.includes('apartment') || lower.includes('condo') || lower.includes('flat')) return '2';
+    if (lower.includes('storage') || lower.includes('unit')) return '3';
+    return null;
+}
+
 module.exports = {
     handleIncomingCall,
     handleRecordingComplete,
@@ -1177,11 +1738,23 @@ module.exports = {
     handleMainMenu,
     handleQuoteServiceType,
     handleQuotePickupAddress,
+    handleQuotePickupHomeType,
+    handleQuotePickupBedrooms,
+    handleQuotePickupStairs,
     handleQuoteDeliveryAddress,
+    handleQuoteDeliveryHomeType,
+    handleQuoteDeliveryBedrooms,
+    handleQuoteDeliveryStairs,
+    handleQuoteAppliances,
+    handleQuoteAppliancesDetails,
+    handleQuoteHeavyItems,
+    handleQuoteHeavyItemsDetails,
+    handleQuotePackingServices,
     handleQuoteCalculateDistance,
     handleQuoteFinalize,
     handleQuoteDecision,
     handleEmailQuoteSend,
+    handleSMSBookingLink,
     handleBookingStart,
     handleBookingEmail,
     handleBookingDate,
