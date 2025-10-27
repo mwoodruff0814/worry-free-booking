@@ -1223,6 +1223,35 @@ async function handleQuoteFinalize(req, res) {
             response.say(`This includes labor and a travel fee for the ${Math.round(conv.data.distance)} mile distance.`);
         }
 
+        // Automatically send quote via SMS
+        try {
+            const quoteMessage = `Your Worry Free Moving Quote:\n\n` +
+                `📦 Service: ${conv.data.serviceCategory === 'moving' ? `${crewSize}-Person Crew + Truck` : 'Labor Only'}\n` +
+                `📍 From: ${conv.data.pickupAddress}\n` +
+                `📍 To: ${conv.data.deliveryAddress}\n` +
+                `📏 Distance: ${Math.round(conv.data.distance)} miles\n` +
+                `👥 Crew: ${crewSize} movers\n` +
+                `⏱️ Est. Time: ${hours} hours\n` +
+                `💰 Estimated Total: $${total}\n\n` +
+                `This is an estimate. Final cost based on actual time.\n\n` +
+                `Ready to book? Press 1\n` +
+                `Worry Free Moving\n(330) 661-9985`;
+
+            await twilioClient.messages.create({
+                body: quoteMessage,
+                from: process.env.TWILIO_PHONE_NUMBER,
+                to: conv.customerPhone
+            });
+
+            console.log(`📱 Quote SMS sent to ${conv.customerPhone}`);
+
+            response.pause({ length: 1 });
+            response.say("I just texted you a copy of your quote for reference.");
+        } catch (smsError) {
+            console.error('Error sending quote SMS:', smsError);
+            // Don't fail the call if SMS fails, just continue
+        }
+
         response.pause({ length: 1 });
 
         const gather = response.gather({
