@@ -1295,8 +1295,8 @@ app.post('/api/services', async (req, res) => {
 app.post('/api/calculate-estimate', async (req, res) => {
     try {
         const bookingData = req.body;
-        const servicesData = await fs.readFile(SERVICES_FILE, 'utf8');
-        const services = JSON.parse(servicesData);
+        // Read from MongoDB (same source as admin portal) instead of file
+        const services = await getServicesConfig();
 
         let subtotal = 0;
         let laborCost = 0;
