@@ -1,6 +1,6 @@
 ---
 name: worry-free-pricing
-description: Accurate pricing calculations for Worry Free Moving following exact pricing model. Calculates distance-based dynamic hourly rates, crew size pricing, service charges, and travel fees. Use when calculating moving quotes, estimating costs, or validating pricing accuracy.
+description: Calculate moving quotes using exact pricing model with distance-based rates, crew size adjustments, and service charges. Use for cost estimates and pricing validation.
 ---
 
 # Worry Free Moving - Pricing Calculator

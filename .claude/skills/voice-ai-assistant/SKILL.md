@@ -1,6 +1,6 @@
 ---
 name: voice-ai-assistant
-description: Extract structured data from natural speech (addresses, dates, names, emails), generate human-like conversational responses, detect customer intent, validate data, and handle multi-turn conversations. Use when building conversational AI systems or processing natural language from customers.
+description: Extract data from speech, generate natural responses, detect intent, validate data. Use for conversational AI and natural language processing.
 ---
 
 # Voice AI Assistant

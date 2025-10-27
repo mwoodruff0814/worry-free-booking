@@ -1,6 +1,6 @@
 ---
 name: worry-free-moving-agent
-description: Complete AI receptionist agent (Sarah) for Worry Free Moving. Handles call flow from greeting through booking, including service selection, address collection, distance calculation, pricing quotes, and calendar-aware scheduling. Use when implementing voice AI phone system for moving company operations.
+description: AI receptionist (Sarah) for Worry Free Moving. Handles calls, quotes, and bookings with full call flow protocol. Use for voice phone system operations.
 ---
 
 # Worry Free Moving - Voice AI Agent

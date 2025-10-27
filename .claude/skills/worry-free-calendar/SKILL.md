@@ -1,6 +1,6 @@
 ---
 name: worry-free-calendar
-description: Calendar availability checking and booking creation for Worry Free Moving. Manages Google Calendar integration, checks morning/afternoon slot availability, prevents double-booking, creates MongoDB bookings, and sends confirmation emails and SMS payment links. Use when scheduling moves or checking availability.
+description: Check availability and create bookings with Google Calendar integration. Manages morning/afternoon slots and prevents double-booking. Use for scheduling moves.
 ---
 
 # Worry Free Moving - Calendar & Scheduling
