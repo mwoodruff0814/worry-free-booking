@@ -1196,22 +1196,40 @@ async function handleQuoteFinalize(req, res) {
         console.log('📊 Requesting quote:', JSON.stringify(quoteRequest, null, 2));
 
         // Call real pricing API
-        const quoteResponse = await axios.post(`${BASE_URL}/api/calculate-estimate`, quoteRequest);
+        let quoteResponse;
+        try {
+            quoteResponse = await axios.post(`${BASE_URL}/api/calculate-estimate`, quoteRequest);
+            console.log('✅ Quote API responded:', quoteResponse.status);
+        } catch (apiError) {
+            console.error('❌ Quote API Error:', {
+                status: apiError.response?.status,
+                statusText: apiError.response?.statusText,
+                data: apiError.response?.data,
+                message: apiError.message
+            });
+            throw apiError;
+        }
+
         const quote = quoteResponse.data;
+
+        if (!quote || !quote.estimate) {
+            console.error('❌ Invalid quote response:', quote);
+            throw new Error('Invalid quote response from API');
+        }
 
         console.log('💰 Quote received:', JSON.stringify(quote, null, 2));
 
         // Save quote and additional data for emails/bookings
-        conv.data.quote = quote;
-        conv.data.estimatedTotal = quote.total;
-        conv.data.estimatedHours = quote.estimatedTime || estimatedHours;
+        conv.data.quote = quote.estimate;
+        conv.data.estimatedTotal = quote.estimate.total;
+        conv.data.estimatedHours = quote.estimate.estimatedTime || estimatedHours;
         conv.data.numMovers = crewSize;
         conv.data.serviceType = quoteRequest.serviceType;
         conversations.set(CallSid, conv);
 
         // Present quote
-        const total = Math.round(quote.total);
-        const hours = Math.round(quote.estimatedTime || estimatedHours);
+        const total = Math.round(quote.estimate.total);
+        const hours = Math.round(quote.estimate.estimatedTime || estimatedHours);
 
         if (conv.data.serviceCategory === 'moving') {
             response.say(`Great news! Your estimated total is $${total} for ${crewSize} movers with a truck.`);
