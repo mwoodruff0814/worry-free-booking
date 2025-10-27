@@ -1,17 +1,18 @@
 /**
- * Twilio Smart Voice AI - V3 with OpenAI Intelligence
+ * Twilio Smart Voice AI - V3 with Claude Intelligence
  * Natural language understanding, smart parsing, context awareness
+ * Powered by Anthropic's Claude 3.5 Sonnet
  */
 
 const twilio = require('twilio');
 const axios = require('axios');
-const OpenAI = require('openai');
+const Anthropic = require('@anthropic-ai/sdk');
 const { getEventsForDate } = require('./googleCalendar');
 const { checkAvailability } = require('./calendarManager');
 
-// Initialize OpenAI
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+// Initialize Claude (Anthropic)
+const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY
 });
 
 // Initialize Twilio client for SMS
@@ -27,7 +28,7 @@ const conversations = new Map();
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
 
 /**
- * Use AI to intelligently extract information from customer speech
+ * Use Claude AI to intelligently extract information from customer speech
  */
 async function extractWithAI(speech, context, expectedInfo) {
     try {
@@ -38,58 +39,58 @@ Expected information: ${expectedInfo}
 
 Customer said: "${speech}"
 
-Extract the relevant information and return ONLY valid JSON. Be lenient with variations.`;
+Extract the relevant information and return ONLY valid JSON. Be lenient with variations and infer reasonable values.`;
 
-        const response = await openai.chat.completions.create({
-            model: 'gpt-4',
+        const response = await anthropic.messages.create({
+            model: 'claude-3-5-sonnet-20241022',
+            max_tokens: 150,
+            temperature: 0.3,
+            system: 'You are a data extraction assistant. Return only valid JSON with no markdown formatting. Be helpful and infer reasonable values from messy speech input.',
             messages: [
-                {
-                    role: 'system',
-                    content: 'You are a data extraction assistant. Return only valid JSON. Be helpful and infer reasonable values.'
-                },
                 {
                     role: 'user',
                     content: prompt
                 }
-            ],
-            temperature: 0.3,
-            max_tokens: 150
+            ]
         });
 
-        const extracted = JSON.parse(response.choices[0].message.content);
-        console.log('🧠 AI extracted:', extracted);
+        // Extract JSON from Claude's response
+        let jsonText = response.content[0].text.trim();
+
+        // Remove markdown code blocks if present
+        jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+        const extracted = JSON.parse(jsonText);
+        console.log('🧠 Claude extracted:', extracted);
         return extracted;
 
     } catch (error) {
-        console.error('AI extraction error:', error);
+        console.error('Claude extraction error:', error);
         return null;
     }
 }
 
 /**
- * Generate natural AI response based on context
+ * Generate natural AI response based on context using Claude
  */
 async function generateNaturalResponse(context, question) {
     try {
-        const response = await openai.chat.completions.create({
-            model: 'gpt-4',
+        const response = await anthropic.messages.create({
+            model: 'claude-3-5-sonnet-20241022',
+            max_tokens: 80,
+            temperature: 0.7,
+            system: 'You are Sarah, a friendly AI receptionist for Worry Free Moving. Keep responses SHORT (1-2 sentences). Be professional but warm.',
             messages: [
-                {
-                    role: 'system',
-                    content: 'You are Sarah, a friendly AI receptionist for Worry Free Moving. Keep responses SHORT (1-2 sentences). Be professional but warm.'
-                },
                 {
                     role: 'user',
                     content: `Context: ${context}\n\nGenerate a natural response to ask: ${question}`
                 }
-            ],
-            temperature: 0.7,
-            max_tokens: 80
+            ]
         });
 
-        return response.choices[0].message.content;
+        return response.content[0].text;
     } catch (error) {
-        console.error('AI response generation error:', error);
+        console.error('Claude response generation error:', error);
         return question; // Fallback to simple question
     }
 }

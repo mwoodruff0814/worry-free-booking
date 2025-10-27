@@ -16,12 +16,13 @@ Your Twilio voice AI just got 10x smarter! Here's what changed:
 - Uses your existing Square/Vercel integration
 - No charge until after move is complete
 
-### 3. Enhanced AI Intelligence
-- OpenAI GPT-4 parses natural language:
+### 3. Enhanced AI Intelligence (Powered by Claude)
+- **Anthropic's Claude 3.5 Sonnet** parses natural language:
   - **Addresses**: "uh 123 main street in canton" → Clean address
   - **Dates**: "next friday" → Actual date (YYYY-MM-DD)
   - **Names**: "my name is john smith" → firstName + lastName
   - **Emails**: "john at gmail dot com" → john@gmail.com
+- Claude is exceptionally good at structured data extraction!
 
 ---
 
@@ -105,14 +106,14 @@ Worry Free Moving
 
 You need to add this to your Render environment variables:
 
-### OpenAI API Key (Required)
+### Anthropic API Key (Required)
 ```
-OPENAI_API_KEY=sk-proj-...your-key...
+ANTHROPIC_API_KEY=sk-ant-...your-key...
 ```
 
-Get your key from: https://platform.openai.com/api-keys
+Get your key from: https://console.anthropic.com/settings/keys
 
-**Cost**: ~$0.01-0.02 per call for AI parsing
+**Cost**: ~$0.003-0.015 per call for Claude parsing (cheaper than GPT-4!)
 
 ### Existing Variables (Already Set)
 - `TWILIO_ACCOUNT_SID` ✓
@@ -129,8 +130,8 @@ Get your key from: https://platform.openai.com/api-keys
 2. Select your service
 3. Click **Environment** in left sidebar
 4. Click **Add Environment Variable**
-5. Key: `OPENAI_API_KEY`
-6. Value: `sk-proj-...` (your OpenAI key)
+5. Key: `ANTHROPIC_API_KEY`
+6. Value: `sk-ant-...` (your Claude API key)
 7. Click **Save Changes**
 8. Service will auto-redeploy with new variable
 
@@ -170,10 +171,10 @@ Get your key from: https://platform.openai.com/api-keys
 - Twilio Voice: $0.0085/min
 - Speech-to-Text: $0.08/min
 - Text-to-Speech: $0.005/min
-- **OpenAI AI Parsing**: ~$0.01-0.02/call
+- **Claude AI Parsing**: ~$0.003-0.015/call (cheaper than GPT-4!)
 - **SMS (payment link)**: ~$0.0075
 
-**Total per call**: ~$0.10-0.12/min + $0.02/call
+**Total per call**: ~$0.10-0.12/min + $0.01/call
 
 **Example**: 5-minute call with booking
 - Voice: $0.45
@@ -191,7 +192,7 @@ Still **75% cheaper than Vapi** ($85/month)!
 ## New Files Added
 
 1. **services/twilioSmartVoice.js** (Updated)
-   - Added OpenAI integration
+   - Added Claude 3.5 Sonnet integration
    - Added calendar availability checking
    - Added payment link SMS sending
 
@@ -251,9 +252,9 @@ You can update booking with:
 ## Troubleshooting
 
 ### "AI says dates incorrectly"
-- Check `OPENAI_API_KEY` is set on Render
+- Check `ANTHROPIC_API_KEY` is set on Render
 - View logs: Render dashboard → Logs tab
-- Look for: `🧠 AI extracted:` messages
+- Look for: `🧠 Claude extracted:` messages
 
 ### "SMS not received"
 - Check Twilio phone number is SMS-capable
@@ -275,7 +276,7 @@ You can update booking with:
 ## Next Steps
 
 1. ✅ Code deployed to GitHub/Render
-2. ⏳ Add `OPENAI_API_KEY` to Render environment
+2. ⏳ Add `ANTHROPIC_API_KEY` to Render environment
 3. ⏳ Wait for Render redeploy (~2-3 min)
 4. ✅ Test by calling (330) 661-9985
 5. ✅ Verify SMS payment link works
@@ -296,7 +297,7 @@ Your voice AI now:
 - ✅ Fully automated booking flow
 
 **What You Need to Do:**
-1. Add `OPENAI_API_KEY` to Render environment variables
+1. Add `ANTHROPIC_API_KEY` to Render environment variables
 2. Test the flow by calling your number
 3. Verify payment link SMS arrives and works
 
