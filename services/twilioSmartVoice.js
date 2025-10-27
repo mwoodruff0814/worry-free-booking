@@ -319,7 +319,7 @@ function handleIncomingCall(req, res) {
         timeout: 8
     });
 
-    gather.say("I can help you get a free quote and book your move today. Press 1 or say quote to get started. If you already have a quote and want to book, press 2.");
+    gather.say("I can help you get a free quote and book your move today. Press 1 or say quote to get started over the phone. Or press 2 if you'd prefer me to text you a link to our online booking form, which is much faster.");
 
     response.redirect('/api/twilio/voice');
 
@@ -454,7 +454,7 @@ ${conv && conv.recordingUrl ? `
  * Main menu handler
  */
 function handleMainMenu(req, res) {
-    const { Digits, SpeechResult, CallSid } = req.body;
+    const { Digits, SpeechResult, CallSid, From } = req.body;
     const choice = Digits || (SpeechResult ? parseMenuChoice(SpeechResult) : null);
 
     const VoiceResponse = twilio.twiml.VoiceResponse;
@@ -463,13 +463,13 @@ function handleMainMenu(req, res) {
     const conv = conversations.get(CallSid);
 
     switch (choice) {
-        case '1': // Get quote
+        case '1': // Get quote over phone
             response.redirect('/api/twilio/quote-service-type');
             break;
 
-        case '2': // Already have quote, want to book
-            response.say("Great! Let me help you schedule your move.");
-            response.redirect('/api/twilio/booking-start');
+        case '2': // Send online booking link (skip phone call)
+            response.say("Perfect! I'll send you a text right now with a link to our online booking form. It's super easy and only takes a couple minutes.");
+            response.redirect('/api/twilio/send-online-booking-link');
             break;
 
         case '9': // Hidden transfer option
@@ -1234,7 +1234,7 @@ async function handleQuoteFinalize(req, res) {
             timeout: 10
         });
 
-        gather.say("Would you like to book this move? Press 1 to schedule now over the phone. Press 2 to receive this quote by email. Press 3 to get a text with a fast online booking link. Or press 9 to speak with someone.");
+        gather.say("Would you like to book this move? Press 1 to schedule now. Press 2 to receive this quote by email. Or press 9 to speak with someone.");
 
     } catch (error) {
         console.error('Quote calculation error:', error);
@@ -1258,7 +1258,7 @@ async function handleQuoteDecision(req, res) {
     const choice = Digits || (SpeechResult ? parseDecisionChoice(SpeechResult) : null);
 
     if (choice === '1') {
-        // Book now (phone)
+        // Book now over phone
         response.say("Excellent! Let me get some information to complete your booking.");
         response.redirect('/api/twilio/booking-start');
     } else if (choice === '2') {
@@ -1271,10 +1271,6 @@ async function handleQuoteDecision(req, res) {
             timeout: 15
         });
         gather.say("Sure! What's your email address? Please say it slowly.");
-    } else if (choice === '3') {
-        // SMS with booking link (faster option)
-        response.say("Perfect! I'll text you a link where you can book in just a few taps. Much faster!");
-        response.redirect('/api/twilio/sms-booking-link');
     } else if (choice === '9') {
         response.say("Let me transfer you now.");
         response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
@@ -1330,34 +1326,23 @@ async function handleEmailQuoteSend(req, res) {
 }
 
 /**
- * Send SMS with fast online booking link
+ * Send online booking link at beginning (skip phone call)
  */
-async function handleSMSBookingLink(req, res) {
+async function handleSendOnlineBookingLink(req, res) {
     const { CallSid, From } = req.body;
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const response = new VoiceResponse();
 
-    const conv = conversations.get(CallSid);
-
     try {
-        // Create booking link with quote data
-        const bookingUrl = `https://worryfreemovers.com/public-booking?` +
-            `service=${encodeURIComponent(conv.data.serviceCategory)}` +
-            `&from=${encodeURIComponent(conv.data.pickupAddress)}` +
-            `&to=${encodeURIComponent(conv.data.deliveryAddress)}` +
-            `&distance=${conv.data.distance}` +
-            `&crew=${conv.data.crewSize}` +
-            `&estimate=${Math.round(conv.data.estimatedTotal)}` +
-            `&phone=${encodeURIComponent(From)}`;
+        // Simple booking link without quote data (they haven't gotten a quote yet)
+        const bookingUrl = `https://worryfreemovers.com/public-booking`;
 
-        // Send SMS with booking link
-        const message = `Hi! Here's your moving quote from Worry Free Moving:\n\n` +
-            `📦 Service: ${conv.data.serviceCategory === 'moving' ? 'Movers + Truck' : 'Labor Only'}\n` +
-            `📍 Distance: ${Math.round(conv.data.distance)} miles\n` +
-            `👥 Crew: ${conv.data.crewSize} movers\n` +
-            `💰 Estimate: $${Math.round(conv.data.estimatedTotal)}\n\n` +
-            `Book online in 2 minutes: ${bookingUrl}\n\n` +
-            `Worry Free Moving\n(330) 661-9985`;
+        // Send SMS with simple booking link
+        const message = `Hi! Thanks for calling Worry Free Moving.\n\n` +
+            `Get your free quote and book online:\n${bookingUrl}\n\n` +
+            `It only takes 2-3 minutes!\n\n` +
+            `Questions? Call us: (330) 661-9985\n\n` +
+            `Worry Free Moving`;
 
         await twilioClient.messages.create({
             body: message,
@@ -1365,25 +1350,12 @@ async function handleSMSBookingLink(req, res) {
             to: From
         });
 
-        console.log(`📱 Booking link SMS sent to ${From}`);
+        console.log(`📱 Online booking link SMS sent to ${From}`);
 
-        // Use Claude to generate natural confirmation
-        const confirmation = await generateNaturalResponse(
-            'Just sent customer a text with online booking link',
-            'Confirm that the text was sent and encourage them to book soon. Mention its fast and easy. Keep it friendly and brief.'
-        );
-
-        if (confirmation) {
-            response.say(confirmation);
-        } else {
-            response.say("Perfect! I just sent you a text with your quote and a link to book online. It's super quick - just takes a couple minutes!");
-        }
-
-        response.pause({ length: 1 });
-        response.say("Thanks for calling Worry Free Moving! Have a great day!");
+        response.say("Done! I just sent you the link. You should see it in a few seconds. Have a great day!");
 
     } catch (error) {
-        console.error('Error sending booking link SMS:', error);
+        console.error('Error sending online booking link SMS:', error);
         response.say("I'm having trouble sending the text. Let me connect you with someone who can help.");
         response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
     }
@@ -1680,8 +1652,8 @@ async function handleBookingCreate(req, res) {
  */
 function parseMenuChoice(speech) {
     const lower = speech.toLowerCase();
-    if (lower.includes('quote') || lower.includes('price') || lower.includes('estimate')) return '1';
-    if (lower.includes('book') || lower.includes('schedule') || lower.includes('already')) return '2';
+    if (lower.includes('quote') || lower.includes('price') || lower.includes('estimate') || lower.includes('phone')) return '1';
+    if (lower.includes('text') || lower.includes('link') || lower.includes('online') || lower.includes('faster')) return '2';
     if (lower.includes('speak') || lower.includes('person') || lower.includes('agent')) return '9';
     return null;
 }
@@ -1697,7 +1669,6 @@ function parseDecisionChoice(speech) {
     const lower = speech.toLowerCase();
     if (lower.includes('book') || lower.includes('schedule') || lower.includes('yes')) return '1';
     if (lower.includes('email') || lower.includes('send')) return '2';
-    if (lower.includes('text') || lower.includes('sms') || lower.includes('link') || lower.includes('online')) return '3';
     if (lower.includes('speak') || lower.includes('person') || lower.includes('agent')) return '9';
     return null;
 }
@@ -1736,6 +1707,7 @@ module.exports = {
     handleRecordingComplete,
     handleTranscriptionComplete,
     handleMainMenu,
+    handleSendOnlineBookingLink,
     handleQuoteServiceType,
     handleQuotePickupAddress,
     handleQuotePickupHomeType,
@@ -1754,7 +1726,6 @@ module.exports = {
     handleQuoteFinalize,
     handleQuoteDecision,
     handleEmailQuoteSend,
-    handleSMSBookingLink,
     handleBookingStart,
     handleBookingEmail,
     handleBookingDate,

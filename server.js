@@ -2281,6 +2281,11 @@ app.post('/api/twilio/main-menu', (req, res) => {
     twilioVoice.handleMainMenu(req, res);
 });
 
+// Send online booking link (skip phone call)
+app.post('/api/twilio/send-online-booking-link', (req, res) => {
+    twilioVoice.handleSendOnlineBookingLink(req, res);
+});
+
 // Call recording completion
 app.post('/api/twilio/recording-complete', (req, res) => {
     twilioVoice.handleRecordingComplete(req, res);
@@ -2363,11 +2368,6 @@ app.post('/api/twilio/quote-decision', (req, res) => {
 // Email quote endpoint
 app.post('/api/twilio/email-quote-send', (req, res) => {
     twilioVoice.handleEmailQuoteSend(req, res);
-});
-
-// SMS booking link endpoint (fast online booking)
-app.post('/api/twilio/sms-booking-link', (req, res) => {
-    twilioVoice.handleSMSBookingLink(req, res);
 });
 
 // Booking flow endpoints
