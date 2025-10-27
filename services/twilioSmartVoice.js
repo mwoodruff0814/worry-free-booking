@@ -10,13 +10,14 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { getEventsForDate } = require('./googleCalendar');
 const { checkAvailability } = require('./calendarManager');
 const nodemailer = require('nodemailer');
+const { sendSMS } = require('./smsService'); // RingCentral SMS
 
 // Initialize Claude (Anthropic)
 const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY
 });
 
-// Initialize Twilio client for SMS
+// Initialize Twilio client for voice calls (NOT SMS - using RingCentral for SMS)
 const twilioClient = twilio(
     process.env.TWILIO_ACCOUNT_SID,
     process.env.TWILIO_AUTH_TOKEN
@@ -213,13 +214,10 @@ async function sendPaymentLinkSMS(phone, customerName, bookingId, amount, email)
 
         const message = `Hi ${customerName}! To secure your booking ${bookingId}, please save your card on file (no charge yet): ${checkoutUrl}\n\nWorry Free Moving\n(330) 661-9985`;
 
-        await twilioClient.messages.create({
-            body: message,
-            from: process.env.TWILIO_PHONE_NUMBER,
-            to: phone
-        });
+        // Use RingCentral SMS instead of Twilio
+        await sendSMS(phone, message);
 
-        console.log(`💳 Payment link sent to ${phone}`);
+        console.log(`💳 Payment link sent to ${phone} via RingCentral`);
         return true;
     } catch (error) {
         console.error('Error sending payment link SMS:', error);
@@ -1320,13 +1318,10 @@ async function handleQuoteFinalize(req, res) {
                 `Ready to book? Press 1\n` +
                 `Worry Free Moving\n(330) 661-9985`;
 
-            await twilioClient.messages.create({
-                body: quoteMessage,
-                from: process.env.TWILIO_PHONE_NUMBER,
-                to: conv.customerPhone
-            });
+            // Use RingCentral SMS instead of Twilio
+            await sendSMS(conv.customerPhone, quoteMessage);
 
-            console.log(`📱 Quote SMS sent to ${conv.customerPhone}`);
+            console.log(`📱 Quote SMS sent to ${conv.customerPhone} via RingCentral`);
 
             response.pause({ length: 1 });
             response.say("I just texted you a copy of your quote for reference.");
@@ -1503,17 +1498,10 @@ async function handleSendOnlineBookingLink(req, res) {
 
         console.log(`📱 SMS message length: ${message.length} characters`);
 
-        const smsResult = await twilioClient.messages.create({
-            body: message,
-            from: process.env.TWILIO_PHONE_NUMBER,
-            to: From
-        });
+        // Use RingCentral SMS instead of Twilio
+        const smsResult = await sendSMS(From, message);
 
-        console.log(`✅ Online booking link SMS sent successfully:`, {
-            sid: smsResult.sid,
-            status: smsResult.status,
-            to: From
-        });
+        console.log(`✅ Online booking link SMS sent successfully via RingCentral to ${From}`);
 
         response.say("Done! I just sent you the link. You should see it in a few seconds. Have a great day!");
 
