@@ -2276,56 +2276,63 @@ app.post('/api/twilio/voice', (req, res) => {
     twilioVoice.handleIncomingCall(req, res);
 });
 
-// Menu selection
-app.post('/api/twilio/menu', (req, res) => {
-    twilioVoice.handleMenu(req, res);
+// Main menu
+app.post('/api/twilio/main-menu', (req, res) => {
+    twilioVoice.handleMainMenu(req, res);
 });
 
 // Quote flow endpoints
-app.post('/api/twilio/quote-start', (req, res) => {
-    twilioVoice.handleQuoteStart(req, res);
+app.post('/api/twilio/quote-service-type', (req, res) => {
+    twilioVoice.handleQuoteServiceType(req, res);
 });
 
-app.post('/api/twilio/quote-homesize', (req, res) => {
-    twilioVoice.handleQuoteHomeSize(req, res);
+app.post('/api/twilio/quote-crew-size', (req, res) => {
+    twilioVoice.handleQuoteCrewSize(req, res);
 });
 
-app.post('/api/twilio/quote-pickup', (req, res) => {
-    twilioVoice.handleQuotePickup(req, res);
+app.post('/api/twilio/quote-hours', (req, res) => {
+    twilioVoice.handleQuoteHours(req, res);
 });
 
-app.post('/api/twilio/quote-delivery', (req, res) => {
-    twilioVoice.handleQuoteDelivery(req, res);
+app.post('/api/twilio/quote-hours-parse', (req, res) => {
+    twilioVoice.handleQuoteHoursParse(req, res);
 });
 
-app.post('/api/twilio/quote-stairs', (req, res) => {
-    twilioVoice.handleQuoteStairs(req, res);
+app.post('/api/twilio/quote-pickup-address', (req, res) => {
+    twilioVoice.handleQuotePickupAddress(req, res);
 });
 
-app.post('/api/twilio/quote-book', (req, res) => {
-    twilioVoice.handleQuoteBook(req, res);
+app.post('/api/twilio/quote-delivery-address', (req, res) => {
+    twilioVoice.handleQuoteDeliveryAddress(req, res);
+});
+
+app.post('/api/twilio/quote-calculate', (req, res) => {
+    twilioVoice.handleQuoteCalculate(req, res);
+});
+
+app.post('/api/twilio/quote-decision', (req, res) => {
+    twilioVoice.handleQuoteDecision(req, res);
 });
 
 // Booking flow endpoints
-app.post('/api/twilio/booking-name', (req, res) => {
-    twilioVoice.handleBookingName(req, res);
+app.post('/api/twilio/booking-start', (req, res) => {
+    twilioVoice.handleBookingStart(req, res);
 });
 
-app.post('/api/twilio/booking-phone', (req, res) => {
-    twilioVoice.handleBookingPhone(req, res);
+app.post('/api/twilio/booking-email', (req, res) => {
+    twilioVoice.handleBookingEmail(req, res);
 });
 
 app.post('/api/twilio/booking-date', (req, res) => {
     twilioVoice.handleBookingDate(req, res);
 });
 
-// Returning customer endpoints
-app.post('/api/twilio/returning-customer-menu', (req, res) => {
-    twilioVoice.handleReturningCustomerMenu(req, res);
+app.post('/api/twilio/booking-time-slot', (req, res) => {
+    twilioVoice.handleBookingTimeSlot(req, res);
 });
 
-app.post('/api/twilio/booking-confirm-menu', (req, res) => {
-    twilioVoice.handleBookingConfirmMenu(req, res);
+app.post('/api/twilio/booking-create', (req, res) => {
+    twilioVoice.handleBookingCreate(req, res);
 });
 
 // ==============================================

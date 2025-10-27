@@ -1,16 +1,98 @@
 /**
- * Twilio Smart Voice AI - V2
- * Matches chatbot flow exactly, uses real pricing API, smarter booking
+ * Twilio Smart Voice AI - V3 with OpenAI Intelligence
+ * Natural language understanding, smart parsing, context awareness
  */
 
 const twilio = require('twilio');
 const axios = require('axios');
+const OpenAI = require('openai');
+const { getEventsForDate } = require('./googleCalendar');
+const { checkAvailability } = require('./calendarManager');
+
+// Initialize OpenAI
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+});
+
+// Initialize Twilio client for SMS
+const twilioClient = twilio(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_AUTH_TOKEN
+);
 
 // Conversation state storage
 const conversations = new Map();
 
 // Base URL for API calls
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
+
+/**
+ * Use AI to intelligently extract information from customer speech
+ */
+async function extractWithAI(speech, context, expectedInfo) {
+    try {
+        const prompt = `You are a helpful assistant for Worry Free Moving. Extract structured information from customer speech.
+
+Context: ${context}
+Expected information: ${expectedInfo}
+
+Customer said: "${speech}"
+
+Extract the relevant information and return ONLY valid JSON. Be lenient with variations.`;
+
+        const response = await openai.chat.completions.create({
+            model: 'gpt-4',
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a data extraction assistant. Return only valid JSON. Be helpful and infer reasonable values.'
+                },
+                {
+                    role: 'user',
+                    content: prompt
+                }
+            ],
+            temperature: 0.3,
+            max_tokens: 150
+        });
+
+        const extracted = JSON.parse(response.choices[0].message.content);
+        console.log('🧠 AI extracted:', extracted);
+        return extracted;
+
+    } catch (error) {
+        console.error('AI extraction error:', error);
+        return null;
+    }
+}
+
+/**
+ * Generate natural AI response based on context
+ */
+async function generateNaturalResponse(context, question) {
+    try {
+        const response = await openai.chat.completions.create({
+            model: 'gpt-4',
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are Sarah, a friendly AI receptionist for Worry Free Moving. Keep responses SHORT (1-2 sentences). Be professional but warm.'
+                },
+                {
+                    role: 'user',
+                    content: `Context: ${context}\n\nGenerate a natural response to ask: ${question}`
+                }
+            ],
+            temperature: 0.7,
+            max_tokens: 80
+        });
+
+        return response.choices[0].message.content;
+    } catch (error) {
+        console.error('AI response generation error:', error);
+        return question; // Fallback to simple question
+    }
+}
 
 /**
  * Handle incoming call - intelligent greeting
@@ -257,15 +339,30 @@ function handleQuotePickupAddress(req, res) {
 }
 
 /**
- * Get delivery address
+ * Get delivery address with AI parsing
  */
-function handleQuoteDeliveryAddress(req, res) {
+async function handleQuoteDeliveryAddress(req, res) {
     const { CallSid, SpeechResult } = req.body;
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const response = new VoiceResponse();
 
     const conv = conversations.get(CallSid);
-    conv.data.pickupAddress = SpeechResult;
+
+    // Use AI to parse pickup address
+    const pickupExtracted = await extractWithAI(
+        SpeechResult,
+        'Customer is providing their pickup address',
+        'Extract: street, city, state, zip (if mentioned). Clean up the address formatting.'
+    );
+
+    if (pickupExtracted && pickupExtracted.street) {
+        // Build clean address
+        conv.data.pickupAddress = `${pickupExtracted.street}, ${pickupExtracted.city || 'Canton'}, ${pickupExtracted.state || 'OH'}`;
+        conv.data.pickupCity = pickupExtracted.city || 'Canton';
+    } else {
+        // Fallback to raw speech
+        conv.data.pickupAddress = SpeechResult;
+    }
 
     const gather = response.gather({
         input: 'speech',
@@ -275,7 +372,7 @@ function handleQuoteDeliveryAddress(req, res) {
         timeout: 15
     });
 
-    gather.say("Perfect. And where are you moving to? Please say the full delivery address.");
+    gather.say("Perfect. And where are you moving to? Please say the delivery address.");
 
     conversations.set(CallSid, conv);
     res.type('text/xml');
@@ -283,7 +380,7 @@ function handleQuoteDeliveryAddress(req, res) {
 }
 
 /**
- * Calculate quote using real API
+ * Calculate quote using real API with AI-parsed addresses
  */
 async function handleQuoteCalculate(req, res) {
     const { CallSid, SpeechResult } = req.body;
@@ -291,7 +388,20 @@ async function handleQuoteCalculate(req, res) {
     const response = new VoiceResponse();
 
     const conv = conversations.get(CallSid);
-    conv.data.deliveryAddress = SpeechResult;
+
+    // Use AI to parse delivery address
+    const deliveryExtracted = await extractWithAI(
+        SpeechResult,
+        'Customer is providing their delivery address',
+        'Extract: street, city, state, zip (if mentioned). Clean up the address formatting.'
+    );
+
+    if (deliveryExtracted && deliveryExtracted.street) {
+        conv.data.deliveryAddress = `${deliveryExtracted.street}, ${deliveryExtracted.city || 'Akron'}, ${deliveryExtracted.state || 'OH'}`;
+        conv.data.deliveryCity = deliveryExtracted.city || 'Akron';
+    } else {
+        conv.data.deliveryAddress = SpeechResult;
+    }
 
     response.say("Let me calculate that for you.");
     response.pause({ length: 2 });
@@ -412,17 +522,31 @@ function handleBookingStart(req, res) {
 }
 
 /**
- * Collect email
+ * Collect email with AI parsing
  */
-function handleBookingEmail(req, res) {
+async function handleBookingEmail(req, res) {
     const { CallSid, SpeechResult, From } = req.body;
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const response = new VoiceResponse();
 
     const conv = conversations.get(CallSid);
-    const nameParts = (SpeechResult || '').split(' ');
-    conv.data.firstName = nameParts[0] || 'Customer';
-    conv.data.lastName = nameParts.slice(1).join(' ') || '';
+
+    // Use AI to parse name
+    const nameExtracted = await extractWithAI(
+        SpeechResult,
+        'Customer is providing their full name',
+        'Extract firstName and lastName from the name. Handle variations like "John Smith" or "my name is John Smith".'
+    );
+
+    if (nameExtracted) {
+        conv.data.firstName = nameExtracted.firstName || 'Customer';
+        conv.data.lastName = nameExtracted.lastName || '';
+    } else {
+        const nameParts = (SpeechResult || '').split(' ');
+        conv.data.firstName = nameParts[0] || 'Customer';
+        conv.data.lastName = nameParts.slice(1).join(' ') || '';
+    }
+
     conv.data.phone = From;
 
     const gather = response.gather({
@@ -441,25 +565,37 @@ function handleBookingEmail(req, res) {
 }
 
 /**
- * Collect move date
+ * Collect move date with AI parsing
  */
-function handleBookingDate(req, res) {
+async function handleBookingDate(req, res) {
     const { CallSid, SpeechResult } = req.body;
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const response = new VoiceResponse();
 
     const conv = conversations.get(CallSid);
-    conv.data.email = parseEmail(SpeechResult);
+
+    // Use AI to parse email
+    const emailExtracted = await extractWithAI(
+        SpeechResult,
+        'Customer is providing their email address spoken aloud',
+        'Extract email address. Common patterns: "at" = @, "dot" = ., "gmail", "yahoo", "hotmail". Return as: { email: "user@domain.com" }'
+    );
+
+    if (emailExtracted && emailExtracted.email) {
+        conv.data.email = emailExtracted.email;
+    } else {
+        conv.data.email = parseEmail(SpeechResult); // Fallback to simple parser
+    }
 
     const gather = response.gather({
         input: 'speech',
-        action: '/api/twilio/booking-create',
+        action: '/api/twilio/booking-time-slot',
         method: 'POST',
         speechTimeout: 'auto',
         timeout: 15
     });
 
-    gather.say("Great! When would you like to move? Please say the date, like December 20th.");
+    gather.say("Great! When would you like to move? Please say the date, like December 20th or next Friday.");
 
     conversations.set(CallSid, conv);
     res.type('text/xml');
@@ -467,15 +603,100 @@ function handleBookingDate(req, res) {
 }
 
 /**
- * Create booking via API
+ * Check availability and offer time slots
  */
-async function handleBookingCreate(req, res) {
+async function handleBookingTimeSlot(req, res) {
     const { CallSid, SpeechResult } = req.body;
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const response = new VoiceResponse();
 
     const conv = conversations.get(CallSid);
-    const moveDate = parseDateFromSpeech(SpeechResult);
+
+    // Use AI to parse date naturally
+    const today = new Date().toISOString().split('T')[0];
+    const dateExtracted = await extractWithAI(
+        SpeechResult,
+        `Customer is providing move date. Today is ${today}`,
+        'Extract the date in YYYY-MM-DD format. Understand: "next friday", "the 20th", "december 25th", "two weeks from now". Return as: { date: "YYYY-MM-DD" }'
+    );
+
+    let moveDate;
+    if (dateExtracted && dateExtracted.date) {
+        moveDate = dateExtracted.date;
+    } else {
+        moveDate = parseDateFromSpeech(SpeechResult); // Fallback
+    }
+
+    conv.data.moveDate = moveDate;
+
+    // Check availability for this date
+    const slots = await getAvailableSlotsForDate(moveDate);
+
+    if (!slots.anyAvailable) {
+        // No availability - suggest next day or transfer
+        response.say("I'm sorry, we're fully booked that day. Let me connect you with someone who can find the next available date.");
+        response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
+    } else if (slots.morning && slots.afternoon) {
+        // Both slots available - let customer choose
+        response.say("Good news! We have availability that day.");
+        response.pause({ length: 1 });
+
+        const gather = response.gather({
+            input: 'dtmf speech',
+            action: '/api/twilio/booking-create',
+            method: 'POST',
+            numDigits: 1,
+            speechTimeout: 'auto',
+            timeout: 10
+        });
+
+        gather.say("Would you prefer a morning arrival between 8 and 9 AM? Press 1 or say morning. Or would you prefer afternoon between 1 and 2 PM? Press 2 or say afternoon.");
+
+    } else if (slots.morning) {
+        // Only morning available
+        response.say("We have a morning slot available that day, between 8 and 9 AM.");
+        conv.data.timeSlot = 'morning';
+        conv.data.time = '08:00';
+        conversations.set(CallSid, conv);
+        response.redirect('/api/twilio/booking-create');
+
+    } else if (slots.afternoon) {
+        // Only afternoon available
+        response.say("We have an afternoon slot available that day, between 1 and 2 PM.");
+        conv.data.timeSlot = 'afternoon';
+        conv.data.time = '13:00';
+        conversations.set(CallSid, conv);
+        response.redirect('/api/twilio/booking-create');
+    }
+
+    conversations.set(CallSid, conv);
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Create booking via API with selected time slot
+ */
+async function handleBookingCreate(req, res) {
+    const { CallSid, SpeechResult, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    // Parse time slot choice if provided (from menu)
+    if (Digits || SpeechResult) {
+        const timeChoice = Digits || parseTimeSlotChoice(SpeechResult);
+        if (timeChoice === '1' || timeChoice === 'morning') {
+            conv.data.timeSlot = 'morning';
+            conv.data.time = '08:00';
+        } else if (timeChoice === '2' || timeChoice === 'afternoon') {
+            conv.data.timeSlot = 'afternoon';
+            conv.data.time = '13:00';
+        }
+    }
+
+    const moveDate = conv.data.moveDate;
 
     try {
         const { createAppointment } = require('./database');
@@ -484,6 +705,7 @@ async function handleBookingCreate(req, res) {
         const bookingId = `WF-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
         // Create appointment using existing system
+        const bookingTime = conv.data.time || '09:00';
         const appointment = {
             bookingId,
             company: 'Worry Free Moving',
@@ -492,7 +714,7 @@ async function handleBookingCreate(req, res) {
             email: conv.data.email,
             phone: conv.data.phone,
             date: moveDate,
-            time: '09:00',
+            time: bookingTime,
             serviceType: conv.data.serviceCategory === 'moving'
                 ? `${conv.data.crewSize}-Person Crew Moving`
                 : 'Labor Only',
@@ -505,7 +727,7 @@ async function handleBookingCreate(req, res) {
             source: 'twilio-voice-ai',
             callSid: CallSid,
             createdAt: new Date().toISOString(),
-            notes: `Booked via AI phone - Quote: $${Math.round(conv.data.quote?.total || 0)}`
+            notes: `Booked via AI phone - Quote: $${Math.round(conv.data.quote?.total || 0)} - ${conv.data.timeSlot || 'morning'} slot`
         };
 
         await createAppointment(appointment);
@@ -519,7 +741,7 @@ async function handleBookingCreate(req, res) {
                 bookingId,
                 company: 'Worry Free Moving',
                 date: moveDate,
-                time: '09:00',
+                time: bookingTime,
                 serviceType: appointment.serviceType,
                 pickupAddress: conv.data.pickupAddress,
                 dropoffAddress: conv.data.deliveryAddress,
@@ -529,9 +751,23 @@ async function handleBookingCreate(req, res) {
             console.error('Email send failed:', emailError);
         }
 
-        response.say(`Perfect! Your move is confirmed for ${moveDate}. Your booking I D is ${bookingId}.`);
+        // Send payment link SMS
+        try {
+            await sendPaymentLinkSMS(
+                conv.data.phone,
+                conv.data.firstName,
+                bookingId,
+                conv.data.quote?.total || 0,
+                conv.data.email
+            );
+        } catch (smsError) {
+            console.error('Payment SMS failed:', smsError);
+        }
+
+        const timeSlotText = conv.data.timeSlot === 'afternoon' ? 'afternoon between 1 and 2 PM' : 'morning between 8 and 9 AM';
+        response.say(`Perfect! Your move is confirmed for ${moveDate} in the ${timeSlotText}. Your booking I D is ${bookingId}.`);
         response.pause({ length: 1 });
-        response.say(`We've sent a confirmation email to ${conv.data.email} with all the details. We'll see you on ${moveDate}!`);
+        response.say(`We've sent a confirmation email to ${conv.data.email}. You'll also receive a text message with a secure link to save your card on file.`);
         response.pause({ length: 1 });
         response.say("Thanks for choosing Worry Free Moving!");
 
@@ -543,6 +779,64 @@ async function handleBookingCreate(req, res) {
 
     res.type('text/xml');
     res.send(response.toString());
+}
+
+/**
+ * Check calendar availability for specific time slot
+ */
+async function checkSlotAvailability(date, timeSlot) {
+    try {
+        const time = timeSlot === 'morning' ? '08:00' : '13:00';
+        const availability = await checkAvailability(date, time);
+        return availability.available;
+    } catch (error) {
+        console.error('Error checking slot availability:', error);
+        return true; // Default to available if check fails
+    }
+}
+
+/**
+ * Get available slots for a date (morning/afternoon)
+ */
+async function getAvailableSlotsForDate(date) {
+    try {
+        const morningAvailable = await checkSlotAvailability(date, 'morning');
+        const afternoonAvailable = await checkSlotAvailability(date, 'afternoon');
+
+        return {
+            morning: morningAvailable,
+            afternoon: afternoonAvailable,
+            anyAvailable: morningAvailable || afternoonAvailable
+        };
+    } catch (error) {
+        console.error('Error getting available slots:', error);
+        return { morning: true, afternoon: true, anyAvailable: true };
+    }
+}
+
+/**
+ * Generate Square payment link and send via SMS
+ */
+async function sendPaymentLinkSMS(phone, customerName, bookingId, amount, email) {
+    try {
+        // Generate unique checkout URL with query params
+        const checkoutUrl = `${BASE_URL}/checkout.html?amount=${Math.round(amount)}&booking=${bookingId}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(customerName)}`;
+
+        const message = `Hi ${customerName}! To secure your booking ${bookingId}, please save your card on file (no charge yet): ${checkoutUrl}\n\nWorry Free Moving\n(330) 661-9985`;
+
+        // Send SMS via Twilio
+        await twilioClient.messages.create({
+            body: message,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: phone
+        });
+
+        console.log(`💳 Payment link sent to ${phone}`);
+        return true;
+    } catch (error) {
+        console.error('Error sending payment link SMS:', error);
+        return false;
+    }
 }
 
 /**
@@ -622,6 +916,13 @@ function parseDateFromSpeech(speech) {
     return futureDate.toISOString().split('T')[0];
 }
 
+function parseTimeSlotChoice(speech) {
+    const lower = speech.toLowerCase();
+    if (lower.includes('morning') || lower.includes('8') || lower.includes('9 am')) return 'morning';
+    if (lower.includes('afternoon') || lower.includes('1') || lower.includes('2 pm')) return 'afternoon';
+    return null;
+}
+
 module.exports = {
     handleIncomingCall,
     handleMainMenu,
@@ -636,6 +937,7 @@ module.exports = {
     handleBookingStart,
     handleBookingEmail,
     handleBookingDate,
+    handleBookingTimeSlot,
     handleBookingCreate,
     conversations
 };
