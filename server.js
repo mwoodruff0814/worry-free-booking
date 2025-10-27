@@ -1295,8 +1295,28 @@ app.post('/api/services', async (req, res) => {
 app.post('/api/calculate-estimate', async (req, res) => {
     try {
         const bookingData = req.body;
-        // Read from MongoDB (same source as admin portal) instead of file
-        const services = await getServicesConfig();
+
+        console.log('📊 Calculate Estimate Request:', JSON.stringify(bookingData, null, 2));
+
+        // Read from MongoDB (same source as admin portal) with fallback to file
+        let services = await getServicesConfig();
+
+        // If MongoDB config doesn't exist, fallback to file
+        if (!services) {
+            console.warn('⚠️ MongoDB config not found, falling back to services.json file');
+            const servicesData = await fs.readFile(path.join(__dirname, 'data', 'services.json'), 'utf8');
+            services = JSON.parse(servicesData);
+        }
+
+        if (!services) {
+            throw new Error('No services configuration available');
+        }
+
+        console.log('✅ Services config loaded:', {
+            hasMovingServices: !!services.movingServices,
+            hasLaborOnly: !!services.laborOnly,
+            hasFees: !!services.fees
+        });
 
         let subtotal = 0;
         let laborCost = 0;
@@ -1433,7 +1453,7 @@ app.post('/api/calculate-estimate', async (req, res) => {
         // Calculate total
         const total = subtotal + serviceCharge + stairsFee + heavyItemsFee + additionalServicesCost + packingMaterialsCost + fvpCost;
 
-        res.json({
+        const response = {
             success: true,
             estimate: {
                 subtotal: Math.round(subtotal * 100) / 100,
@@ -1448,13 +1468,22 @@ app.post('/api/calculate-estimate', async (req, res) => {
                 total: Math.round(total * 100) / 100,
                 estimatedTime: Math.round(estimatedTime * 10) / 10
             }
-        });
+        };
+
+        console.log('💰 Estimate Response:', JSON.stringify(response, null, 2));
+
+        res.json(response);
 
     } catch (error) {
-        console.error('Error calculating estimate:', error);
+        console.error('❌ Error calculating estimate:', {
+            message: error.message,
+            stack: error.stack,
+            requestData: req.body
+        });
         res.status(500).json({
             success: false,
-            error: 'Failed to calculate estimate'
+            error: 'Failed to calculate estimate',
+            details: error.message
         });
     }
 });
