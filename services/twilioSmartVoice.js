@@ -1462,29 +1462,98 @@ async function handleQuoteFinalize(req, res) {
 
         console.log('📢 Quote presented verbally to customer');
 
-        // Automatically send quote via SMS
+        // Automatically send detailed quote breakdown via SMS (similar to chatbot)
         try {
-            const quoteMessage = `Your Worry Free Moving Quote:\n\n` +
-                `📦 Service: ${conv.data.serviceCategory === 'moving' ? `${crewSize}-Person Crew + Truck` : 'Labor Only'}\n` +
-                `📍 From: ${conv.data.pickupAddress}\n` +
-                `📍 To: ${conv.data.deliveryAddress}\n` +
-                `📏 Distance: ${Math.round(conv.data.distance)} miles\n` +
-                `👥 Crew: ${crewSize} movers\n` +
-                `⏱️ Est. Time: ${hours} hours\n` +
-                `💰 Estimated Total: $${total}\n\n` +
-                `This is an estimate. Final cost based on actual time.\n\n` +
-                `Ready to book? Press 1\n` +
-                `Worry Free Moving\n(330) 661-9985`;
+            console.log('📱 Building detailed SMS quote breakdown...');
 
-            // Use RingCentral SMS instead of Twilio
+            const estimate = quote.estimate;
+            let quoteMessage = `🚚 Worry Free Moving - Quote Breakdown\n\n`;
+
+            // Service type and basic info
+            quoteMessage += `📦 Service: ${conv.data.serviceCategory === 'moving' ? `${crewSize}-Person Crew + Truck` : `Labor Only (${crewSize} helpers)`}\n`;
+            quoteMessage += `📍 From: ${conv.data.pickupAddress}\n`;
+            quoteMessage += `📍 To: ${conv.data.deliveryAddress}\n`;
+            quoteMessage += `📏 Distance: ${Math.round(conv.data.distance)} miles\n`;
+            quoteMessage += `⏱️ Estimated Time: ${hours} hours\n\n`;
+
+            // Cost breakdown
+            quoteMessage += `💰 COST BREAKDOWN:\n`;
+            quoteMessage += `━━━━━━━━━━━━━━━━━━━━\n`;
+
+            // Base rate
+            if (estimate.baseRate) {
+                quoteMessage += `Base Rate: $${estimate.baseRate.toFixed(2)}\n`;
+            }
+
+            // Hourly rate
+            if (estimate.hourlyRate) {
+                quoteMessage += `Hourly Rate: $${estimate.hourlyRate.toFixed(2)}/hr\n`;
+            }
+
+            // Distance charges
+            if (estimate.distanceCharge && estimate.distanceCharge > 0) {
+                quoteMessage += `Distance Charge: $${estimate.distanceCharge.toFixed(2)}\n`;
+            }
+
+            // Travel fees (for labor only)
+            if (estimate.travelFee && estimate.travelFee > 0) {
+                quoteMessage += `Travel Fee: $${estimate.travelFee.toFixed(2)}\n`;
+            }
+
+            // Stairs fees
+            if (estimate.stairsFee && estimate.stairsFee > 0) {
+                const totalStairs = (conv.data.pickupStairs || 0) + (conv.data.deliveryStairs || 0);
+                quoteMessage += `Stairs Fee (${totalStairs} flights): $${estimate.stairsFee.toFixed(2)}\n`;
+            }
+
+            // Heavy items
+            if (estimate.heavyItemsFee && estimate.heavyItemsFee > 0) {
+                quoteMessage += `Heavy Items Fee: $${estimate.heavyItemsFee.toFixed(2)}\n`;
+            }
+
+            // Packing services
+            if (estimate.packingFee && estimate.packingFee > 0) {
+                quoteMessage += `Packing Services: $${estimate.packingFee.toFixed(2)}\n`;
+            }
+
+            // FVP Insurance
+            if (estimate.fvpCost && estimate.fvpCost > 0) {
+                quoteMessage += `Full Value Protection: $${estimate.fvpCost.toFixed(2)}\n`;
+            }
+
+            // Subtotal
+            if (estimate.subtotal) {
+                quoteMessage += `\nSubtotal: $${estimate.subtotal.toFixed(2)}\n`;
+            }
+
+            // Service charge
+            if (estimate.serviceCharge && estimate.serviceCharge > 0) {
+                const serviceChargePercent = conv.data.serviceCategory === 'moving' ? '14%' : '8%';
+                quoteMessage += `Service Charge (${serviceChargePercent}): $${estimate.serviceCharge.toFixed(2)}\n`;
+            }
+
+            quoteMessage += `━━━━━━━━━━━━━━━━━━━━\n`;
+            quoteMessage += `TOTAL: $${total}\n\n`;
+
+            // Important notes
+            quoteMessage += `⚠️ Final cost based on actual time.\n`;
+            quoteMessage += `⚠️ 3-hour minimum for all jobs.\n\n`;
+
+            quoteMessage += `Questions? Call us:\n`;
+            quoteMessage += `📞 (330) 661-9985\n`;
+            quoteMessage += `worryfreemovers.com`;
+
+            // Use RingCentral SMS
             await sendSMS(conv.customerPhone, quoteMessage);
 
-            console.log(`📱 Quote SMS sent to ${conv.customerPhone} via RingCentral`);
+            console.log(`📱 Detailed quote SMS sent to ${conv.customerPhone} via RingCentral`);
+            console.log(`📱 SMS content:\n${quoteMessage}`);
 
             response.pause({ length: 1 });
-            response.say("I just texted you a copy of your quote for reference.");
+            response.say("I just texted you a detailed breakdown of your quote for reference.");
         } catch (smsError) {
-            console.error('Error sending quote SMS:', smsError);
+            console.error('Error sending quote SMS:', smsError.message);
+            console.error('SMS Error details:', smsError);
             // Don't fail the call if SMS fails, just continue
         }
 
