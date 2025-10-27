@@ -65,6 +65,28 @@
         "manageSettings": false,
         "viewReports": true
       }
+    },
+    {
+      "id": "user-1761517433214-1cdbrpsib",
+      "username": "testadmin",
+      "passwordHash": "$2b$10$vxHhXpLmZqohA/BkRhvkZ.XfQgRQe8ZwaeW.7Xzemi3HlD5bBprHq",
+      "firstName": "Admin",
+      "lastName": "TestUser",
+      "email": "admin.test@example.com",
+      "role": "manager",
+      "status": "active",
+      "createdAt": "2025-10-26T22:23:53.214Z",
+      "lastLogin": null,
+      "permissions": {
+        "viewBookings": true,
+        "createBookings": true,
+        "editBookings": true,
+        "deleteBookings": false,
+        "viewCustomers": true,
+        "manageUsers": false,
+        "manageSettings": false,
+        "viewReports": true
+      }
     }
   ]
 }

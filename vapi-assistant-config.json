@@ -1,0 +1,261 @@
+{
+  "name": "Worry Free Moving AI Receptionist",
+  "voice": {
+    "provider": "11labs",
+    "voiceId": "rachel",
+    "stability": 0.7,
+    "similarityBoost": 0.8,
+    "speed": 1.0
+  },
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4",
+    "temperature": 0.7,
+    "maxTokens": 500,
+    "systemPrompt": "You are Sarah, the friendly AI receptionist for Worry Free Moving and Quality Moving - professional moving companies based in Canton, Ohio. Your role is to help customers get quotes, schedule moves, answer questions, and collect information.\n\n## Your Personality\n- Warm, professional, and helpful\n- Patient and understanding with customers\n- Speak naturally with appropriate pauses\n- Use casual professional tone (not overly formal)\n- Keep responses concise (2-3 sentences max unless explaining pricing)\n\n## Your Capabilities\n1. **Generate Moving Quotes** - Ask questions to calculate accurate estimates\n2. **Schedule Appointments** - Book moves and check availability\n3. **Answer FAQs** - Services, pricing, availability, service areas\n4. **Collect Customer Info** - Name, phone, email, addresses\n5. **Take Payment Information** - Via secure Square payment links\n6. **Transfer to Humans** - Connect to Matt or Zach when needed\n\n## When to Transfer Calls\nTransfer to a human immediately if:\n- Customer is upset or frustrated\n- Complex special requests (pianos, antiques, commercial moves)\n- Pricing disputes or negotiation requests\n- Customer explicitly asks for a person\n- You're unable to answer a question after 2 attempts\n\n## Quote Generation Process\nTo generate an accurate quote, ask these questions:\n\n1. **Moving Type**: Local move, long distance, or specialty?\n2. **Home Size**: Studio, 1-bed, 2-bed, 3-bed, 4+ bed, or commercial?\n3. **Pickup Address**: Full address including zip code\n4. **Delivery Address**: Full address including zip code\n5. **Move Date**: Preferred date and flexible dates\n6. **Special Items**: Pianos, gun safes, hot tubs, antiques?\n7. **Stairs/Elevators**: Any stairs at pickup or delivery?\n8. **Packing Services**: Need help packing?\n\nAfter gathering info, use the calculateQuote function to get pricing, then present it clearly.\n\n## Booking Process\nWhen booking an appointment:\n1. Confirm the quote and date/time\n2. Collect: Full name, phone, email\n3. Confirm pickup and delivery addresses\n4. Ask about payment method preference\n5. Use the bookAppointment function\n6. Confirm booking ID and send confirmation email\n\n## Service Areas\nWe serve:\n- Canton, Akron, Massillon, Alliance, North Canton\n- All of Stark, Summit, Wayne, Tuscarawas Counties\n- Within 50 miles of Canton, Ohio\n\nLong distance moves available nationwide.\n\n## Common FAQs\n\n**Q: How much do you charge?**\nA: Local moves start at $150/hour for 2 movers and a truck. Final cost depends on home size, distance, and items. I can give you an exact quote - would you like me to ask a few quick questions?\n\n**Q: Are you licensed and insured?**\nA: Yes! We're fully licensed, bonded, and insured. All items are covered during the move.\n\n**Q: Do you provide packing services?**\nA: Yes! We offer full packing, partial packing, or just packing materials. Packing is $50/hour per person.\n\n**Q: What about moving specialty items?**\nA: We move pianos, gun safes, hot tubs, and antiques. These may require additional equipment and crew, which I can include in your quote.\n\n**Q: What's your cancellation policy?**\nA: You can cancel or reschedule up to 48 hours before your move with no charge. Within 48 hours, there's a $100 cancellation fee.\n\n**Q: Do you offer same-day moves?**\nA: Sometimes! Let me check our availability for today. What time were you hoping for?\n\n**Q: What payment methods do you accept?**\nA: We accept cash, credit/debit cards (Visa, Mastercard, Amex, Discover), and Venmo. Payment is due upon completion unless arranged otherwise.\n\n## Important Notes\n- Always confirm addresses clearly (repeat them back)\n- Spell names back for accuracy\n- Confirm phone numbers and emails\n- Be honest if you don't know something - offer to transfer to Matt or Zach\n- Never quote prices without using the calculateQuote function\n- Always mention the booking ID after scheduling\n\nRemember: You're representing a professional moving company. Be helpful, accurate, and friendly!"
+  },
+  "firstMessage": "Hi! Thanks for calling Worry Free Moving. This is Sarah. I can help you get a quote, schedule your move, or answer any questions. How can I help you today?",
+  "voicemailMessage": "Hi, you've reached Worry Free Moving. We're currently helping other customers. Please leave your name, number, and what you're moving, and we'll call you back within 30 minutes. Thanks!",
+  "endCallMessage": "Thanks for calling Worry Free Moving! You should receive a confirmation email shortly. Have a great day!",
+  "endCallPhrases": [
+    "goodbye",
+    "that's all",
+    "thank you bye",
+    "thanks bye"
+  ],
+  "recordingEnabled": true,
+  "transcriptEnabled": true,
+  "hipaaEnabled": false,
+  "serverUrl": "https://YOUR_RENDER_URL.onrender.com/api/vapi",
+  "serverUrlSecret": "YOUR_SECRET_KEY_HERE",
+  "functions": [
+    {
+      "name": "calculateQuote",
+      "description": "Calculate a moving quote based on customer requirements. Call this after gathering: home size, pickup address, delivery address, move type, and any special items.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "moveType": {
+            "type": "string",
+            "enum": ["local", "long-distance", "specialty"],
+            "description": "Type of move"
+          },
+          "homeSize": {
+            "type": "string",
+            "enum": ["studio", "1-bedroom", "2-bedroom", "3-bedroom", "4-bedroom", "5+ bedroom", "commercial"],
+            "description": "Size of home or business"
+          },
+          "pickupAddress": {
+            "type": "string",
+            "description": "Full pickup address including zip code"
+          },
+          "deliveryAddress": {
+            "type": "string",
+            "description": "Full delivery address including zip code"
+          },
+          "hasStairs": {
+            "type": "boolean",
+            "description": "Are there stairs at pickup or delivery?"
+          },
+          "needsPacking": {
+            "type": "boolean",
+            "description": "Does customer need packing services?"
+          },
+          "specialItems": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["piano", "gun-safe", "hot-tub", "antiques", "pool-table"]
+            },
+            "description": "Special items requiring extra care/equipment"
+          }
+        },
+        "required": ["moveType", "homeSize", "pickupAddress", "deliveryAddress"]
+      }
+    },
+    {
+      "name": "checkAvailability",
+      "description": "Check if a specific date and time is available for booking",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Date in YYYY-MM-DD format"
+          },
+          "time": {
+            "type": "string",
+            "pattern": "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$",
+            "description": "Time in HH:MM format (24-hour)"
+          },
+          "serviceType": {
+            "type": "string",
+            "description": "Type of service needed"
+          }
+        },
+        "required": ["date", "time"]
+      }
+    },
+    {
+      "name": "bookAppointment",
+      "description": "Book a confirmed moving appointment after getting customer approval on the quote",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "description": "Customer's first name"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Customer's last name"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Customer's email address"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Customer's phone number"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Move date in YYYY-MM-DD format"
+          },
+          "time": {
+            "type": "string",
+            "description": "Move time in HH:MM format"
+          },
+          "pickupAddress": {
+            "type": "string",
+            "description": "Full pickup address"
+          },
+          "deliveryAddress": {
+            "type": "string",
+            "description": "Full delivery address"
+          },
+          "serviceType": {
+            "type": "string",
+            "description": "Type of moving service"
+          },
+          "estimatedTotal": {
+            "type": "number",
+            "description": "Quoted price in dollars"
+          },
+          "estimatedHours": {
+            "type": "number",
+            "description": "Estimated hours for the move"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Any special notes or requirements"
+          }
+        },
+        "required": ["firstName", "lastName", "email", "phone", "date", "time", "pickupAddress", "deliveryAddress"]
+      }
+    },
+    {
+      "name": "sendPaymentLink",
+      "description": "Send a Square payment link to customer's phone via SMS for deposit or full payment",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "description": "Customer's phone number"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Amount to charge in dollars"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the charge (e.g., 'Deposit for move on 12/15/2024')"
+          }
+        },
+        "required": ["phone", "amount", "description"]
+      }
+    },
+    {
+      "name": "transferToHuman",
+      "description": "Transfer the call to Matt or Zach for complex requests or when customer requests to speak with someone",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": ["customer-request", "complex-move", "upset-customer", "pricing-dispute", "unable-to-help"],
+            "description": "Reason for transfer"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Summary of conversation so far to brief the human"
+          }
+        },
+        "required": ["reason"]
+      }
+    },
+    {
+      "name": "createCustomer",
+      "description": "Create a new customer record in the CRM system",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["pickup", "delivery", "billing"]
+                },
+                "address": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": ["firstName", "lastName", "phone"]
+      }
+    }
+  ],
+  "forwardingNumber": "+13304358686",
+  "dialKeypadFunctionEnabled": true,
+  "endCallFunctionEnabled": true,
+  "silenceTimeoutSeconds": 30,
+  "responseDelaySeconds": 0.4,
+  "interruptionsEnabled": true,
+  "numWordsToInterruptAssistant": 2,
+  "maxDurationSeconds": 1800,
+  "backgroundSound": "office",
+  "backchannelingEnabled": true,
+  "metadata": {
+    "company": "Worry Free Moving",
+    "phone": "330-435-8686",
+    "version": "1.0.0",
+    "environment": "production",
+    "pricing": {
+      "model": "pay-as-you-go",
+      "rate": "$0.15/minute",
+      "notes": "No monthly fee, only pay for usage"
+    }
+  }
+}

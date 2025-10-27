@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header + Chatbot Integration Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .test-content {
+            padding: 250px 20px 100px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .test-content h1 {
+            color: #004085;
+            margin-bottom: 20px;
+        }
+
+        .test-content p {
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER FROM header-fixed.html -->
+    <iframe src="../Worry Free Moving/Website Material/Web Pages/header-fixed.html"
+            style="width: 100%; height: 200px; border: none; position: fixed; top: 0; left: 0; z-index: 1000;">
+    </iframe>
+
+    <!-- TEST PAGE CONTENT -->
+    <div class="test-content">
+        <h1>Header + Chatbot Integration Test</h1>
+        <p>This page tests the integration between the header buttons and the chatbot widget.</p>
+        <p><strong>Test Instructions:</strong></p>
+        <ol>
+            <li>Click the "Chat with Sarah" button in the header (purple gradient button)</li>
+            <li>The chatbot should appear in the bottom-right corner</li>
+            <li>On mobile, the chatbot should fill the entire screen</li>
+            <li>The native toggle button should NOT be visible</li>
+        </ol>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+    </div>
+
+    <!-- CHATBOT WIDGET - Include directly on page -->
+    <script>
+        // Load the chatbot from sarah-ai.html
+        fetch('sarah-ai.html')
+            .then(response => response.text())
+            .then(html => {
+                // Extract just the chatbot container and script
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                // Get the styles
+                const styles = doc.querySelectorAll('style');
+                styles.forEach(style => {
+                    document.head.appendChild(style.cloneNode(true));
+                });
+
+                // Get the chatbot container
+                const container = doc.querySelector('#wfm-chat-container');
+                if (container) {
+                    document.body.appendChild(container.cloneNode(true));
+                }
+
+                // Get and execute the script
+                const scripts = doc.querySelectorAll('script');
+                scripts.forEach(script => {
+                    const newScript = document.createElement('script');
+                    if (script.src) {
+                        newScript.src = script.src;
+                    } else {
+                        newScript.textContent = script.textContent;
+                    }
+                    document.body.appendChild(newScript);
+                });
+            })
+            .catch(error => console.error('Error loading chatbot:', error));
+    </script>
+</body>
+</html>

@@ -2267,6 +2267,124 @@ app.delete('/api/customers/:customerId', async (req, res) => {
 });
 
 // ==============================================
+// TWILIO VOICE AI ENDPOINTS (Cheaper Alternative!)
+// ==============================================
+const twilioVoice = require('./services/twilioSimpleVoice');
+
+// Main voice endpoint - handles incoming calls
+app.post('/api/twilio/voice', (req, res) => {
+    twilioVoice.handleIncomingCall(req, res);
+});
+
+// Menu selection
+app.post('/api/twilio/menu', (req, res) => {
+    twilioVoice.handleMenu(req, res);
+});
+
+// Quote flow endpoints
+app.post('/api/twilio/quote-start', (req, res) => {
+    twilioVoice.handleQuoteStart(req, res);
+});
+
+app.post('/api/twilio/quote-homesize', (req, res) => {
+    twilioVoice.handleQuoteHomeSize(req, res);
+});
+
+app.post('/api/twilio/quote-pickup', (req, res) => {
+    twilioVoice.handleQuotePickup(req, res);
+});
+
+app.post('/api/twilio/quote-delivery', (req, res) => {
+    twilioVoice.handleQuoteDelivery(req, res);
+});
+
+app.post('/api/twilio/quote-stairs', (req, res) => {
+    twilioVoice.handleQuoteStairs(req, res);
+});
+
+app.post('/api/twilio/quote-book', (req, res) => {
+    twilioVoice.handleQuoteBook(req, res);
+});
+
+// Booking flow endpoints
+app.post('/api/twilio/booking-name', (req, res) => {
+    twilioVoice.handleBookingName(req, res);
+});
+
+app.post('/api/twilio/booking-phone', (req, res) => {
+    twilioVoice.handleBookingPhone(req, res);
+});
+
+app.post('/api/twilio/booking-date', (req, res) => {
+    twilioVoice.handleBookingDate(req, res);
+});
+
+// FAQ endpoints
+app.post('/api/twilio/faq', (req, res) => {
+    twilioVoice.handleFAQ(req, res);
+});
+
+app.post('/api/twilio/faq-answer', (req, res) => {
+    twilioVoice.handleFAQAnswer(req, res);
+});
+
+// ==============================================
+// VAPI AI PHONE RECEPTIONIST ENDPOINTS (Optional - More Expensive)
+// ==============================================
+const { handleVapiWebhook } = require('./services/vapiEndpoints');
+const { syncToOneDrive, generateCallSummary } = require('./services/vapiService');
+
+// Main Vapi webhook - receives all events from AI assistant
+app.post('/api/vapi/webhook', async (req, res) => {
+    try {
+        // Verify webhook secret if configured
+        const secret = req.headers['x-vapi-secret'];
+        if (process.env.VAPI_WEBHOOK_SECRET && secret !== process.env.VAPI_WEBHOOK_SECRET) {
+            console.warn('⚠️ Invalid Vapi webhook secret');
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        await handleVapiWebhook(req, res);
+    } catch (error) {
+        console.error('Error in Vapi webhook:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Manual sync to OneDrive
+app.post('/api/vapi/sync', async (req, res) => {
+    try {
+        const result = await syncToOneDrive();
+        res.json(result);
+    } catch (error) {
+        console.error('Error syncing to OneDrive:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Get call summary for a specific date
+app.get('/api/vapi/summary/:date?', async (req, res) => {
+    try {
+        const { date } = req.params;
+        const result = await generateCallSummary(date);
+        res.json(result);
+    } catch (error) {
+        console.error('Error generating call summary:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Test endpoint to verify Vapi integration
+app.get('/api/vapi/test', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Vapi integration is active',
+        configured: !!process.env.VAPI_API_KEY,
+        webhookUrl: `${process.env.BASE_URL || 'http://localhost:3001'}/api/vapi/webhook`
+    });
+});
+
+// ==============================================
 // EMPLOYEE PORTAL ENDPOINTS
 // ==============================================
 const EMPLOYEES_FILE = path.join(__dirname, 'data', 'employees.json');
@@ -3356,6 +3474,12 @@ async function startServer() {
     const { initReminderScheduler } = require('./services/reminderScheduler');
     initReminderScheduler();
 
+    // Initialize Vapi call data sync scheduler
+    if (process.env.VAPI_API_KEY) {
+        const { initVapiSyncScheduler } = require('./services/vapiSyncScheduler');
+        initVapiSyncScheduler();
+    }
+
     app.listen(PORT, () => {
         console.log(`\n${'='.repeat(50)}`);
         console.log(`🚀 Booking API server running on http://localhost:${PORT}`);
@@ -3364,6 +3488,8 @@ async function startServer() {
         console.log(`⏰ 24-hour reminder system: ACTIVE`);
         console.log(`📧 Email notifications: ${process.env.EMAIL_SERVICE || 'NOT CONFIGURED'}`);
         console.log(`📱 SMS notifications: ${process.env.RINGCENTRAL_CLIENT_ID ? 'ACTIVE' : 'NOT CONFIGURED'}`);
+        console.log(`📞 Twilio Voice AI: ${process.env.TWILIO_ACCOUNT_SID ? 'CONFIGURED (~$0.02/min)' : 'NOT CONFIGURED'}`);
+        console.log(`📞 Vapi AI Phone: ${process.env.VAPI_API_KEY ? 'CONFIGURED (~$0.15/min)' : 'NOT CONFIGURED'}`);
         console.log(`${'='.repeat(50)}\n`);
     });
 }

@@ -1,0 +1,17 @@
+[
+  {
+    "requestId": "TO-1761508248796-NORD8ACUW",
+    "crewName": "Zach Larimer",
+    "crewEmail": "zlarimer24@gmail.com",
+    "crewPhone": "330-261-7687",
+    "crew": "Not specified",
+    "requestType": "vacation",
+    "startDate": "2025-11-01",
+    "endDate": "2025-11-02",
+    "daysCount": 2,
+    "reason": "Testing time off system",
+    "submittedDate": "2025-10-26T19:50:48.796Z",
+    "status": "pending",
+    "createdAt": "2025-10-26T19:50:48.796Z"
+  }
+]

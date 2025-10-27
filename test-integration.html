@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header + Chatbot Integration Test - Worry Free Moving</title>
+</head>
+<body>
+    <h1 style="margin: 250px 20px 20px 20px; text-align: center;">Local Integration Test</h1>
+    <p style="text-align: center; margin-bottom: 50px;">Click "Chat with Sarah" in the header above to test the integration.</p>
+
+    <!-- INCLUDE THE HEADER -->
+    <iframe src="../../../Worry Free Moving/Website Material/Web Pages/header-fixed.html"
+            style="width: 100%; height: 200px; border: none; position: fixed; top: 0; left: 0; right: 0; z-index: 10000;">
+    </iframe>
+
+    <!-- INCLUDE THE CHATBOT (loads from file) -->
+    <script>
+        // Load chatbot directly from file
+        window.addEventListener('DOMContentLoaded', () => {
+            fetch('sarah-ai.html')
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Add styles
+                    doc.querySelectorAll('style').forEach(style => {
+                        document.head.appendChild(style.cloneNode(true));
+                    });
+                    
+                    // Add chatbot container
+                    const container = doc.querySelector('#wfm-chat-container');
+                    if (container) {
+                        document.body.appendChild(container.cloneNode(true));
+                    }
+                    
+                    // Add scripts
+                    doc.querySelectorAll('script').forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        if (oldScript.src) {
+                            newScript.src = oldScript.src;
+                        } else {
+                            newScript.textContent = oldScript.textContent;
+                        }
+                        document.body.appendChild(newScript);
+                    });
+                    
+                    console.log('Chatbot loaded successfully!');
+                })
+                .catch(err => console.error('Error loading chatbot:', err));
+        });
+    </script>
+</body>
+</html>
