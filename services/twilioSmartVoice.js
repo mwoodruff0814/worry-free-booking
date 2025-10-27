@@ -8,7 +8,6 @@ const twilio = require('twilio');
 const axios = require('axios');
 const Anthropic = require('@anthropic-ai/sdk');
 const { getEventsForDate } = require('./googleCalendar');
-const { checkAvailability } = require('./calendarManager');
 const nodemailer = require('nodemailer');
 const { sendSMS } = require('./smsService'); // RingCentral SMS
 
@@ -173,15 +172,55 @@ function estimateDistance(pickup, delivery) {
 }
 
 /**
- * Check calendar availability for specific time slot
+ * Check Google Calendar availability for specific time slot
  */
 async function checkSlotAvailability(date, timeSlot) {
     try {
-        const time = timeSlot === 'morning' ? '08:00' : '13:00';
-        const availability = await checkAvailability(date, time);
-        return availability.available;
+        console.log(`📅 Checking Google Calendar availability for ${date} ${timeSlot}`);
+
+        // Get all events from Google Calendar for this date
+        const events = await getEventsForDate(date);
+
+        console.log(`📅 Found ${events.length} events on ${date}`);
+
+        // Define time windows
+        const timeWindows = {
+            morning: {
+                start: `${date}T08:00:00`,
+                end: `${date}T10:00:00`
+            },
+            afternoon: {
+                start: `${date}T14:00:00`,
+                end: `${date}T16:00:00`
+            }
+        };
+
+        const window = timeWindows[timeSlot];
+        if (!window) {
+            console.error(`Invalid time slot: ${timeSlot}`);
+            return true;
+        }
+
+        // Check if any event overlaps with this time window
+        const hasConflict = events.some(event => {
+            const eventStart = new Date(event.start);
+            const eventEnd = new Date(event.end);
+            const windowStart = new Date(window.start);
+            const windowEnd = new Date(window.end);
+
+            // Check for overlap
+            return (eventStart < windowEnd && eventEnd > windowStart);
+        });
+
+        if (hasConflict) {
+            console.log(`❌ ${timeSlot} slot on ${date} is BOOKED`);
+        } else {
+            console.log(`✅ ${timeSlot} slot on ${date} is AVAILABLE`);
+        }
+
+        return !hasConflict;
     } catch (error) {
-        console.error('Error checking slot availability:', error);
+        console.error('Error checking Google Calendar availability:', error);
         return true; // Default to available if check fails
     }
 }
@@ -1692,19 +1731,19 @@ async function handleBookingTimeSlot(req, res) {
             timeout: 10
         });
 
-        gather.say("Would you prefer a morning arrival between 8 and 9 AM? Press 1 or say morning. Or would you prefer afternoon between 1 and 2 PM? Press 2 or say afternoon.");
+        gather.say("Would you prefer a morning arrival between 8 and 10 AM? Press 1 or say morning. Or would you prefer afternoon between 2 and 4 PM? Press 2 or say afternoon.");
 
     } else if (slots.morning) {
-        response.say("We have a morning slot available that day, between 8 and 9 AM.");
+        response.say("We have a morning slot available that day, between 8 and 10 AM.");
         conv.data.timeSlot = 'morning';
         conv.data.time = '08:00';
         conversations.set(CallSid, conv);
         response.redirect('/api/twilio/booking-create');
 
     } else if (slots.afternoon) {
-        response.say("We have an afternoon slot available that day, between 1 and 2 PM.");
+        response.say("We have an afternoon slot available that day, between 2 and 4 PM.");
         conv.data.timeSlot = 'afternoon';
-        conv.data.time = '13:00';
+        conv.data.time = '14:00';
         conversations.set(CallSid, conv);
         response.redirect('/api/twilio/booking-create');
     }
@@ -1732,7 +1771,7 @@ async function handleBookingCreate(req, res) {
             conv.data.time = '08:00';
         } else if (timeChoice === '2' || timeChoice === 'afternoon') {
             conv.data.timeSlot = 'afternoon';
-            conv.data.time = '13:00';
+            conv.data.time = '14:00';
         }
     }
 
@@ -1822,7 +1861,7 @@ async function handleBookingCreate(req, res) {
             console.error('Payment SMS failed:', smsError);
         }
 
-        const timeSlotText = conv.data.timeSlot === 'afternoon' ? 'afternoon between 1 and 2 PM' : 'morning between 8 and 9 AM';
+        const timeSlotText = conv.data.timeSlot === 'afternoon' ? 'afternoon between 2 and 4 PM' : 'morning between 8 and 10 AM';
         response.say(`Perfect! Your move is all set for ${moveDate} in the ${timeSlotText}. Your booking ID is ${bookingId}.`);
         response.pause({ length: 1 });
         response.say(`I've sent a confirmation email to ${conv.data.email}. You'll also receive a text with a link to save your card on file for payment after your move.`);
