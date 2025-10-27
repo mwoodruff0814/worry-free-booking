@@ -475,7 +475,7 @@ function handleMainMenu(req, res) {
         case '9': // Hidden transfer option
             if (conv && conv.attempts.transfer >= 1) {
                 response.say("Let me connect you with our team.");
-                response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
+                response.dial(process.env.TRANSFER_NUMBER || '+13304358686');
             } else {
                 conv.attempts.transfer++;
                 conversations.set(CallSid, conv);
@@ -1127,7 +1127,7 @@ async function handleQuoteCalculateDistance(req, res) {
     } catch (error) {
         console.error('Distance calculation error:', error);
         response.say("I'm having trouble calculating the distance. Let me connect you with someone who can help.");
-        response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
+        response.dial(process.env.TRANSFER_NUMBER || '+13304358686');
     }
 
     res.type('text/xml');
@@ -1268,7 +1268,7 @@ async function handleQuoteFinalize(req, res) {
     } catch (error) {
         console.error('Quote calculation error:', error);
         response.say("I'm having trouble calculating your quote. Let me connect you with someone who can help.");
-        response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
+        response.dial(process.env.TRANSFER_NUMBER || '+13304358686');
     }
 
     res.type('text/xml');
@@ -1302,7 +1302,7 @@ async function handleQuoteDecision(req, res) {
         gather.say("Sure! What's your email address? Please say it slowly.");
     } else if (choice === '9') {
         response.say("Let me transfer you now.");
-        response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
+        response.dial(process.env.TRANSFER_NUMBER || '+13304358686');
     } else {
         response.say("I didn't catch that.");
         response.redirect('/api/twilio/quote-finalize');
@@ -1347,7 +1347,7 @@ async function handleEmailQuoteSend(req, res) {
         response.say(`Perfect! I've sent your quote to ${email}. Thanks for calling Worry Free Moving!`);
     } catch (error) {
         response.say("I'm having trouble sending the email. Let me connect you with someone who can help.");
-        response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
+        response.dial(process.env.TRANSFER_NUMBER || '+13304358686');
     }
 
     res.type('text/xml');
@@ -1386,7 +1386,7 @@ async function handleSendOnlineBookingLink(req, res) {
     } catch (error) {
         console.error('Error sending online booking link SMS:', error);
         response.say("I'm having trouble sending the text. Let me connect you with someone who can help.");
-        response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
+        response.dial(process.env.TRANSFER_NUMBER || '+13304358686');
     }
 
     res.type('text/xml');
@@ -1532,7 +1532,7 @@ async function handleBookingTimeSlot(req, res) {
 
     if (!slots.anyAvailable) {
         response.say("I'm sorry, we're fully booked that day. Let me connect you with someone who can find the next available date.");
-        response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
+        response.dial(process.env.TRANSFER_NUMBER || '+13304358686');
     } else if (slots.morning && slots.afternoon) {
         response.say("Good news! We have availability that day.");
         response.pause({ length: 1 });
@@ -1669,7 +1669,7 @@ async function handleBookingCreate(req, res) {
     } catch (error) {
         console.error('Booking error:', error);
         response.say("I'm having trouble completing your booking. Let me transfer you to someone who can help.");
-        response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
+        response.dial(process.env.TRANSFER_NUMBER || '+13304358686');
     }
 
     res.type('text/xml');
