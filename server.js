@@ -2286,6 +2286,11 @@ app.post('/api/twilio/recording-complete', (req, res) => {
     twilioVoice.handleRecordingComplete(req, res);
 });
 
+// Transcription completion
+app.post('/api/twilio/transcription-complete', (req, res) => {
+    twilioVoice.handleTranscriptionComplete(req, res);
+});
+
 // Quote flow endpoints (NEW ORDER: service → addresses → distance → crew → quote)
 app.post('/api/twilio/quote-service-type', (req, res) => {
     twilioVoice.handleQuoteServiceType(req, res);
