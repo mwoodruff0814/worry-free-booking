@@ -604,7 +604,7 @@ function handleQuotePickupAddress(req, res) {
 }
 
 /**
- * Ask pickup home type - with Claude explanation
+ * Parse and confirm pickup address
  */
 async function handleQuotePickupHomeType(req, res) {
     const { CallSid, SpeechResult } = req.body;
@@ -627,34 +627,87 @@ async function handleQuotePickupHomeType(req, res) {
         conv.data.pickupAddress = SpeechResult;
     }
 
-    // Use Claude to generate natural transition
-    const naturalResponse = await generateNaturalResponse(
-        `Customer provided pickup address: ${conv.data.pickupAddress}`,
-        'Acknowledge the address naturally and explain why you need to know the home type (helps estimate crew size and time)'
-    );
+    console.log(`📍 Pickup address collected: ${conv.data.pickupAddress}`);
 
-    if (naturalResponse.success) {
-        response.say(naturalResponse.reply);
-    } else {
-        response.say("Perfect. This helps me figure out the right crew size for you.");
-    }
-
-    response.pause({ length: 1 });
-
+    // Confirm address back to customer
     const gather = response.gather({
         input: 'dtmf speech',
-        action: '/api/twilio/quote-pickup-bedrooms',
+        action: '/api/twilio/quote-pickup-address-confirm',
         method: 'POST',
         numDigits: 1,
         speechTimeout: 'auto',
         timeout: 10
     });
 
-    gather.say("What type of place are you moving FROM? Press 1 for a house. Press 2 for an apartment or condo. Or press 3 for a storage unit.");
+    gather.say(`I have your pickup address as ${conv.data.pickupAddress}. Is that correct? Press 1 for yes, or press 2 to say it again.`);
 
     conversations.set(CallSid, conv);
     res.type('text/xml');
     res.send(response.toString());
+}
+
+/**
+ * Handle pickup address confirmation
+ */
+async function handleQuotePickupAddressConfirm(req, res) {
+    const { CallSid, Digits, SpeechResult } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    const choice = Digits || (SpeechResult && SpeechResult.toLowerCase().includes('yes') ? '1' : '2');
+
+    if (choice === '1') {
+        // Address confirmed, continue to home type
+        console.log(`✅ Pickup address confirmed: ${conv.data.pickupAddress}`);
+
+        // Use Claude to generate natural transition
+        const naturalResponse = await generateNaturalResponse(
+            `Customer confirmed pickup address: ${conv.data.pickupAddress}`,
+            'Acknowledge naturally and explain why you need to know the home type (helps estimate crew size and time)'
+        );
+
+        if (naturalResponse.success) {
+            response.say(naturalResponse.reply);
+        } else {
+            response.say("Perfect. This helps me figure out the right crew size for you.");
+        }
+
+        response.pause({ length: 1 });
+
+        const gather = response.gather({
+            input: 'dtmf speech',
+            action: '/api/twilio/quote-pickup-bedrooms',
+            method: 'POST',
+            numDigits: 1,
+            speechTimeout: 'auto',
+            timeout: 10
+        });
+
+        gather.say("What type of place are you moving FROM? Press 1 for a house. Press 2 for an apartment or condo. Or press 3 for a storage unit.");
+
+        conversations.set(CallSid, conv);
+        res.type('text/xml');
+        res.send(response.toString());
+    } else {
+        // Address not confirmed, ask again
+        console.log(`🔄 Pickup address not confirmed, asking again`);
+
+        const gather = response.gather({
+            input: 'speech',
+            action: '/api/twilio/quote-pickup-home-type',
+            method: 'POST',
+            speechTimeout: 'auto',
+            timeout: 15
+        });
+
+        gather.say("No problem. Please say your pickup address again, including the street address and city.");
+
+        conversations.set(CallSid, conv);
+        res.type('text/xml');
+        res.send(response.toString());
+    }
 }
 
 /**
@@ -771,7 +824,7 @@ async function handleQuoteDeliveryAddress(req, res) {
 }
 
 /**
- * Ask delivery home type
+ * Parse and confirm delivery address
  */
 async function handleQuoteDeliveryHomeType(req, res) {
     const { CallSid, SpeechResult } = req.body;
@@ -794,20 +847,73 @@ async function handleQuoteDeliveryHomeType(req, res) {
         conv.data.deliveryAddress = SpeechResult;
     }
 
+    console.log(`📍 Delivery address collected: ${conv.data.deliveryAddress}`);
+
+    // Confirm address back to customer
     const gather = response.gather({
         input: 'dtmf speech',
-        action: '/api/twilio/quote-delivery-bedrooms',
+        action: '/api/twilio/quote-delivery-address-confirm',
         method: 'POST',
         numDigits: 1,
         speechTimeout: 'auto',
         timeout: 10
     });
 
-    gather.say("Got it. What type of place are you moving TO? Press 1 for a house. Press 2 for an apartment or condo. Or press 3 for a storage unit.");
+    gather.say(`I have your delivery address as ${conv.data.deliveryAddress}. Is that correct? Press 1 for yes, or press 2 to say it again.`);
 
     conversations.set(CallSid, conv);
     res.type('text/xml');
     res.send(response.toString());
+}
+
+/**
+ * Handle delivery address confirmation
+ */
+async function handleQuoteDeliveryAddressConfirm(req, res) {
+    const { CallSid, Digits, SpeechResult } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    const choice = Digits || (SpeechResult && SpeechResult.toLowerCase().includes('yes') ? '1' : '2');
+
+    if (choice === '1') {
+        // Address confirmed, continue to home type
+        console.log(`✅ Delivery address confirmed: ${conv.data.deliveryAddress}`);
+
+        const gather = response.gather({
+            input: 'dtmf speech',
+            action: '/api/twilio/quote-delivery-bedrooms',
+            method: 'POST',
+            numDigits: 1,
+            speechTimeout: 'auto',
+            timeout: 10
+        });
+
+        gather.say("Got it. What type of place are you moving TO? Press 1 for a house. Press 2 for an apartment or condo. Or press 3 for a storage unit.");
+
+        conversations.set(CallSid, conv);
+        res.type('text/xml');
+        res.send(response.toString());
+    } else {
+        // Address not confirmed, ask again
+        console.log(`🔄 Delivery address not confirmed, asking again`);
+
+        const gather = response.gather({
+            input: 'speech',
+            action: '/api/twilio/quote-delivery-home-type',
+            method: 'POST',
+            speechTimeout: 'auto',
+            timeout: 15
+        });
+
+        gather.say("No problem. Please say your delivery address again, including the street address and city.");
+
+        conversations.set(CallSid, conv);
+        res.type('text/xml');
+        res.send(response.toString());
+    }
 }
 
 /**
@@ -1648,7 +1754,7 @@ async function handleBookingEmail(req, res) {
 }
 
 /**
- * Collect move date with AI parsing
+ * Collect email and confirm it back to customer
  */
 async function handleBookingDate(req, res) {
     const { CallSid, SpeechResult } = req.body;
@@ -1670,19 +1776,74 @@ async function handleBookingDate(req, res) {
         conv.data.email = parseEmail(SpeechResult);
     }
 
+    console.log(`📧 Email collected: ${conv.data.email}`);
+
+    // Confirm email back to customer
     const gather = response.gather({
-        input: 'speech',
-        action: '/api/twilio/booking-time-slot',
+        input: 'dtmf speech',
+        action: '/api/twilio/booking-email-confirm',
         method: 'POST',
+        numDigits: 1,
         speechTimeout: 'auto',
-        timeout: 15
+        timeout: 10
     });
 
-    gather.say("Great! When would you like to move? Please say the date, like December 20th or next Friday.");
+    // Format email for speaking (spell out @ and .)
+    const emailForSpeaking = conv.data.email.replace('@', ' at ').replace(/\./g, ' dot ');
+    gather.say(`I have your email as ${emailForSpeaking}. Is that correct? Press 1 for yes, or press 2 to say it again.`);
 
     conversations.set(CallSid, conv);
     res.type('text/xml');
     res.send(response.toString());
+}
+
+/**
+ * Handle email confirmation
+ */
+async function handleBookingEmailConfirm(req, res) {
+    const { CallSid, Digits, SpeechResult } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    const choice = Digits || (SpeechResult && SpeechResult.toLowerCase().includes('yes') ? '1' : '2');
+
+    if (choice === '1') {
+        // Email confirmed, ask for date
+        console.log(`✅ Email confirmed: ${conv.data.email}`);
+
+        const gather = response.gather({
+            input: 'speech',
+            action: '/api/twilio/booking-time-slot',
+            method: 'POST',
+            speechTimeout: 'auto',
+            timeout: 15
+        });
+
+        gather.say("Perfect! When would you like to move? Please say the date, like December 20th or next Friday.");
+
+        conversations.set(CallSid, conv);
+        res.type('text/xml');
+        res.send(response.toString());
+    } else {
+        // Email not confirmed, ask again
+        console.log(`🔄 Email not confirmed, asking again`);
+
+        const gather = response.gather({
+            input: 'speech',
+            action: '/api/twilio/booking-date',
+            method: 'POST',
+            speechTimeout: 'auto',
+            timeout: 15
+        });
+
+        gather.say("No problem. Please say your email address again slowly, like john at gmail dot com.");
+
+        conversations.set(CallSid, conv);
+        res.type('text/xml');
+        res.send(response.toString());
+    }
 }
 
 /**
@@ -1943,10 +2104,12 @@ module.exports = {
     handleQuoteServiceType,
     handleQuotePickupAddress,
     handleQuotePickupHomeType,
+    handleQuotePickupAddressConfirm,
     handleQuotePickupBedrooms,
     handleQuotePickupStairs,
     handleQuoteDeliveryAddress,
     handleQuoteDeliveryHomeType,
+    handleQuoteDeliveryAddressConfirm,
     handleQuoteDeliveryBedrooms,
     handleQuoteDeliveryStairs,
     handleQuoteAppliances,
@@ -1962,6 +2125,7 @@ module.exports = {
     handleBookingStart,
     handleBookingEmail,
     handleBookingDate,
+    handleBookingEmailConfirm,
     handleBookingTimeSlot,
     handleBookingCreate,
     conversations

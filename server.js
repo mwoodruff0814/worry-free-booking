@@ -2361,6 +2361,10 @@ app.post('/api/twilio/quote-pickup-home-type', (req, res) => {
     twilioVoice.handleQuotePickupHomeType(req, res);
 });
 
+app.post('/api/twilio/quote-pickup-address-confirm', (req, res) => {
+    twilioVoice.handleQuotePickupAddressConfirm(req, res);
+});
+
 app.post('/api/twilio/quote-pickup-bedrooms', (req, res) => {
     twilioVoice.handleQuotePickupBedrooms(req, res);
 });
@@ -2375,6 +2379,10 @@ app.post('/api/twilio/quote-delivery-address', (req, res) => {
 
 app.post('/api/twilio/quote-delivery-home-type', (req, res) => {
     twilioVoice.handleQuoteDeliveryHomeType(req, res);
+});
+
+app.post('/api/twilio/quote-delivery-address-confirm', (req, res) => {
+    twilioVoice.handleQuoteDeliveryAddressConfirm(req, res);
 });
 
 app.post('/api/twilio/quote-delivery-bedrooms', (req, res) => {
@@ -2437,6 +2445,10 @@ app.post('/api/twilio/booking-email', (req, res) => {
 
 app.post('/api/twilio/booking-date', (req, res) => {
     twilioVoice.handleBookingDate(req, res);
+});
+
+app.post('/api/twilio/booking-email-confirm', (req, res) => {
+    twilioVoice.handleBookingEmailConfirm(req, res);
 });
 
 app.post('/api/twilio/booking-time-slot', (req, res) => {
