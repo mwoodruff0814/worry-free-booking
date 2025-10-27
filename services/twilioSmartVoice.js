@@ -1444,6 +1444,8 @@ async function handleSendOnlineBookingLink(req, res) {
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const response = new VoiceResponse();
 
+    console.log(`📱 Attempting to send booking link SMS to ${From} from ${process.env.TWILIO_PHONE_NUMBER}`);
+
     try {
         // Simple booking link without quote data (they haven't gotten a quote yet)
         const bookingUrl = `https://worryfreemovers.com/public-booking`;
@@ -1455,18 +1457,30 @@ async function handleSendOnlineBookingLink(req, res) {
             `Questions? Call us: (330) 661-9985\n\n` +
             `Worry Free Moving`;
 
-        await twilioClient.messages.create({
+        console.log(`📱 SMS message length: ${message.length} characters`);
+
+        const smsResult = await twilioClient.messages.create({
             body: message,
             from: process.env.TWILIO_PHONE_NUMBER,
             to: From
         });
 
-        console.log(`📱 Online booking link SMS sent to ${From}`);
+        console.log(`✅ Online booking link SMS sent successfully:`, {
+            sid: smsResult.sid,
+            status: smsResult.status,
+            to: From
+        });
 
         response.say("Done! I just sent you the link. You should see it in a few seconds. Have a great day!");
 
     } catch (error) {
-        console.error('Error sending online booking link SMS:', error);
+        console.error('❌ Error sending online booking link SMS:', {
+            error: error.message,
+            code: error.code,
+            status: error.status,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: From
+        });
         response.say("I'm having trouble sending the text. Let me connect you with someone who can help.");
         response.dial(process.env.TRANSFER_NUMBER || '+13304358686');
     }
