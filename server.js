@@ -2320,21 +2320,7 @@ const twilioVoice = require('./services/twilioSmartVoice');
 
 // Main voice endpoint - handles incoming calls
 app.post('/api/twilio/voice', (req, res) => {
-    try {
-        console.log('🎤 VOICE ENDPOINT HIT - Incoming call from:', req.body.From, 'CallSid:', req.body.CallSid);
-        twilioVoice.handleIncomingCall(req, res);
-    } catch (error) {
-        console.error('❌❌❌ CRITICAL ERROR in voice endpoint:', error);
-        console.error('Stack trace:', error.stack);
-
-        // Send basic TwiML response to prevent call from dropping
-        const twilio = require('twilio');
-        const VoiceResponse = twilio.twiml.VoiceResponse;
-        const response = new VoiceResponse();
-        response.say('We are experiencing technical difficulties. Please try again later or call our main office.');
-        res.type('text/xml');
-        res.send(response.toString());
-    }
+    twilioVoice.handleIncomingCall(req, res);
 });
 
 // Main menu
@@ -3640,38 +3626,9 @@ async function startServer() {
         console.log(`📆 Google Calendar sync: ${process.env.GOOGLE_CALENDAR_ID ? 'ACTIVE' : 'Ready (configure credentials.json)'}`);
         console.log(`⏰ 24-hour reminder system: ACTIVE`);
         console.log(`📧 Email notifications: ${process.env.EMAIL_SERVICE || 'NOT CONFIGURED'}`);
-        console.log(`📱 SMS notifications: ${process.env.RINGCENTRAL_CLIENT_ID ? 'ACTIVE (RingCentral)' : 'NOT CONFIGURED'}`);
+        console.log(`📱 SMS notifications: ${process.env.RINGCENTRAL_CLIENT_ID ? 'ACTIVE' : 'NOT CONFIGURED'}`);
         console.log(`📞 Twilio Voice AI: ${process.env.TWILIO_ACCOUNT_SID ? 'CONFIGURED (~$0.02/min)' : 'NOT CONFIGURED'}`);
         console.log(`📞 Vapi AI Phone: ${process.env.VAPI_API_KEY ? 'CONFIGURED (~$0.15/min)' : 'NOT CONFIGURED'}`);
-        console.log(`${'='.repeat(50)}`);
-
-        // Verify critical environment variables for voice AI
-        console.log(`\n🔍 VOICE AI CONFIGURATION CHECK:`);
-        console.log(`   BASE_URL: ${process.env.BASE_URL || 'NOT SET (will use default)'}`);
-        console.log(`   TWILIO_PHONE_NUMBER: ${process.env.TWILIO_PHONE_NUMBER || 'NOT SET'}`);
-        console.log(`   TRANSFER_NUMBER: ${process.env.TRANSFER_NUMBER || 'NOT SET'}`);
-        console.log(`   ANTHROPIC_API_KEY: ${process.env.ANTHROPIC_API_KEY ? '✅ SET' : '❌ NOT SET'}`);
-        console.log(`   GOOGLE_MAPS_API_KEY: ${process.env.GOOGLE_MAPS_API_KEY ? '✅ SET' : '⚠️  NOT SET'}`);
-
-        // Check for service separation (Twilio for voice, RingCentral for SMS)
-        console.log(`\n📡 SERVICE SEPARATION VERIFICATION:`);
-        console.log(`   Twilio (Voice Only): ${process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN ? '✅ CONFIGURED' : '❌ NOT CONFIGURED'}`);
-        console.log(`   RingCentral (SMS Only): ${process.env.RINGCENTRAL_CLIENT_ID && process.env.RINGCENTRAL_JWT ? '✅ CONFIGURED' : '❌ NOT CONFIGURED'}`);
-
-        // Warn about potential misconfigurations
-        if (process.env.BASE_URL && process.env.BASE_URL.includes('vercel.app')) {
-            console.log(`\n⚠️  WARNING: BASE_URL points to Vercel (${process.env.BASE_URL})`);
-            console.log(`   If server is on Render, Twilio callbacks will FAIL!`);
-            console.log(`   Update BASE_URL to: https://worry-free-booking.onrender.com`);
-        }
-
-        if (process.env.RINGCENTRAL_CLIENT_ID === '0J4k9ES6cBwfaRZY2oB3MY') {
-            console.log(`\n⚠️  WARNING: RINGCENTRAL_CLIENT_ID looks incorrect!`);
-            console.log(`   JWT token requires CLIENT_ID: VyHFre8nNpUfvJBG5dsAOH`);
-            console.log(`   Current CLIENT_ID: ${process.env.RINGCENTRAL_CLIENT_ID}`);
-            console.log(`   This will cause SMS authentication to FAIL!`);
-        }
-
         console.log(`${'='.repeat(50)}\n`);
     });
 }
