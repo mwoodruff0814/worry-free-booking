@@ -8,6 +8,12 @@ const https = require('https');
 const { formatTimeWindow } = require('../utils/helpers');
 const { getCompany, getCompanyInfo, determineCompany } = require('../utils/companyConfig');
 
+// Token cache to avoid repeated auth requests
+let tokenCache = {
+    accessToken: null,
+    expiresAt: null
+};
+
 /**
  * Send SMS via RingCentral API
  * @param {string} to - Phone number to send to
@@ -88,8 +94,18 @@ async function sendSMS(to, message) {
 /**
  * Get RingCentral access token using Personal JWT Flow
  * As per RingCentral docs: https://developers.ringcentral.com/api-reference/Get-Token
+ * Uses token caching to avoid repeated auth requests
  */
 async function getRingCentralToken() {
+    // Check if we have a valid cached token (with 5 minute buffer before expiry)
+    const now = Date.now();
+    if (tokenCache.accessToken && tokenCache.expiresAt && tokenCache.expiresAt > now + (5 * 60 * 1000)) {
+        console.log('✅ Using cached RingCentral token (expires in', Math.round((tokenCache.expiresAt - now) / 60000), 'minutes)');
+        return tokenCache.accessToken;
+    }
+
+    console.log('🔄 Requesting new RingCentral access token...');
+
     return new Promise((resolve, reject) => {
         // Personal JWT Flow - use Basic auth with client credentials
         const authString = Buffer.from(
@@ -126,11 +142,30 @@ async function getRingCentralToken() {
             res.on('end', () => {
                 if (res.statusCode === 200) {
                     const response = JSON.parse(data);
-                    console.log('RingCentral auth successful');
+
+                    // Cache the token with expiration (typically 3600 seconds = 1 hour)
+                    const expiresIn = response.expires_in || 3600; // Default to 1 hour
+                    tokenCache.accessToken = response.access_token;
+                    tokenCache.expiresAt = Date.now() + (expiresIn * 1000);
+
+                    console.log('✅ RingCentral auth successful (token valid for', Math.round(expiresIn / 60), 'minutes)');
                     resolve(response.access_token);
                 } else {
-                    console.error('RingCentral Auth Error:', res.statusCode, data);
-                    reject(new Error(`Auth failed: ${res.statusCode}`));
+                    // Parse error response for detailed logging
+                    let errorDetails = data;
+                    try {
+                        const errorJson = JSON.parse(data);
+                        errorDetails = JSON.stringify(errorJson, null, 2);
+                    } catch (e) {
+                        // data is not JSON, use as-is
+                    }
+
+                    console.error('❌ RingCentral Auth Error:', {
+                        statusCode: res.statusCode,
+                        error: errorDetails,
+                        hint: res.statusCode === 400 ? 'JWT token may be expired. Regenerate at https://developers.ringcentral.com/my-account.html' : ''
+                    });
+                    reject(new Error(`Auth failed: ${res.statusCode} - ${errorDetails}`));
                 }
             });
         });
