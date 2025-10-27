@@ -327,12 +327,85 @@ async function sendConfirmationEmail(details) {
                     <span class="label">Dropoff Address:</span> ${dropoffAddress}
                 </div>
                 ` : ''}
-                ${estimateDetails ? `
-                <div class="detail-row">
-                    <span class="label">Estimated Total:</span> $${estimateDetails.total}
-                </div>
-                ` : ''}
             </div>
+
+            ${estimateDetails ? `
+            <div class="booking-details" style="margin-top: 20px;">
+                <h2 style="color: #004085; margin-top: 0;">💰 Estimate Breakdown</h2>
+                <div class="detail-row">
+                    <span class="label">Service:</span> ${estimateDetails.serviceCategory === 'moving' ? `${estimateDetails.numMovers}-Person Crew + Truck` : `Labor Only (${estimateDetails.numMovers} helpers)`}
+                </div>
+                <div class="detail-row">
+                    <span class="label">Distance:</span> ${Math.round(estimateDetails.distance || 0)} miles
+                </div>
+                <div class="detail-row">
+                    <span class="label">Estimated Time:</span> ${Math.round(estimateDetails.estimatedHours || 0)} hours
+                </div>
+
+                <div style="margin: 20px 0; padding: 15px; background: #f1f5f9; border-radius: 8px;">
+                    <h3 style="margin-top: 0; color: #004085; font-size: 16px;">Cost Details:</h3>
+                    ${estimateDetails.distanceCharge && estimateDetails.distanceCharge > 0 ? `
+                    <div style="padding: 5px 0; display: flex; justify-content: space-between;">
+                        <span>Distance Charge:</span>
+                        <strong>$${estimateDetails.distanceCharge.toFixed(2)}</strong>
+                    </div>
+                    ` : ''}
+                    ${estimateDetails.travelFee && estimateDetails.travelFee > 0 ? `
+                    <div style="padding: 5px 0; display: flex; justify-content: space-between;">
+                        <span>Travel Fee:</span>
+                        <strong>$${estimateDetails.travelFee.toFixed(2)}</strong>
+                    </div>
+                    ` : ''}
+                    ${estimateDetails.stairsFee && estimateDetails.stairsFee > 0 ? `
+                    <div style="padding: 5px 0; display: flex; justify-content: space-between;">
+                        <span>Stairs Fee (${(estimateDetails.pickupStairs || 0) + (estimateDetails.deliveryStairs || 0)} flights):</span>
+                        <strong>$${estimateDetails.stairsFee.toFixed(2)}</strong>
+                    </div>
+                    ` : ''}
+                    ${estimateDetails.heavyItemsFee && estimateDetails.heavyItemsFee > 0 ? `
+                    <div style="padding: 5px 0; display: flex; justify-content: space-between;">
+                        <span>Heavy Items Fee:</span>
+                        <strong>$${estimateDetails.heavyItemsFee.toFixed(2)}</strong>
+                    </div>
+                    ` : ''}
+                    ${estimateDetails.packingFee && estimateDetails.packingFee > 0 ? `
+                    <div style="padding: 5px 0; display: flex; justify-content: space-between;">
+                        <span>Packing Services:</span>
+                        <strong>$${estimateDetails.packingFee.toFixed(2)}</strong>
+                    </div>
+                    ` : ''}
+                    ${estimateDetails.fvpCost && estimateDetails.fvpCost > 0 ? `
+                    <div style="padding: 5px 0; display: flex; justify-content: space-between;">
+                        <span>Full Value Protection:</span>
+                        <strong>$${estimateDetails.fvpCost.toFixed(2)}</strong>
+                    </div>
+                    ` : ''}
+                    ${estimateDetails.subtotal ? `
+                    <div style="padding: 10px 0 5px 0; margin-top: 10px; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-between;">
+                        <span>Subtotal:</span>
+                        <strong>$${estimateDetails.subtotal.toFixed(2)}</strong>
+                    </div>
+                    ` : ''}
+                    ${estimateDetails.serviceCharge && estimateDetails.serviceCharge > 0 ? `
+                    <div style="padding: 5px 0; display: flex; justify-content: space-between;">
+                        <span>Service Charge (${estimateDetails.serviceCategory === 'moving' ? '14%' : '8%'}):</span>
+                        <strong>$${estimateDetails.serviceCharge.toFixed(2)}</strong>
+                    </div>
+                    ` : ''}
+                    <div style="padding: 10px 0; margin-top: 10px; border-top: 2px solid #004085; display: flex; justify-content: space-between; font-size: 18px;">
+                        <span><strong>TOTAL:</strong></span>
+                        <strong style="color: #004085;">$${Math.round(estimateDetails.total)}</strong>
+                    </div>
+                </div>
+
+                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-top: 15px; border-radius: 4px;">
+                    <p style="margin: 0; color: #92400e; font-size: 14px;">
+                        <strong>⚠️ Important:</strong> This is an estimate. Final cost is based on actual time needed. 2-hour minimum applies to all jobs.
+                    </p>
+                </div>
+            </div>
+            ` : ''}
+
 
             <div style="text-align: center; margin: 30px 0;">
                 <p><strong>📅 Add to your calendar:</strong></p>

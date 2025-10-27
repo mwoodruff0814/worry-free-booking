@@ -2409,6 +2409,14 @@ app.post('/api/twilio/quote-heavy-items-details', (req, res) => {
     twilioVoice.handleQuoteHeavyItemsDetails(req, res);
 });
 
+app.post('/api/twilio/quote-packing-materials', (req, res) => {
+    twilioVoice.handleQuotePackingMaterials(req, res);
+});
+
+app.post('/api/twilio/quote-packing-materials-confirm', (req, res) => {
+    twilioVoice.handleQuotePackingMaterialsConfirm(req, res);
+});
+
 app.post('/api/twilio/quote-packing-services', (req, res) => {
     twilioVoice.handleQuotePackingServices(req, res);
 });

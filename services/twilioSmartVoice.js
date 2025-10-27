@@ -108,6 +108,167 @@ Generate a natural, warm, and professional response (1-2 sentences max). Sound h
 }
 
 /**
+ * Calculate packing materials based on bedroom count (matches chatbot formula)
+ */
+function calculatePackingMaterials(bedrooms, servicesConfig) {
+    const materials = {
+        smallBox: { qty: 6 + (bedrooms * 8), price: servicesConfig.packingMaterials.smallBox.price },
+        mediumBox: { qty: 6 + (bedrooms * 6), price: servicesConfig.packingMaterials.mediumBox.price },
+        largeBox: { qty: 2 + (bedrooms * 4), price: servicesConfig.packingMaterials.largeBox.price },
+        wardrobeBox: { qty: bedrooms * 2, price: servicesConfig.packingMaterials.wardrobeBox.price },
+        movingBlanket: { qty: 12 + (bedrooms * 6), price: servicesConfig.packingMaterials.movingBlanket.price },
+        packingPaper: { qty: Math.ceil(bedrooms * 0.5), price: servicesConfig.packingMaterials.packingPaper.price },
+        packingTape: { qty: Math.ceil(bedrooms * 0.50), price: servicesConfig.packingMaterials.packingTape.price },
+        furnitureCover: { qty: Math.ceil(bedrooms * 2), price: servicesConfig.packingMaterials.furnitureCover.price },
+        dishpack: { qty: Math.ceil(bedrooms * 0.75), price: servicesConfig.packingMaterials.dishpack.price },
+        smallBubbleWrap: { qty: Math.ceil(bedrooms * 0.50), price: servicesConfig.packingMaterials.smallBubbleWrap.price },
+        largeBubbleWrap: { qty: Math.ceil(bedrooms * 0.50), price: servicesConfig.packingMaterials.largeBubbleWrap.price }
+    };
+
+    let totalCost = 0;
+    let itemsList = [];
+
+    // Calculate costs
+    Object.keys(materials).forEach(key => {
+        const item = materials[key];
+        const materialConfig = servicesConfig.packingMaterials[key];
+        const cost = item.qty * item.price;
+        totalCost += cost;
+
+        if (item.qty > 0) {
+            itemsList.push({
+                name: materialConfig.name,
+                qty: item.qty,
+                unitPrice: item.price,
+                total: cost
+            });
+        }
+    });
+
+    return {
+        items: itemsList,
+        total: totalCost
+    };
+}
+
+/**
+ * Send itemized packing materials email to customer (CC company)
+ */
+async function sendPackingMaterialsEmail(customerEmail, customerName, materialsBreakdown, bookingInfo) {
+    try {
+        const { sendEmail } = require('./emailService');
+
+        // Build itemized list HTML
+        let itemsHtml = '';
+        materialsBreakdown.items.forEach(item => {
+            itemsHtml += `
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${item.name}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">${item.qty}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$${item.unitPrice.toFixed(2)}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;"><strong>$${item.total.toFixed(2)}</strong></td>
+            </tr>`;
+        });
+
+        const emailSubject = `Packing Materials List - ${customerName}`;
+        const emailBody = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #004085 0%, #0056b3 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f8f9fa; padding: 30px; }
+        .materials-table { width: 100%; background: white; border-radius: 10px; overflow: hidden; margin: 20px 0; }
+        .total-row { background: #004085; color: white; font-size: 18px; }
+        .note-box { background: #e7f3ff; border-left: 4px solid #004085; padding: 15px; margin: 20px 0; border-radius: 4px; }
+        .customize-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Your Packing Materials List</h1>
+            <p>Worry Free Moving</p>
+        </div>
+        <div class="content">
+            <p>Hi ${customerName},</p>
+            <p>Thank you for choosing Worry Free Moving! Below is your itemized packing materials list based on your ${bookingInfo.bedrooms}-bedroom move.</p>
+
+            <table class="materials-table" cellspacing="0" cellpadding="0">
+                <thead>
+                    <tr style="background: #004085; color: white;">
+                        <th style="padding: 15px; text-align: left;">Item</th>
+                        <th style="padding: 15px; text-align: center;">Quantity</th>
+                        <th style="padding: 15px; text-align: right;">Unit Price</th>
+                        <th style="padding: 15px; text-align: right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                    <tr class="total-row">
+                        <td colspan="3" style="padding: 15px; text-align: right;"><strong>TOTAL:</strong></td>
+                        <td style="padding: 15px; text-align: right;"><strong>$${materialsBreakdown.total.toFixed(2)}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="customize-box">
+                <h3 style="margin-top: 0; color: #856404;">✏️ Want to Customize This List?</h3>
+                <p style="margin-bottom: 0; color: #856404;">
+                    <strong>Simply reply to this email</strong> with any changes you'd like to make. You can:
+                </p>
+                <ul style="color: #856404; margin-top: 10px;">
+                    <li>Increase or decrease quantities</li>
+                    <li>Add items not listed</li>
+                    <li>Remove items you don't need</li>
+                </ul>
+                <p style="color: #856404; margin-bottom: 0;">We'll update your order and send a revised quote!</p>
+            </div>
+
+            <div class="note-box">
+                <h3 style="margin-top: 0; color: #004085;">📋 What's Included</h3>
+                <ul style="margin-bottom: 0; color: #004085;">
+                    <li>This is a recommended materials list based on your home size</li>
+                    <li>Materials will be delivered before your move date</li>
+                    <li>Professional-grade packing supplies</li>
+                    <li>All materials are clean and unused</li>
+                </ul>
+            </div>
+
+            <p><strong>Move Details:</strong></p>
+            <ul>
+                <li><strong>From:</strong> ${bookingInfo.pickupAddress}</li>
+                <li><strong>To:</strong> ${bookingInfo.deliveryAddress}</li>
+                <li><strong>Bedrooms:</strong> ${bookingInfo.bedrooms}</li>
+            </ul>
+
+            <p>Questions? Call us at <strong>(330) 661-9985</strong> or reply to this email.</p>
+
+            <p>Thanks for choosing Worry Free Moving!</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+        // Send to customer with company CC'd
+        await sendEmail(
+            customerEmail,
+            emailSubject,
+            emailBody,
+            process.env.EMAIL_CC_LIST // CC company email(s)
+        );
+
+        console.log(`✅ Packing materials email sent to ${customerEmail}`);
+        return true;
+    } catch (error) {
+        console.error('❌ Error sending packing materials email:', error);
+        return false;
+    }
+}
+
+/**
  * Calculate distance between addresses using Google Maps API
  */
 async function calculateDistanceWithGoogleMaps(pickupAddress, deliveryAddress) {
@@ -1157,7 +1318,76 @@ async function handleQuoteHeavyItemsDetails(req, res) {
         }
     }
 
-    // Move to packing services
+    // Move to packing materials question (first step of packing flow)
+    response.redirect('/api/twilio/quote-packing-materials');
+
+    conversations.set(CallSid, conv);
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Ask about packing materials (step 1 of packing flow)
+ */
+async function handleQuotePackingMaterials(req, res) {
+    const { CallSid, SpeechResult, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    response.say("Now let's talk about packing. Would you like us to provide packing materials like boxes, tape, and bubble wrap?");
+    response.pause({ length: 1 });
+
+    const gather = response.gather({
+        input: 'dtmf speech',
+        action: '/api/twilio/quote-packing-materials-confirm',
+        method: 'POST',
+        numDigits: 1,
+        speechTimeout: 'auto',
+        timeout: 10
+    });
+
+    gather.say("Press 1 for yes, I need packing materials. Or press 2 for no, I have my own.");
+
+    conversations.set(CallSid, conv);
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Handle packing materials response and send itemized email (step 2)
+ */
+async function handleQuotePackingMaterialsConfirm(req, res) {
+    const { CallSid, SpeechResult, Digits } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    const needsPackingMaterials = Digits === '1';
+    conv.data.needsPackingMaterials = needsPackingMaterials;
+
+    if (needsPackingMaterials) {
+        // Calculate materials based on bedrooms
+        const bedrooms = Math.max(conv.data.pickupBedrooms || 2, conv.data.deliveryBedrooms || 2);
+        const { getServicesConfig } = require('../utils/serviceConfigLoader');
+        const servicesConfig = await getServicesConfig();
+
+        const materialsBreakdown = calculatePackingMaterials(bedrooms, servicesConfig);
+        conv.data.packingMaterialsBreakdown = materialsBreakdown;
+
+        response.say(`Perfect! I've calculated a recommended packing materials list based on your ${bedrooms}-bedroom move. The total for materials is about $${Math.round(materialsBreakdown.total)}.`);
+        response.pause({ length: 1 });
+
+        // Email will be sent later when we have customer email (during booking)
+        conv.data.shouldEmailPackingMaterials = true;
+
+        response.say("I'll email you an itemized list that you can customize by replying to the email.");
+        response.pause({ length: 1 });
+    }
+
+    // Move to packing service question
     response.redirect('/api/twilio/quote-packing-services');
 
     conversations.set(CallSid, conv);
@@ -1166,7 +1396,7 @@ async function handleQuoteHeavyItemsDetails(req, res) {
 }
 
 /**
- * Ask about packing services with Claude explanation
+ * Ask about professional packing services (step 3)
  */
 async function handleQuotePackingServices(req, res) {
     const { CallSid, SpeechResult, Digits } = req.body;
@@ -1177,15 +1407,15 @@ async function handleQuotePackingServices(req, res) {
 
     // Use Claude to introduce packing services
     const packingIntro = await generateNaturalResponse(
-        'Asking if customer needs help packing before their move',
-        'Explain that packing is usually done 1-2 days before the move. Keep it natural and helpful, under 2 sentences.'
+        'Asking if customer needs professional packing help',
+        'Explain that packing service is done 1-2 days before the move by professionals. Keep it natural and helpful, under 2 sentences.'
     );
 
     if (packingIntro) {
         response.say(packingIntro);
         response.pause({ length: 1 });
     } else {
-        response.say("One last thing. We can help you pack too, usually a day or two before your move.");
+        response.say("We also offer professional packing services. Our team can pack everything for you, usually a day or two before your move.");
         response.pause({ length: 1 });
     }
 
@@ -1198,7 +1428,7 @@ async function handleQuotePackingServices(req, res) {
         timeout: 10
     });
 
-    gather.say("Would you like help with packing? Press 1 for yes, or press 2 for no.");
+    gather.say("Would you like professional packing services? Press 1 for yes, or press 2 for no.");
 
     conversations.set(CallSid, conv);
     res.type('text/xml');
@@ -1480,16 +1710,6 @@ async function handleQuoteFinalize(req, res) {
             quoteMessage += `💰 COST BREAKDOWN:\n`;
             quoteMessage += `━━━━━━━━━━━━━━━━━━━━\n`;
 
-            // Base rate
-            if (estimate.baseRate) {
-                quoteMessage += `Base Rate: $${estimate.baseRate.toFixed(2)}\n`;
-            }
-
-            // Hourly rate
-            if (estimate.hourlyRate) {
-                quoteMessage += `Hourly Rate: $${estimate.hourlyRate.toFixed(2)}/hr\n`;
-            }
-
             // Distance charges
             if (estimate.distanceCharge && estimate.distanceCharge > 0) {
                 quoteMessage += `Distance Charge: $${estimate.distanceCharge.toFixed(2)}\n`;
@@ -1537,7 +1757,7 @@ async function handleQuoteFinalize(req, res) {
 
             // Important notes
             quoteMessage += `⚠️ Final cost based on actual time.\n`;
-            quoteMessage += `⚠️ 3-hour minimum for all jobs.\n\n`;
+            quoteMessage += `⚠️ 2-hour minimum for all jobs.\n\n`;
 
             quoteMessage += `Questions? Call us:\n`;
             quoteMessage += `📞 (330) 661-9985\n`;
@@ -2060,8 +2280,10 @@ async function handleBookingCreate(req, res) {
             console.error('⚠️ Google Calendar creation failed (booking still saved):', calError.message);
         }
 
-        // Send confirmation email
+        // Send confirmation email with detailed estimate breakdown
         try {
+            console.log('📧 Sending confirmation email with detailed estimate...');
+
             await sendConfirmationEmail({
                 to: conv.data.email,
                 customerName: `${conv.data.firstName} ${conv.data.lastName}`,
@@ -2072,10 +2294,31 @@ async function handleBookingCreate(req, res) {
                 serviceType: appointment.serviceType,
                 pickupAddress: conv.data.pickupAddress,
                 dropoffAddress: conv.data.deliveryAddress,
-                estimatedTotal: conv.data.quote?.total
+                estimateDetails: {
+                    total: conv.data.quote?.total,
+                    baseRate: conv.data.quote?.baseRate,
+                    hourlyRate: conv.data.quote?.hourlyRate,
+                    estimatedHours: conv.data.quote?.estimatedTime || conv.data.estimatedHours,
+                    distanceCharge: conv.data.quote?.distanceCharge,
+                    travelFee: conv.data.quote?.travelFee,
+                    stairsFee: conv.data.quote?.stairsFee,
+                    heavyItemsFee: conv.data.quote?.heavyItemsFee,
+                    packingFee: conv.data.quote?.packingFee,
+                    fvpCost: conv.data.quote?.fvpCost,
+                    subtotal: conv.data.quote?.subtotal,
+                    serviceCharge: conv.data.quote?.serviceCharge,
+                    distance: conv.data.distance,
+                    numMovers: conv.data.numMovers,
+                    serviceCategory: conv.data.serviceCategory,
+                    pickupStairs: conv.data.pickupStairs,
+                    deliveryStairs: conv.data.deliveryStairs
+                }
             });
+
+            console.log('✅ Confirmation email sent with detailed estimate');
         } catch (emailError) {
-            console.error('Email send failed:', emailError);
+            console.error('❌ Email send failed:', emailError.message);
+            console.error('Email error details:', emailError);
         }
 
         // Send payment link SMS
@@ -2089,6 +2332,27 @@ async function handleBookingCreate(req, res) {
             );
         } catch (smsError) {
             console.error('Payment SMS failed:', smsError);
+        }
+
+        // Send packing materials email if customer requested materials
+        if (conv.data.shouldEmailPackingMaterials && conv.data.packingMaterialsBreakdown) {
+            try {
+                console.log('📦 Sending packing materials email...');
+                await sendPackingMaterialsEmail(
+                    conv.data.email,
+                    `${conv.data.firstName} ${conv.data.lastName}`,
+                    conv.data.packingMaterialsBreakdown,
+                    {
+                        bedrooms: Math.max(conv.data.pickupBedrooms || 2, conv.data.deliveryBedrooms || 2),
+                        pickupAddress: conv.data.pickupAddress,
+                        deliveryAddress: conv.data.deliveryAddress
+                    }
+                );
+                console.log('✅ Packing materials email sent');
+            } catch (packingEmailError) {
+                console.error('❌ Packing materials email failed:', packingEmailError.message);
+                // Don't fail the booking if email fails
+            }
         }
 
         const timeSlotText = conv.data.timeSlot === 'afternoon' ? 'afternoon between 2 and 4 PM' : 'morning between 8 and 10 AM';
@@ -2185,6 +2449,8 @@ module.exports = {
     handleQuoteAppliancesDetails,
     handleQuoteHeavyItems,
     handleQuoteHeavyItemsDetails,
+    handleQuotePackingMaterials,
+    handleQuotePackingMaterialsConfirm,
     handleQuotePackingServices,
     handleQuoteInsurance,
     handleQuoteCalculateDistance,

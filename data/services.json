@@ -208,12 +208,12 @@
   "fees": {
     "stairs": {
       "name": "Stairs",
-      "apartment": 35,
+      "apartment": 25,
       "house": 25,
-      "apartmentTime": 0.35,
+      "apartmentTime": 0.275,
       "houseTime": 0.275,
       "unit": "per flight",
-      "description": "Additional fee for each flight of stairs (apartment rates are higher due to narrow hallways and building restrictions)",
+      "description": "Additional fee for each flight of stairs - $25 flat rate per flight",
       "enabled": true
     },
     "sameDayService": {
