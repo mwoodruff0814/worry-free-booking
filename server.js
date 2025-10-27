@@ -2281,21 +2281,14 @@ app.post('/api/twilio/main-menu', (req, res) => {
     twilioVoice.handleMainMenu(req, res);
 });
 
-// Quote flow endpoints
+// Call recording completion
+app.post('/api/twilio/recording-complete', (req, res) => {
+    twilioVoice.handleRecordingComplete(req, res);
+});
+
+// Quote flow endpoints (NEW ORDER: service → addresses → distance → crew → quote)
 app.post('/api/twilio/quote-service-type', (req, res) => {
     twilioVoice.handleQuoteServiceType(req, res);
-});
-
-app.post('/api/twilio/quote-crew-size', (req, res) => {
-    twilioVoice.handleQuoteCrewSize(req, res);
-});
-
-app.post('/api/twilio/quote-hours', (req, res) => {
-    twilioVoice.handleQuoteHours(req, res);
-});
-
-app.post('/api/twilio/quote-hours-parse', (req, res) => {
-    twilioVoice.handleQuoteHoursParse(req, res);
 });
 
 app.post('/api/twilio/quote-pickup-address', (req, res) => {
@@ -2306,12 +2299,21 @@ app.post('/api/twilio/quote-delivery-address', (req, res) => {
     twilioVoice.handleQuoteDeliveryAddress(req, res);
 });
 
-app.post('/api/twilio/quote-calculate', (req, res) => {
-    twilioVoice.handleQuoteCalculate(req, res);
+app.post('/api/twilio/quote-calculate-distance', (req, res) => {
+    twilioVoice.handleQuoteCalculateDistance(req, res);
+});
+
+app.post('/api/twilio/quote-finalize', (req, res) => {
+    twilioVoice.handleQuoteFinalize(req, res);
 });
 
 app.post('/api/twilio/quote-decision', (req, res) => {
     twilioVoice.handleQuoteDecision(req, res);
+});
+
+// Email quote endpoint
+app.post('/api/twilio/email-quote-send', (req, res) => {
+    twilioVoice.handleEmailQuoteSend(req, res);
 });
 
 // Booking flow endpoints

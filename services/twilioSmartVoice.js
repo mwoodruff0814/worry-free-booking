@@ -1,6 +1,6 @@
 /**
- * Twilio Smart Voice AI - V3 with Claude Intelligence
- * Natural language understanding, smart parsing, context awareness
+ * Twilio Smart Voice AI - V4 with Full Claude Intelligence
+ * Human-like conversation, accurate pricing, calendar-aware booking
  * Powered by Anthropic's Claude 3.5 Sonnet
  */
 
@@ -26,6 +26,9 @@ const conversations = new Map();
 
 // Base URL for API calls
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
+
+// Google Maps API Key
+const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
 /**
  * Use Claude AI to intelligently extract information from customer speech
@@ -71,19 +74,27 @@ Extract the relevant information and return ONLY valid JSON. Be lenient with var
 }
 
 /**
- * Generate natural AI response based on context using Claude
+ * Generate natural, human-like AI response using Claude
  */
-async function generateNaturalResponse(context, question) {
+async function generateNaturalResponse(context, intent, conversationHistory = []) {
     try {
+        const prompt = `You are Sarah, a friendly and professional receptionist for Worry Free Moving.
+
+Context: ${context}
+What you need to do: ${intent}
+Conversation history: ${JSON.stringify(conversationHistory)}
+
+Generate a natural, warm, and professional response (1-2 sentences max). Sound human, not robotic.`;
+
         const response = await anthropic.messages.create({
             model: 'claude-3-5-sonnet-20241022',
-            max_tokens: 80,
-            temperature: 0.7,
-            system: 'You are Sarah, a friendly AI receptionist for Worry Free Moving. Keep responses SHORT (1-2 sentences). Be professional but warm.',
+            max_tokens: 100,
+            temperature: 0.8,
+            system: 'You are Sarah, a warm and friendly moving company receptionist. Keep responses SHORT (1-2 sentences), conversational, and helpful. Sound like a real person.',
             messages: [
                 {
                     role: 'user',
-                    content: `Context: ${context}\n\nGenerate a natural response to ask: ${question}`
+                    content: prompt
                 }
             ]
         });
@@ -91,17 +102,181 @@ async function generateNaturalResponse(context, question) {
         return response.content[0].text;
     } catch (error) {
         console.error('Claude response generation error:', error);
-        return question; // Fallback to simple question
+        return null; // Will use fallback
     }
 }
 
 /**
- * Handle incoming call - intelligent greeting
+ * Calculate distance between addresses using Google Maps API
+ */
+async function calculateDistanceWithGoogleMaps(pickupAddress, deliveryAddress) {
+    try {
+        if (!GOOGLE_MAPS_API_KEY) {
+            console.warn('Google Maps API key not configured, using estimate');
+            return estimateDistance(pickupAddress, deliveryAddress);
+        }
+
+        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(pickupAddress)}&destinations=${encodeURIComponent(deliveryAddress)}&key=${GOOGLE_MAPS_API_KEY}`;
+
+        const response = await axios.get(url);
+
+        if (response.data.status === 'OK' && response.data.rows[0].elements[0].status === 'OK') {
+            const distanceMeters = response.data.rows[0].elements[0].distance.value;
+            const durationSeconds = response.data.rows[0].elements[0].duration.value;
+
+            const miles = (distanceMeters / 1609.34).toFixed(1); // Convert meters to miles
+            const minutes = Math.round(durationSeconds / 60); // Convert to minutes
+
+            console.log(`📍 Distance calculated: ${miles} miles, ${minutes} minutes`);
+
+            return {
+                distance: parseFloat(miles),
+                driveTime: minutes
+            };
+        } else {
+            console.warn('Google Maps API returned no results, using estimate');
+            return estimateDistance(pickupAddress, deliveryAddress);
+        }
+
+    } catch (error) {
+        console.error('Google Maps API error:', error.message);
+        return estimateDistance(pickupAddress, deliveryAddress);
+    }
+}
+
+/**
+ * Fallback distance estimation
+ */
+function estimateDistance(pickup, delivery) {
+    const pickupLower = pickup.toLowerCase();
+    const deliveryLower = delivery.toLowerCase();
+
+    // Same city
+    if (pickupLower.includes('canton') && deliveryLower.includes('canton'))
+        return { distance: 5, driveTime: 15 };
+    if (pickupLower.includes('akron') && deliveryLower.includes('akron'))
+        return { distance: 5, driveTime: 15 };
+
+    // Nearby cities
+    if ((pickupLower.includes('canton') && deliveryLower.includes('massillon')) ||
+        (pickupLower.includes('massillon') && deliveryLower.includes('canton')))
+        return { distance: 10, driveTime: 20 };
+
+    if ((pickupLower.includes('canton') && deliveryLower.includes('akron')) ||
+        (pickupLower.includes('akron') && deliveryLower.includes('canton')))
+        return { distance: 25, driveTime: 35 };
+
+    // Default
+    return { distance: 15, driveTime: 25 };
+}
+
+/**
+ * Check calendar availability for specific time slot
+ */
+async function checkSlotAvailability(date, timeSlot) {
+    try {
+        const time = timeSlot === 'morning' ? '08:00' : '13:00';
+        const availability = await checkAvailability(date, time);
+        return availability.available;
+    } catch (error) {
+        console.error('Error checking slot availability:', error);
+        return true; // Default to available if check fails
+    }
+}
+
+/**
+ * Get available slots for a date (morning/afternoon)
+ */
+async function getAvailableSlotsForDate(date) {
+    try {
+        const morningAvailable = await checkSlotAvailability(date, 'morning');
+        const afternoonAvailable = await checkSlotAvailability(date, 'afternoon');
+
+        return {
+            morning: morningAvailable,
+            afternoon: afternoonAvailable,
+            anyAvailable: morningAvailable || afternoonAvailable
+        };
+    } catch (error) {
+        console.error('Error getting available slots:', error);
+        return { morning: true, afternoon: true, anyAvailable: true };
+    }
+}
+
+/**
+ * Generate Square payment link and send via SMS
+ */
+async function sendPaymentLinkSMS(phone, customerName, bookingId, amount, email) {
+    try {
+        const checkoutUrl = `${BASE_URL}/checkout.html?amount=${Math.round(amount)}&booking=${bookingId}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(customerName)}`;
+
+        const message = `Hi ${customerName}! To secure your booking ${bookingId}, please save your card on file (no charge yet): ${checkoutUrl}\n\nWorry Free Moving\n(330) 661-9985`;
+
+        await twilioClient.messages.create({
+            body: message,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: phone
+        });
+
+        console.log(`💳 Payment link sent to ${phone}`);
+        return true;
+    } catch (error) {
+        console.error('Error sending payment link SMS:', error);
+        return false;
+    }
+}
+
+/**
+ * Send email estimate
+ */
+async function sendEmailEstimate(email, customerName, quoteData) {
+    try {
+        // Use existing email service
+        const { sendEmail } = require('./emailService');
+
+        const subject = `Your Moving Quote from Worry Free Moving`;
+        const body = `Hi ${customerName},
+
+Thank you for your interest in Worry Free Moving!
+
+Your Estimate:
+- Service: ${quoteData.serviceType}
+- Distance: ${quoteData.distance} miles
+- Estimated Time: ${quoteData.estimatedHours} hours
+- Estimated Total: $${Math.round(quoteData.total)}
+
+This is an estimate based on the information provided. Final cost may vary based on actual time and materials.
+
+Ready to book? Call us at (330) 661-9985 or visit our website!
+
+Best regards,
+Worry Free Moving Team`;
+
+        await sendEmail(email, subject, body);
+        console.log(`📧 Email estimate sent to ${email}`);
+        return true;
+    } catch (error) {
+        console.error('Error sending email estimate:', error);
+        return false;
+    }
+}
+
+/**
+ * Handle incoming call with call recording
  */
 function handleIncomingCall(req, res) {
     const { CallSid, From } = req.body;
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const response = new VoiceResponse();
+
+    // ENABLE CALL RECORDING
+    response.record({
+        recordingStatusCallback: '/api/twilio/recording-complete',
+        recordingStatusCallbackMethod: 'POST',
+        timeout: 10,
+        transcribe: false,
+        maxLength: 3600 // 1 hour max
+    });
 
     // Initialize conversation
     conversations.set(CallSid, {
@@ -109,12 +284,14 @@ function handleIncomingCall(req, res) {
         data: {},
         customerPhone: From,
         attempts: { transfer: 0 },
-        startTime: new Date()
+        startTime: new Date(),
+        conversationHistory: []
     });
 
+    // Use Claude for natural greeting
     response.say({
         voice: 'Polly.Joanna'
-    }, "Hi! Thanks for calling Worry Free Moving. This is Sarah, your AI assistant.");
+    }, "Hi! Thanks for calling Worry Free Moving. This is Sarah.");
 
     response.pause({ length: 1 });
 
@@ -127,12 +304,30 @@ function handleIncomingCall(req, res) {
         timeout: 8
     });
 
-    gather.say("I can help you get a moving quote and schedule your move. Press 1 or say quote to get started. Or, if you've already received a quote and want to book, press 2.");
+    gather.say("I can help you get a free quote and book your move today. Press 1 or say quote to get started. If you already have a quote and want to book, press 2.");
 
     response.redirect('/api/twilio/voice');
 
     res.type('text/xml');
     res.send(response.toString());
+}
+
+/**
+ * Handle recording completion
+ */
+function handleRecordingComplete(req, res) {
+    const { CallSid, RecordingUrl, RecordingSid, RecordingDuration } = req.body;
+
+    console.log(`📞 Call recording complete:`, {
+        callSid: CallSid,
+        recordingSid: RecordingSid,
+        duration: RecordingDuration,
+        url: RecordingUrl
+    });
+
+    // TODO: Store recording URL in database for monitoring
+
+    res.sendStatus(200);
 }
 
 /**
@@ -157,7 +352,7 @@ function handleMainMenu(req, res) {
             response.redirect('/api/twilio/booking-start');
             break;
 
-        case '9': // Hidden transfer option (not advertised)
+        case '9': // Hidden transfer option
             if (conv && conv.attempts.transfer >= 1) {
                 response.say("Let me connect you with our team.");
                 response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
@@ -170,7 +365,7 @@ function handleMainMenu(req, res) {
             break;
 
         default:
-            response.say("I didn't catch that.");
+            response.say("I didn't catch that. Let me repeat the options.");
             response.redirect('/api/twilio/voice');
     }
 
@@ -179,7 +374,7 @@ function handleMainMenu(req, res) {
 }
 
 /**
- * Start quote - ask service type
+ * Ask service type
  */
 function handleQuoteServiceType(req, res) {
     const { CallSid } = req.body;
@@ -190,12 +385,12 @@ function handleQuoteServiceType(req, res) {
     conv.stage = 'quote-service-type';
     conversations.set(CallSid, conv);
 
-    response.say("Perfect! First, what type of service do you need?");
+    response.say("Perfect! What type of service do you need?");
     response.pause({ length: 1 });
 
     const gather = response.gather({
         input: 'dtmf speech',
-        action: '/api/twilio/quote-crew-size',
+        action: '/api/twilio/quote-pickup-address',
         method: 'POST',
         numDigits: 1,
         speechTimeout: 'auto',
@@ -209,9 +404,9 @@ function handleQuoteServiceType(req, res) {
 }
 
 /**
- * Get crew size
+ * Get pickup address FIRST (before crew size)
  */
-function handleQuoteCrewSize(req, res) {
+function handleQuotePickupAddress(req, res) {
     const { CallSid, SpeechResult, Digits } = req.body;
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const response = new VoiceResponse();
@@ -223,106 +418,18 @@ function handleQuoteCrewSize(req, res) {
 
     if (serviceChoice === '1') {
         conv.data.serviceCategory = 'moving';
-        conv.stage = 'quote-crew-size';
-
-        const gather = response.gather({
-            input: 'dtmf speech',
-            action: '/api/twilio/quote-pickup-address',
-            method: 'POST',
-            numDigits: 1,
-            speechTimeout: 'auto',
-            timeout: 10
-        });
-
-        gather.say("Got it, movers and truck. How many movers do you need? Press 2 for two movers, press 3 for three movers, or press 4 for four movers.");
-
     } else if (serviceChoice === '2') {
         conv.data.serviceCategory = 'labor';
-        conv.stage = 'quote-crew-size';
-
-        const gather = response.gather({
-            input: 'dtmf speech',
-            action: '/api/twilio/quote-hours',
-            method: 'POST',
-            numDigits: 1,
-            speechTimeout: 'auto',
-            timeout: 10
-        });
-
-        gather.say("Perfect, labor only. How many helpers do you need? Press 2 for two people, or press 3 for three people.");
-
     } else {
-        response.say("I didn't catch that.");
+        response.say("I didn't catch that. Let's try again.");
         response.redirect('/api/twilio/quote-service-type');
+        conversations.set(CallSid, conv);
         res.type('text/xml');
         return res.send(response.toString());
     }
 
+    conv.stage = 'quote-pickup-address';
     conversations.set(CallSid, conv);
-    res.type('text/xml');
-    res.send(response.toString());
-}
-
-/**
- * Get hours for labor only
- */
-function handleQuoteHours(req, res) {
-    const { CallSid, SpeechResult, Digits } = req.body;
-    const VoiceResponse = twilio.twiml.VoiceResponse;
-    const response = new VoiceResponse();
-
-    const conv = conversations.get(CallSid);
-    conv.data.crewSize = parseInt(Digits) || 2;
-
-    const gather = response.gather({
-        input: 'speech',
-        action: '/api/twilio/quote-hours-parse',
-        method: 'POST',
-        speechTimeout: 'auto',
-        timeout: 10
-    });
-
-    gather.say("How many hours do you think you'll need? You can say a number between 2 and 8 hours.");
-
-    conversations.set(CallSid, conv);
-    res.type('text/xml');
-    res.send(response.toString());
-}
-
-/**
- * Parse hours and move to address
- */
-function handleQuoteHoursParse(req, res) {
-    const { CallSid, SpeechResult } = req.body;
-    const VoiceResponse = twilio.twiml.VoiceResponse;
-    const response = new VoiceResponse();
-
-    const conv = conversations.get(CallSid);
-    conv.data.estimatedHours = parseHours(SpeechResult);
-
-    response.say(`Okay, ${conv.data.estimatedHours} hours with ${conv.data.crewSize} people.`);
-    response.redirect('/api/twilio/quote-pickup-address');
-
-    conversations.set(CallSid, conv);
-    res.type('text/xml');
-    res.send(response.toString());
-}
-
-/**
- * Get pickup address
- */
-function handleQuotePickupAddress(req, res) {
-    const { CallSid, Digits } = req.body;
-    const VoiceResponse = twilio.twiml.VoiceResponse;
-    const response = new VoiceResponse();
-
-    const conv = conversations.get(CallSid);
-
-    // If coming from crew size selection
-    if (Digits && conv.data.serviceCategory === 'moving') {
-        conv.data.crewSize = parseInt(Digits);
-        conv.data.serviceType = `${Digits}-person-crew`;
-    }
 
     const gather = response.gather({
         input: 'speech',
@@ -332,9 +439,8 @@ function handleQuotePickupAddress(req, res) {
         timeout: 15
     });
 
-    gather.say("What's the pickup address? Please say the street address and city.");
+    gather.say("Got it. What's your pickup address? Please say the street address and city.");
 
-    conversations.set(CallSid, conv);
     res.type('text/xml');
     res.send(response.toString());
 }
@@ -349,25 +455,23 @@ async function handleQuoteDeliveryAddress(req, res) {
 
     const conv = conversations.get(CallSid);
 
-    // Use AI to parse pickup address
+    // Use Claude to parse pickup address
     const pickupExtracted = await extractWithAI(
         SpeechResult,
-        'Customer is providing their pickup address',
-        'Extract: street, city, state, zip (if mentioned). Clean up the address formatting.'
+        'Customer is providing their pickup address for a move',
+        'Extract: street, city, state. Clean up the address formatting. If state not mentioned, assume Ohio (OH).'
     );
 
     if (pickupExtracted && pickupExtracted.street) {
-        // Build clean address
         conv.data.pickupAddress = `${pickupExtracted.street}, ${pickupExtracted.city || 'Canton'}, ${pickupExtracted.state || 'OH'}`;
         conv.data.pickupCity = pickupExtracted.city || 'Canton';
     } else {
-        // Fallback to raw speech
         conv.data.pickupAddress = SpeechResult;
     }
 
     const gather = response.gather({
         input: 'speech',
-        action: '/api/twilio/quote-calculate',
+        action: '/api/twilio/quote-calculate-distance',
         method: 'POST',
         speechTimeout: 'auto',
         timeout: 15
@@ -381,20 +485,20 @@ async function handleQuoteDeliveryAddress(req, res) {
 }
 
 /**
- * Calculate quote using real API with AI-parsed addresses
+ * Calculate distance THEN ask crew size
  */
-async function handleQuoteCalculate(req, res) {
+async function handleQuoteCalculateDistance(req, res) {
     const { CallSid, SpeechResult } = req.body;
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const response = new VoiceResponse();
 
     const conv = conversations.get(CallSid);
 
-    // Use AI to parse delivery address
+    // Use Claude to parse delivery address
     const deliveryExtracted = await extractWithAI(
         SpeechResult,
-        'Customer is providing their delivery address',
-        'Extract: street, city, state, zip (if mentioned). Clean up the address formatting.'
+        'Customer is providing their delivery address for a move',
+        'Extract: street, city, state. Clean up the address formatting. If state not mentioned, assume Ohio (OH).'
     );
 
     if (deliveryExtracted && deliveryExtracted.street) {
@@ -404,23 +508,76 @@ async function handleQuoteCalculate(req, res) {
         conv.data.deliveryAddress = SpeechResult;
     }
 
-    response.say("Let me calculate that for you.");
+    response.say("Great! Let me calculate the distance.");
     response.pause({ length: 2 });
 
     try {
-        // Calculate distance using Google Maps or estimation
-        const distance = await calculateDistance(conv.data.pickupAddress, conv.data.deliveryAddress);
-        const driveTime = Math.round(distance * 2); // Rough estimate: 2 min per mile
+        // Calculate distance using Google Maps
+        const distanceData = await calculateDistanceWithGoogleMaps(
+            conv.data.pickupAddress,
+            conv.data.deliveryAddress
+        );
 
-        // Prepare quote request
+        conv.data.distance = distanceData.distance;
+        conv.data.driveTime = distanceData.driveTime;
+
+        console.log(`📍 Distance: ${conv.data.distance} miles, Drive time: ${conv.data.driveTime} min`);
+
+        // Now ask for crew size
+        const gather = response.gather({
+            input: 'dtmf speech',
+            action: '/api/twilio/quote-finalize',
+            method: 'POST',
+            numDigits: 1,
+            speechTimeout: 'auto',
+            timeout: 10
+        });
+
+        if (conv.data.serviceCategory === 'moving') {
+            gather.say(`The distance is about ${Math.round(conv.data.distance)} miles. How many movers do you need? Press 2 for two movers, press 3 for three, or press 4 for four.`);
+        } else {
+            gather.say(`The distance is about ${Math.round(conv.data.distance)} miles. How many people do you need for labor? Press 2 for two people, or press 3 for three.`);
+        }
+
+        conversations.set(CallSid, conv);
+
+    } catch (error) {
+        console.error('Distance calculation error:', error);
+        response.say("I'm having trouble calculating the distance. Let me connect you with someone who can help.");
+        response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
+    }
+
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Finalize quote with exact pricing algorithm
+ */
+async function handleQuoteFinalize(req, res) {
+    const { CallSid, Digits, SpeechResult } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    // Parse crew size
+    const crewSize = parseInt(Digits) || 2;
+    conv.data.crewSize = crewSize;
+
+    response.say("Let me calculate your quote.");
+    response.pause({ length: 2 });
+
+    try {
+        // Use EXACT pricing API from server
         const quoteRequest = {
             serviceType: conv.data.serviceCategory === 'moving'
-                ? `${conv.data.crewSize}-person-crew`
+                ? `${crewSize}-person-crew`
                 : 'Labor Only',
-            distance: distance,
-            driveTime: driveTime,
-            estimatedHours: conv.data.estimatedHours || null,
-            laborCrewSize: conv.data.serviceCategory === 'labor' ? conv.data.crewSize : null,
+            distance: conv.data.distance,
+            driveTime: conv.data.driveTime,
+            estimatedHours: 3, // Default for moving
+            laborCrewSize: conv.data.serviceCategory === 'labor' ? crewSize : null,
             pickupDetails: { homeType: 'house', stairs: 0 },
             dropoffDetails: { homeType: 'house', stairs: 0 }
         };
@@ -431,20 +588,19 @@ async function handleQuoteCalculate(req, res) {
 
         // Save quote
         conv.data.quote = quote;
-        conv.data.distance = distance;
         conversations.set(CallSid, conv);
 
         // Present quote
         const total = Math.round(quote.total);
 
         if (conv.data.serviceCategory === 'moving') {
-            response.say(`Great news! Your estimated total is $${total} for ${conv.data.crewSize} movers with a truck.`);
+            response.say(`Great news! Your estimated total is $${total} for ${crewSize} movers with a truck.`);
             response.pause({ length: 1 });
             response.say(`This includes approximately ${Math.round(quote.estimatedTime)} hours of service. The final cost depends on actual time needed.`);
         } else {
-            response.say(`Your estimated total for labor only is $${total}.`);
+            response.say(`Your estimated total is $${total} for ${crewSize} helpers.`);
             response.pause({ length: 1 });
-            response.say(`This includes ${conv.data.estimatedHours} hours with ${conv.data.crewSize} helpers, plus a travel fee.`);
+            response.say(`This includes labor and a travel fee for the ${Math.round(conv.data.distance)} mile distance.`);
         }
 
         response.pause({ length: 1 });
@@ -458,7 +614,7 @@ async function handleQuoteCalculate(req, res) {
             timeout: 10
         });
 
-        gather.say("Would you like to schedule this move now? Press 1 or say yes to book. Press 2 or say no if you just need the quote for now. Or press 9 to speak with someone.");
+        gather.say("Would you like to book this move? Press 1 to schedule now. Press 2 to receive this quote by email. Or press 9 to speak with someone.");
 
     } catch (error) {
         console.error('Quote calculation error:', error);
@@ -471,23 +627,78 @@ async function handleQuoteCalculate(req, res) {
 }
 
 /**
- * Handle booking decision
+ * Handle booking decision or email quote
  */
-function handleQuoteDecision(req, res) {
+async function handleQuoteDecision(req, res) {
     const { CallSid, SpeechResult, Digits } = req.body;
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const response = new VoiceResponse();
 
-    const choice = Digits || (SpeechResult ? parseYesNo(SpeechResult) : null);
+    const conv = conversations.get(CallSid);
+    const choice = Digits || (SpeechResult ? parseDecisionChoice(SpeechResult) : null);
 
-    if (choice === '1' || choice === 'yes') {
+    if (choice === '1') {
+        // Book now
+        response.say("Excellent! Let me get some information to complete your booking.");
         response.redirect('/api/twilio/booking-start');
+    } else if (choice === '2') {
+        // Email quote
+        const gather = response.gather({
+            input: 'speech',
+            action: '/api/twilio/email-quote-send',
+            method: 'POST',
+            speechTimeout: 'auto',
+            timeout: 15
+        });
+        gather.say("Sure! What's your email address? Please say it slowly.");
     } else if (choice === '9') {
         response.say("Let me transfer you now.");
         response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
     } else {
-        response.say("No problem! I'll text you the quote details shortly. Thanks for calling Worry Free Moving!");
-        // TODO: Send SMS with quote
+        response.say("I didn't catch that.");
+        response.redirect('/api/twilio/quote-finalize');
+    }
+
+    res.type('text/xml');
+    res.send(response.toString());
+}
+
+/**
+ * Send email quote
+ */
+async function handleEmailQuoteSend(req, res) {
+    const { CallSid, SpeechResult } = req.body;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    const conv = conversations.get(CallSid);
+
+    // Parse email with Claude
+    const emailExtracted = await extractWithAI(
+        SpeechResult,
+        'Customer is providing their email address spoken aloud',
+        'Extract email address. Common patterns: "at" = @, "dot" = ., "gmail", "yahoo", "hotmail". Return as: { email: "user@domain.com" }'
+    );
+
+    let email;
+    if (emailExtracted && emailExtracted.email) {
+        email = emailExtracted.email;
+    } else {
+        email = parseEmail(SpeechResult);
+    }
+
+    try {
+        await sendEmailEstimate(email, 'Customer', {
+            serviceType: conv.data.serviceCategory === 'moving' ? `${conv.data.crewSize}-Person Crew Moving` : 'Labor Only',
+            distance: conv.data.distance,
+            estimatedHours: conv.data.quote.estimatedTime,
+            total: conv.data.quote.total
+        });
+
+        response.say(`Perfect! I've sent your quote to ${email}. Thanks for calling Worry Free Moving!`);
+    } catch (error) {
+        response.say("I'm having trouble sending the email. Let me connect you with someone who can help.");
+        response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
     }
 
     res.type('text/xml');
@@ -505,8 +716,6 @@ function handleBookingStart(req, res) {
     const conv = conversations.get(CallSid);
     conv.stage = 'booking-name';
     conversations.set(CallSid, conv);
-
-    response.say("Excellent! Let me get some information to complete your booking.");
 
     const gather = response.gather({
         input: 'speech',
@@ -532,7 +741,7 @@ async function handleBookingEmail(req, res) {
 
     const conv = conversations.get(CallSid);
 
-    // Use AI to parse name
+    // Use Claude to parse name
     const nameExtracted = await extractWithAI(
         SpeechResult,
         'Customer is providing their full name',
@@ -575,7 +784,7 @@ async function handleBookingDate(req, res) {
 
     const conv = conversations.get(CallSid);
 
-    // Use AI to parse email
+    // Use Claude to parse email
     const emailExtracted = await extractWithAI(
         SpeechResult,
         'Customer is providing their email address spoken aloud',
@@ -585,7 +794,7 @@ async function handleBookingDate(req, res) {
     if (emailExtracted && emailExtracted.email) {
         conv.data.email = emailExtracted.email;
     } else {
-        conv.data.email = parseEmail(SpeechResult); // Fallback to simple parser
+        conv.data.email = parseEmail(SpeechResult);
     }
 
     const gather = response.gather({
@@ -613,7 +822,7 @@ async function handleBookingTimeSlot(req, res) {
 
     const conv = conversations.get(CallSid);
 
-    // Use AI to parse date naturally
+    // Use Claude to parse date naturally
     const today = new Date().toISOString().split('T')[0];
     const dateExtracted = await extractWithAI(
         SpeechResult,
@@ -625,7 +834,7 @@ async function handleBookingTimeSlot(req, res) {
     if (dateExtracted && dateExtracted.date) {
         moveDate = dateExtracted.date;
     } else {
-        moveDate = parseDateFromSpeech(SpeechResult); // Fallback
+        moveDate = parseDateFromSpeech(SpeechResult);
     }
 
     conv.data.moveDate = moveDate;
@@ -634,11 +843,9 @@ async function handleBookingTimeSlot(req, res) {
     const slots = await getAvailableSlotsForDate(moveDate);
 
     if (!slots.anyAvailable) {
-        // No availability - suggest next day or transfer
         response.say("I'm sorry, we're fully booked that day. Let me connect you with someone who can find the next available date.");
         response.dial(process.env.TRANSFER_NUMBER || '+13307542648');
     } else if (slots.morning && slots.afternoon) {
-        // Both slots available - let customer choose
         response.say("Good news! We have availability that day.");
         response.pause({ length: 1 });
 
@@ -654,7 +861,6 @@ async function handleBookingTimeSlot(req, res) {
         gather.say("Would you prefer a morning arrival between 8 and 9 AM? Press 1 or say morning. Or would you prefer afternoon between 1 and 2 PM? Press 2 or say afternoon.");
 
     } else if (slots.morning) {
-        // Only morning available
         response.say("We have a morning slot available that day, between 8 and 9 AM.");
         conv.data.timeSlot = 'morning';
         conv.data.time = '08:00';
@@ -662,7 +868,6 @@ async function handleBookingTimeSlot(req, res) {
         response.redirect('/api/twilio/booking-create');
 
     } else if (slots.afternoon) {
-        // Only afternoon available
         response.say("We have an afternoon slot available that day, between 1 and 2 PM.");
         conv.data.timeSlot = 'afternoon';
         conv.data.time = '13:00';
@@ -685,7 +890,7 @@ async function handleBookingCreate(req, res) {
 
     const conv = conversations.get(CallSid);
 
-    // Parse time slot choice if provided (from menu)
+    // Parse time slot choice if provided
     if (Digits || SpeechResult) {
         const timeChoice = Digits || parseTimeSlotChoice(SpeechResult);
         if (timeChoice === '1' || timeChoice === 'morning') {
@@ -722,13 +927,14 @@ async function handleBookingCreate(req, res) {
             pickupAddress: conv.data.pickupAddress,
             dropoffAddress: conv.data.deliveryAddress,
             estimatedTotal: conv.data.quote?.total,
-            estimatedHours: conv.data.quote?.estimatedTime || conv.data.estimatedHours,
+            estimatedHours: conv.data.quote?.estimatedTime || 3,
             numMovers: conv.data.crewSize,
+            distance: conv.data.distance,
             status: 'confirmed',
             source: 'twilio-voice-ai',
             callSid: CallSid,
             createdAt: new Date().toISOString(),
-            notes: `Booked via AI phone - Quote: $${Math.round(conv.data.quote?.total || 0)} - ${conv.data.timeSlot || 'morning'} slot`
+            notes: `Booked via AI phone - Quote: $${Math.round(conv.data.quote?.total || 0)} - ${conv.data.timeSlot || 'morning'} slot - Distance: ${conv.data.distance} miles`
         };
 
         await createAppointment(appointment);
@@ -766,11 +972,11 @@ async function handleBookingCreate(req, res) {
         }
 
         const timeSlotText = conv.data.timeSlot === 'afternoon' ? 'afternoon between 1 and 2 PM' : 'morning between 8 and 9 AM';
-        response.say(`Perfect! Your move is confirmed for ${moveDate} in the ${timeSlotText}. Your booking I D is ${bookingId}.`);
+        response.say(`Perfect! Your move is all set for ${moveDate} in the ${timeSlotText}. Your booking ID is ${bookingId}.`);
         response.pause({ length: 1 });
-        response.say(`We've sent a confirmation email to ${conv.data.email}. You'll also receive a text message with a secure link to save your card on file.`);
+        response.say(`I've sent a confirmation email to ${conv.data.email}. You'll also receive a text with a link to save your card on file for payment after your move.`);
         response.pause({ length: 1 });
-        response.say("Thanks for choosing Worry Free Moving!");
+        response.say("Thanks for choosing Worry Free Moving! We'll see you soon!");
 
     } catch (error) {
         console.error('Booking error:', error);
@@ -780,91 +986,6 @@ async function handleBookingCreate(req, res) {
 
     res.type('text/xml');
     res.send(response.toString());
-}
-
-/**
- * Check calendar availability for specific time slot
- */
-async function checkSlotAvailability(date, timeSlot) {
-    try {
-        const time = timeSlot === 'morning' ? '08:00' : '13:00';
-        const availability = await checkAvailability(date, time);
-        return availability.available;
-    } catch (error) {
-        console.error('Error checking slot availability:', error);
-        return true; // Default to available if check fails
-    }
-}
-
-/**
- * Get available slots for a date (morning/afternoon)
- */
-async function getAvailableSlotsForDate(date) {
-    try {
-        const morningAvailable = await checkSlotAvailability(date, 'morning');
-        const afternoonAvailable = await checkSlotAvailability(date, 'afternoon');
-
-        return {
-            morning: morningAvailable,
-            afternoon: afternoonAvailable,
-            anyAvailable: morningAvailable || afternoonAvailable
-        };
-    } catch (error) {
-        console.error('Error getting available slots:', error);
-        return { morning: true, afternoon: true, anyAvailable: true };
-    }
-}
-
-/**
- * Generate Square payment link and send via SMS
- */
-async function sendPaymentLinkSMS(phone, customerName, bookingId, amount, email) {
-    try {
-        // Generate unique checkout URL with query params
-        const checkoutUrl = `${BASE_URL}/checkout.html?amount=${Math.round(amount)}&booking=${bookingId}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(customerName)}`;
-
-        const message = `Hi ${customerName}! To secure your booking ${bookingId}, please save your card on file (no charge yet): ${checkoutUrl}\n\nWorry Free Moving\n(330) 661-9985`;
-
-        // Send SMS via Twilio
-        await twilioClient.messages.create({
-            body: message,
-            from: process.env.TWILIO_PHONE_NUMBER,
-            to: phone
-        });
-
-        console.log(`💳 Payment link sent to ${phone}`);
-        return true;
-    } catch (error) {
-        console.error('Error sending payment link SMS:', error);
-        return false;
-    }
-}
-
-/**
- * Calculate distance between addresses
- * TODO: Replace with Google Maps API for production
- */
-async function calculateDistance(pickup, delivery) {
-    // Simplified for now - returns estimated miles
-    // In production, use Google Maps Distance Matrix API
-
-    // Extract cities if possible
-    const pickupLower = pickup.toLowerCase();
-    const deliveryLower = delivery.toLowerCase();
-
-    // Same city = 5 miles
-    if (pickupLower.includes('canton') && deliveryLower.includes('canton')) return 5;
-    if (pickupLower.includes('akron') && deliveryLower.includes('akron')) return 5;
-
-    // Nearby cities = 10-15 miles
-    if ((pickupLower.includes('canton') && deliveryLower.includes('massillon')) ||
-        (pickupLower.includes('massillon') && deliveryLower.includes('canton'))) return 10;
-
-    if ((pickupLower.includes('canton') && deliveryLower.includes('akron')) ||
-        (pickupLower.includes('akron') && deliveryLower.includes('canton'))) return 25;
-
-    // Default assumption
-    return 15;
 }
 
 /**
@@ -885,24 +1006,15 @@ function parseServiceType(speech) {
     return null;
 }
 
-function parseYesNo(speech) {
+function parseDecisionChoice(speech) {
     const lower = speech.toLowerCase();
-    if (lower.includes('yes') || lower.includes('yeah') || lower.includes('sure')) return 'yes';
-    if (lower.includes('no') || lower.includes('not')) return 'no';
+    if (lower.includes('book') || lower.includes('schedule') || lower.includes('yes')) return '1';
+    if (lower.includes('email') || lower.includes('send')) return '2';
+    if (lower.includes('speak') || lower.includes('person') || lower.includes('agent')) return '9';
     return null;
 }
 
-function parseHours(speech) {
-    const numbers = speech.match(/\d+/);
-    if (numbers) {
-        const hours = parseInt(numbers[0]);
-        return Math.min(Math.max(hours, 2), 8); // Clamp between 2-8
-    }
-    return 3; // Default
-}
-
 function parseEmail(speech) {
-    // Simple email parsing from speech
     const lower = speech.toLowerCase()
         .replace(/ at /g, '@')
         .replace(/ dot /g, '.')
@@ -911,7 +1023,6 @@ function parseEmail(speech) {
 }
 
 function parseDateFromSpeech(speech) {
-    // Simplified date parsing
     const today = new Date();
     const futureDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
     return futureDate.toISOString().split('T')[0];
@@ -926,15 +1037,15 @@ function parseTimeSlotChoice(speech) {
 
 module.exports = {
     handleIncomingCall,
+    handleRecordingComplete,
     handleMainMenu,
     handleQuoteServiceType,
-    handleQuoteCrewSize,
-    handleQuoteHours,
-    handleQuoteHoursParse,
     handleQuotePickupAddress,
     handleQuoteDeliveryAddress,
-    handleQuoteCalculate,
+    handleQuoteCalculateDistance,
+    handleQuoteFinalize,
     handleQuoteDecision,
+    handleEmailQuoteSend,
     handleBookingStart,
     handleBookingEmail,
     handleBookingDate,
