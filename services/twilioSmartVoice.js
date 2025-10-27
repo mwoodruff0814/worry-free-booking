@@ -1206,9 +1206,14 @@ async function handleQuoteFinalize(req, res) {
 
     const conv = conversations.get(CallSid);
 
+    console.log('💰 Starting quote finalization for CallSid:', CallSid);
+    console.log('💰 Current conversation data:', JSON.stringify(conv.data, null, 2));
+
     // Parse crew size
     const crewSize = parseInt(Digits) || 2;
     conv.data.crewSize = crewSize;
+
+    console.log(`👥 Crew size selected: ${crewSize}`);
 
     response.say("Let me calculate your quote.");
     response.pause({ length: 2 });
@@ -1256,19 +1261,23 @@ async function handleQuoteFinalize(req, res) {
             }
         };
 
-        console.log('📊 Requesting quote:', JSON.stringify(quoteRequest, null, 2));
+        console.log('📊 Requesting quote from:', `${BASE_URL}/api/calculate-estimate`);
+        console.log('📊 Quote request data:', JSON.stringify(quoteRequest, null, 2));
 
         // Call real pricing API
         let quoteResponse;
         try {
+            console.log('🌐 Making API call to pricing endpoint...');
             quoteResponse = await axios.post(`${BASE_URL}/api/calculate-estimate`, quoteRequest);
-            console.log('✅ Quote API responded:', quoteResponse.status);
+            console.log('✅ Quote API responded with status:', quoteResponse.status);
+            console.log('✅ Quote API response data:', JSON.stringify(quoteResponse.data, null, 2));
         } catch (apiError) {
             console.error('❌ Quote API Error:', {
                 status: apiError.response?.status,
                 statusText: apiError.response?.statusText,
                 data: apiError.response?.data,
-                message: apiError.message
+                message: apiError.message,
+                stack: apiError.stack
             });
             throw apiError;
         }
@@ -1280,7 +1289,7 @@ async function handleQuoteFinalize(req, res) {
             throw new Error('Invalid quote response from API');
         }
 
-        console.log('💰 Quote received:', JSON.stringify(quote, null, 2));
+        console.log('💰 Quote parsed successfully:', JSON.stringify(quote, null, 2));
 
         // Save quote and additional data for emails/bookings
         conv.data.quote = quote.estimate;
@@ -1294,6 +1303,8 @@ async function handleQuoteFinalize(req, res) {
         const total = Math.round(quote.estimate.total);
         const hours = Math.round(quote.estimate.estimatedTime || estimatedHours);
 
+        console.log(`💵 Presenting quote to customer: $${total} for ${hours} hours with ${crewSize} movers`);
+
         if (conv.data.serviceCategory === 'moving') {
             response.say(`Great news! Your estimated total is $${total} for ${crewSize} movers with a truck.`);
             response.pause({ length: 1 });
@@ -1303,6 +1314,8 @@ async function handleQuoteFinalize(req, res) {
             response.pause({ length: 1 });
             response.say(`This includes labor and a travel fee for the ${Math.round(conv.data.distance)} mile distance.`);
         }
+
+        console.log('📢 Quote presented verbally to customer');
 
         // Automatically send quote via SMS
         try {
@@ -1344,7 +1357,12 @@ async function handleQuoteFinalize(req, res) {
         gather.say("Would you like to book this move? Press 1 to schedule now. Press 2 to receive this quote by email. Or press 9 to speak with someone.");
 
     } catch (error) {
-        console.error('Quote calculation error:', error);
+        console.error('❌❌❌ QUOTE CALCULATION FAILED ❌❌❌');
+        console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            conversationData: conv?.data
+        });
         response.say("I'm having trouble calculating your quote. Let me connect you with someone who can help.");
         response.dial(process.env.TRANSFER_NUMBER || '+13304358686');
     }
