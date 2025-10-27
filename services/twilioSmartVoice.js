@@ -1741,6 +1741,7 @@ async function handleBookingCreate(req, res) {
     try {
         const { createAppointment } = require('./database');
         const { sendConfirmationEmail } = require('./emailService');
+        const { createGoogleCalendarEvent } = require('./googleCalendar');
 
         const bookingId = `WF-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
@@ -1771,8 +1772,24 @@ async function handleBookingCreate(req, res) {
             notes: `Booked via AI phone - Quote: $${Math.round(conv.data.quote?.total || 0)} - ${conv.data.timeSlot || 'morning'} slot - Distance: ${conv.data.distance} miles`
         };
 
+        // Create in MongoDB
         await createAppointment(appointment);
-        console.log(`✅ Booking created via phone: ${bookingId}`);
+        console.log(`✅ Booking created in MongoDB: ${bookingId}`);
+
+        // Create in Google Calendar
+        try {
+            const calendarEvent = await createGoogleCalendarEvent({
+                summary: `Move - ${conv.data.firstName} ${conv.data.lastName}`,
+                description: `Booking ID: ${bookingId}\nPhone: ${conv.data.phone}\nService: ${appointment.serviceType}\n${conv.data.pickupAddress} → ${conv.data.deliveryAddress}\nEstimated: $${Math.round(conv.data.quote?.total || 0)}`,
+                location: conv.data.pickupAddress,
+                startTime: `${moveDate}T${bookingTime}:00`,
+                endTime: `${moveDate}T${bookingTime}:00`,
+                attendees: [conv.data.email]
+            });
+            console.log(`✅ Booking added to Google Calendar: ${calendarEvent.id}`);
+        } catch (calError) {
+            console.error('⚠️ Google Calendar creation failed (booking still saved):', calError.message);
+        }
 
         // Send confirmation email
         try {
