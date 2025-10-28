@@ -449,6 +449,30 @@
             opacity: 0.85;
         }
 
+        /* Estimate Breakdown */
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .breakdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .breakdown-label {
+            font-size: 14px;
+            color: #475569;
+        }
+
+        .breakdown-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
         /* Buttons */
         .buttons {
             display: flex;
@@ -887,10 +911,79 @@
             border-color: #28a745;
             box-shadow: 0 4px 12px rgba(40,167,69,0.3);
         }
+
+        /* Google Places Autocomplete Styles */
+        .pac-container {
+            z-index: 10000 !important;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e2e8f0;
+            margin-top: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .pac-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-top: 1px solid #f1f5f9;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .pac-item:first-child {
+            border-top: none;
+        }
+
+        .pac-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .pac-item-selected,
+        .pac-item-selected:hover {
+            background-color: #e3e8ff;
+        }
+
+        .pac-icon {
+            margin-right: 12px;
+        }
+
+        .pac-item-query {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .pac-matched {
+            font-weight: 700;
+            color: #004085;
+        }
+
+        /* Mobile-specific fixes for autocomplete */
+        @media (max-width: 768px) {
+            .pac-container {
+                width: 100% !important;
+                left: 0 !important;
+                right: 0 !important;
+                max-width: 100vw;
+                border-radius: 0 0 12px 12px;
+            }
+
+            .pac-item {
+                padding: 16px;
+                font-size: 16px; /* Prevents iOS zoom on focus */
+                -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+            }
+
+            /* Ensure input doesn't zoom on focus (iOS) */
+            input[type="text"],
+            input[type="email"],
+            input[type="tel"] {
+                font-size: 16px !important;
+            }
+        }
     </style>
 
     <!-- Google Maps API with Places -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAWGIVnh7-2sgDJin_2qgNvwh4JD9UgJDo&libraries=places" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAWGIVnh7-2sgDJin_2qgNvwh4JD9UgJDo&libraries=places,geometry" async defer></script>
 
     <!-- Square Web SDK -->
     <script type="text/javascript" src="https://web.squarecdn.com/v1/square.js"></script>
@@ -942,15 +1035,11 @@
                 </div>
                 <div class="step" data-step="9">
                     <div class="step-circle">9</div>
-                    <div class="step-label">Schedule</div>
+                    <div class="step-label">Payment</div>
                 </div>
                 <div class="step" data-step="10">
                     <div class="step-circle">10</div>
-                    <div class="step-label">Payment</div>
-                </div>
-                <div class="step" data-step="11">
-                    <div class="step-circle">11</div>
-                    <div class="step-label">Confirm</div>
+                    <div class="step-label">Schedule</div>
                 </div>
             </div>
         </div>
@@ -972,26 +1061,9 @@
                     <span class="help-text">Select your preferred move date (must be at least 1 day in advance)</span>
                 </div>
 
-                <!-- Labor Hours Field (conditional) -->
-                <div class="conditional-field" id="laborHoursField" style="display: none;">
-                    <div class="form-group">
-                        <label>Estimated Hours Needed <span class="required">*</span></label>
-                        <select id="estimatedHours">
-                            <option value="">Select hours...</option>
-                            <option value="2">2 hours (minimum)</option>
-                            <option value="3">3 hours</option>
-                            <option value="4">4 hours</option>
-                            <option value="5">5 hours</option>
-                            <option value="6">6 hours</option>
-                            <option value="7">7 hours</option>
-                            <option value="8">8 hours</option>
-                            <option value="9">9 hours</option>
-                            <option value="10">10 hours</option>
-                            <option value="12">12 hours</option>
-                        </select>
-                        <span class="help-text">How many hours do you think you'll need? (2 hour minimum)</span>
-                    </div>
-                </div>
+                <!-- Labor Hours removed - now collected in Step 2 with other labor details -->
+
+                <!-- Cleanout/Junk details removed - now collected in Step 2 -->
 
                 <div class="buttons">
                     <button class="btn-primary" onclick="nextStep()">Next: Addresses →</button>
@@ -1000,37 +1072,240 @@
 
             <!-- Step 2: Addresses -->
             <div class="form-section" data-section="2">
-                <h2>Where are we moving from and to?</h2>
-                <p class="section-subtitle">Enter your pickup and delivery addresses</p>
+                <h2 id="addressesTitle">Where are we moving from and to?</h2>
+                <p class="section-subtitle" id="addressesSubtitle">Enter your pickup and delivery addresses</p>
 
-                <div class="form-group">
-                    <label>Pickup Address <span class="required">*</span></label>
-                    <input type="text" id="pickupAddress" placeholder="123 Main St, Akron OH" required>
-                    <span class="help-text">Start typing to search for your address</span>
-                </div>
-
-                <div class="form-group">
-                    <label>Dropoff Address <span class="required">*</span></label>
-                    <input type="text" id="dropoffAddress" placeholder="456 Oak Ave, Canton OH" required>
-                    <span class="help-text">Start typing to search for your address</span>
-                </div>
-
-                <div class="checkbox-item" onclick="toggleThirdLocation()">
-                    <input type="checkbox" id="hasThirdLocation">
-                    <label class="checkbox-label">I need to stop at a third location</label>
-                </div>
-
-                <div class="conditional-field" id="thirdLocationField">
+                <!-- For Labor Only: Complete Flow (matches chatbot) -->
+                <div id="laborOnlySection" style="display: none;">
                     <div class="form-group">
-                        <label>Third Location Address <span class="required">*</span></label>
-                        <input type="text" id="thirdAddress" placeholder="789 Pine Rd, Cleveland OH">
-                        <span class="help-text">Additional stop (storage unit, donation center, etc.)</span>
+                        <label>Service Location <span class="required">*</span></label>
+                        <input type="text" id="laborAddress" placeholder="123 Main St, Akron OH">
+                        <span class="help-text">Where do you need labor help?</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Home Type <span class="required">*</span></label>
+                        <select id="laborHomeType">
+                            <option value="">Select...</option>
+                            <option value="house">House</option>
+                            <option value="apartment">Apartment</option>
+                            <option value="condo">Condo</option>
+                            <option value="townhouse">Townhouse</option>
+                            <option value="storage">Storage Unit</option>
+                            <option value="office">Office/Commercial</option>
+                        </select>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Bedrooms</label>
+                            <select id="laborBedrooms">
+                                <option value="0">Studio/0</option>
+                                <option value="1">1 Bedroom</option>
+                                <option value="2">2 Bedrooms</option>
+                                <option value="3">3 Bedrooms</option>
+                                <option value="4">4 Bedrooms</option>
+                                <option value="5">5+ Bedrooms</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Flights of Stairs</label>
+                            <select id="laborStairs">
+                                <option value="0">None (Ground level)</option>
+                                <option value="1">1 Flight</option>
+                                <option value="2">2 Flights</option>
+                                <option value="3">3 Flights</option>
+                                <option value="4">4+ Flights</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Crew Size <span class="required">*</span></label>
+                        <select id="laborCrewSize">
+                            <option value="">Select crew size...</option>
+                            <option value="2">👥 2 person crew</option>
+                            <option value="3">👥 3 person crew</option>
+                            <option value="4">👥 4 person crew</option>
+                        </select>
+                        <span class="help-text">How many movers do you need?</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Hours Needed <span class="required">*</span></label>
+                        <select id="laborHours" onchange="handleLaborHoursChange()">
+                            <option value="">Select hours...</option>
+                            <option value="2">2 hours (minimum)</option>
+                            <option value="4">4 hours</option>
+                            <option value="6">6 hours</option>
+                            <option value="8">8 hours (full day)</option>
+                            <option value="other">Other amount</option>
+                        </select>
+                        <span class="help-text">How long will you need the crew?</span>
+                    </div>
+
+                    <!-- Custom hours input (shown when "Other" is selected) -->
+                    <div class="form-group" id="laborCustomHoursField" style="display: none;">
+                        <label>Enter Hours <span class="required">*</span></label>
+                        <input type="number" id="laborCustomHours" min="2" max="12" step="0.5" placeholder="Enter hours (2-12)">
+                        <span class="help-text">Minimum 2 hours, maximum 12 hours</span>
+                    </div>
+                </div>
+
+                <!-- For Cleanout/Junk Removal: Complete Flow -->
+                <div id="cleanoutAddressSection" style="display: none;">
+                    <div class="form-group">
+                        <label>Service Location <span class="required">*</span></label>
+                        <input type="text" id="cleanoutAddress" placeholder="123 Main St, Akron OH">
+                        <span class="help-text">Where do you need cleanout/junk removal service?</span>
+                    </div>
+
+                    <!-- Service Type Selection -->
+                    <div class="form-group">
+                        <label>What type of service do you need? <span class="required">*</span></label>
+                        <select id="cleanoutServiceType" onchange="handleCleanoutTypeChange()">
+                            <option value="">Select service type...</option>
+                            <option value="junk">🗑️ Junk Removal (1 hour minimum)</option>
+                            <option value="cleanout">🧹 Cleanout Service (2+ hours)</option>
+                        </select>
+                        <span class="help-text">Junk removal for quick jobs, cleanout for larger projects</span>
+                    </div>
+
+                    <!-- Hazardous Materials Check (Junk Removal only) -->
+                    <div class="form-group" id="hazardousCheckField" style="display: none;">
+                        <label>Does the junk include hazardous materials? <span class="required">*</span></label>
+                        <select id="hazardousMaterials">
+                            <option value="no">No hazardous materials</option>
+                            <option value="yes">Yes, includes hazardous items (paint, chemicals, batteries, etc.)</option>
+                        </select>
+                        <span class="help-text">⚠️ We cannot dispose of hazardous materials</span>
+                    </div>
+
+                    <!-- Hours Selection (Cleanout only) -->
+                    <div class="form-group" id="cleanoutHoursField" style="display: none;">
+                        <label>Hours Needed <span class="required">*</span></label>
+                        <select id="cleanoutHoursSelect">
+                            <option value="">Select hours...</option>
+                            <option value="2">2 hours (minimum)</option>
+                            <option value="3">3 hours</option>
+                            <option value="4">4 hours</option>
+                            <option value="5">5+ hours</option>
+                        </select>
+                        <span class="help-text">Minimum 2 hours included in base price</span>
+                    </div>
+
+                    <!-- Crew Size (both services) -->
+                    <div class="form-group" id="cleanoutCrewField" style="display: none;">
+                        <label>Crew Size <span class="required">*</span></label>
+                        <select id="cleanoutCrewSelect">
+                            <option value="">Select crew size...</option>
+                            <option value="2">👥 2 crew members (standard)</option>
+                            <option value="3">👥 3 crew members</option>
+                            <option value="4">👥 4 crew members</option>
+                        </select>
+                        <span class="help-text">How many crew members do you need?</span>
+                    </div>
+                </div>
+
+                <!-- For Single Item Move: Complete Flow -->
+                <div id="singleItemSection" style="display: none;">
+                    <!-- Item Category Selection -->
+                    <div class="form-group">
+                        <label>What type of item are you moving? <span class="required">*</span></label>
+                        <select id="singleItemCategory" onchange="handleItemCategoryChange()">
+                            <option value="">Select category...</option>
+                            <option value="furniture">🛋️ Furniture</option>
+                            <option value="appliance">🔌 Appliance</option>
+                            <option value="set">🛏️ Furniture Set</option>
+                            <option value="heavy">🏋️ Heavy/Special Item</option>
+                            <option value="other">📦 Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Specific Item Selection (shown based on category) -->
+                    <div class="form-group" id="specificItemField" style="display: none;">
+                        <label>Select your item <span class="required">*</span></label>
+                        <select id="specificItem">
+                            <option value="">Select item...</option>
+                        </select>
+                    </div>
+
+                    <!-- Custom Item Description (shown when "Other" selected) -->
+                    <div class="form-group" id="customItemField" style="display: none;">
+                        <label>Describe your item <span class="required">*</span></label>
+                        <input type="text" id="customItemDescription" placeholder="e.g., Antique armoire, Industrial equipment...">
+                        <span class="help-text">Please provide a brief description</span>
+                    </div>
+
+                    <!-- Pickup Address & Stairs -->
+                    <div class="form-group">
+                        <label>Pickup Address <span class="required">*</span></label>
+                        <input type="text" id="singlePickupAddress" placeholder="123 Main St, Akron OH">
+                        <span class="help-text">Where are we picking up the item?</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Pickup Stairs</label>
+                        <select id="singlePickupStairs">
+                            <option value="0">No stairs (Ground level)</option>
+                            <option value="1">1 Flight</option>
+                            <option value="2">2 Flights</option>
+                            <option value="3">3 Flights</option>
+                            <option value="4">4+ Flights</option>
+                        </select>
+                    </div>
+
+                    <!-- Delivery Address & Stairs -->
+                    <div class="form-group">
+                        <label>Delivery Address <span class="required">*</span></label>
+                        <input type="text" id="singleDropoffAddress" placeholder="456 Oak Ave, Canton OH">
+                        <span class="help-text">Where are we delivering the item?</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Delivery Stairs</label>
+                        <select id="singleDropoffStairs">
+                            <option value="0">No stairs (Ground level)</option>
+                            <option value="1">1 Flight</option>
+                            <option value="2">2 Flights</option>
+                            <option value="3">3 Flights</option>
+                            <option value="4">4+ Flights</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- For Moving Services: Pickup and Dropoff -->
+                <div id="movingAddressSection">
+                    <div class="form-group">
+                        <label>Pickup Address <span class="required">*</span></label>
+                        <input type="text" id="pickupAddress" placeholder="123 Main St, Akron OH" required>
+                        <span class="help-text">Start typing to search for your address</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dropoff Address <span class="required">*</span></label>
+                        <input type="text" id="dropoffAddress" placeholder="456 Oak Ave, Canton OH" required>
+                        <span class="help-text">Start typing to search for your address</span>
+                    </div>
+
+                    <div class="checkbox-item" onclick="toggleThirdLocation()">
+                        <input type="checkbox" id="hasThirdLocation">
+                        <label class="checkbox-label">I need to stop at a third location</label>
+                    </div>
+
+                    <div class="conditional-field" id="thirdLocationField">
+                        <div class="form-group">
+                            <label>Third Location Address <span class="required">*</span></label>
+                            <input type="text" id="thirdAddress" placeholder="789 Pine Rd, Cleveland OH">
+                            <span class="help-text">Additional stop (storage unit, donation center, etc.)</span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="buttons">
                     <button class="btn-secondary" onclick="prevStep()">← Back</button>
-                    <button class="btn-primary" onclick="nextStep()">Next: Location Details →</button>
+                    <button class="btn-primary" onclick="nextStep()" id="addressesNextBtn">Next: Location Details →</button>
                 </div>
             </div>
 
@@ -1387,6 +1662,65 @@
                     <div class="estimate-disclaimer">Final price may vary based on actual time and services required</div>
                 </div>
 
+                <!-- Estimate Breakdown -->
+                <div class="estimate-breakdown" id="estimateBreakdown" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <h3 style="margin-top: 0; margin-bottom: 15px; color: #1e293b; font-size: 18px;">💰 Cost Breakdown</h3>
+
+                    <div class="breakdown-section">
+                        <div class="breakdown-item" id="breakdown-labor" style="display: none;">
+                            <span class="breakdown-label"><span id="breakdown-labor-label">Labor & Truck</span> (<span id="breakdown-hours">0</span> hours)</span>
+                            <span class="breakdown-value">$<span id="breakdown-labor-cost">0</span></span>
+                        </div>
+
+                        <div class="breakdown-item" id="breakdown-travel" style="display: none;">
+                            <span class="breakdown-label">Travel Fee</span>
+                            <span class="breakdown-value">$<span id="breakdown-travel-cost">0</span></span>
+                        </div>
+
+                        <div class="breakdown-item" id="breakdown-service" style="display: none;">
+                            <span class="breakdown-label" id="breakdown-service-label">Service Charge (14%)</span>
+                            <span class="breakdown-value">$<span id="breakdown-service-cost">0</span></span>
+                        </div>
+                    </div>
+
+                    <div class="breakdown-section" id="feesSection" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                        <h4 style="margin: 0 0 10px 0; color: #64748b; font-size: 14px; font-weight: 600;">Additional Fees</h4>
+
+                        <div class="breakdown-item" id="breakdown-stairs" style="display: none;">
+                            <span class="breakdown-label">Stairs Fee</span>
+                            <span class="breakdown-value">$<span id="breakdown-stairs-cost">0</span></span>
+                        </div>
+
+                        <div class="breakdown-item" id="breakdown-heavy" style="display: none;">
+                            <span class="breakdown-label">Heavy/Special Items</span>
+                            <span class="breakdown-value">$<span id="breakdown-heavy-cost">0</span></span>
+                        </div>
+
+                        <div class="breakdown-item" id="breakdown-packing" style="display: none;">
+                            <span class="breakdown-label">Packing Service (<span id="breakdown-packing-hours">0</span> hours @ $135/hr)</span>
+                            <span class="breakdown-value">$<span id="breakdown-packing-cost">0</span></span>
+                        </div>
+
+                        <div class="breakdown-item" id="breakdown-materials" style="display: none;">
+                            <span class="breakdown-label">Packing Materials</span>
+                            <span class="breakdown-value">$<span id="breakdown-materials-cost">0</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Itemized Packing Materials -->
+                    <div class="breakdown-section" id="materialsDetailSection" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                        <h4 style="margin: 0 0 10px 0; color: #64748b; font-size: 14px; font-weight: 600;">📦 Packing Materials Breakdown</h4>
+                        <div id="materialsDetailList" style="font-size: 13px;">
+                            <!-- Materials will be listed here -->
+                        </div>
+                    </div>
+
+                    <div class="breakdown-total" style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700; font-size: 18px; color: #1e293b;">Total</span>
+                        <span style="font-weight: 700; font-size: 24px; color: #28a745;">$<span id="breakdown-total">0</span></span>
+                    </div>
+                </div>
+
                 <div class="alert alert-info">
                     <div>
                         <strong>📋 What's included in your estimate:</strong>
@@ -1396,66 +1730,50 @@
 
                 <div class="buttons">
                     <button class="btn-secondary" onclick="prevStep()">← Back</button>
-                    <button class="btn-primary" onclick="nextStep()">Schedule Your Move →</button>
+                    <button class="btn-primary" onclick="nextStep()">Continue to Payment →</button>
                 </div>
             </div>
 
-            <!-- Step 9: Date & Time Selection -->
+            <!-- Step 9: Save Card on File (Required) -->
             <div class="form-section" data-section="9">
-                <h2>Select Your Move Date & Time</h2>
-                <p class="section-subtitle">Choose an available time slot for your move</p>
+                <!-- Customer Info for Cleanout/Junk (conditional) -->
+                <div id="cleanoutCustomerInfo" style="display: none;">
+                    <h2>Your Information</h2>
+                    <p class="section-subtitle">We need your contact details to schedule your service</p>
 
-                <div class="form-group">
-                    <label>Selected Date:</label>
-                    <div id="selectedDateDisplay" style="font-size: 18px; font-weight: 600; color: #004085; margin-bottom: 20px;">
-                        Loading...
+                    <div class="form-group">
+                        <label>First Name <span class="required">*</span></label>
+                        <input type="text" id="cleanoutFirstName" placeholder="John" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Last Name <span class="required">*</span></label>
+                        <input type="text" id="cleanoutLastName" placeholder="Doe" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email <span class="required">*</span></label>
+                        <input type="email" id="cleanoutEmail" placeholder="john@example.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Phone Number <span class="required">*</span></label>
+                        <input type="tel" id="cleanoutPhone" placeholder="(330) 435-8686" required>
+                    </div>
+
+                    <div class="estimate-box" style="margin: 30px 0;">
+                        <div class="estimate-label">Estimated Total</div>
+                        <div class="estimate-amount" id="cleanoutEstimateAmount">$0</div>
+                        <div class="estimate-disclaimer">Final price may vary based on actual time and disposal fees</div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Available Time Slots <span class="required">*</span></label>
-                    <div id="timeSlotsContainer" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
-                        <!-- Time slots will be loaded here -->
-                    </div>
-                    <span class="help-text">Select a time slot that works best for you</span>
-                </div>
-
-                <div id="noSlotsMessage" style="display: none; padding: 20px; background: #fff3cd; border-radius: 8px; margin-top: 20px;">
-                    <p style="margin: 0; color: #856404;">
-                        <strong>⚠️ No available slots for this date</strong><br>
-                        Please go back and select a different date, or call us at <a href="tel:3304358686">330-435-8686</a> to schedule.
-                    </p>
-                </div>
-
-                <div class="buttons">
-                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
-                    <button class="btn-primary" id="confirmTimeBtn" onclick="nextStep()" style="display: none;">Continue to Payment →</button>
-                </div>
-            </div>
-
-            <!-- Step 10: Save Card on File (Optional) -->
-            <div class="form-section" data-section="10">
-                <h2>Save card for faster checkout (Optional)</h2>
-                <p class="section-subtitle">Securely save your card with Square for easy payment after your move</p>
-
-                <div class="alert alert-info">
-                    <div>
-                        <strong>💳 Why save your card?</strong>
-                        <p>Save time on moving day! We'll securely store your card with Square (PCI compliant). Payment is processed after your move is complete. You can skip this step if you prefer to pay another way.</p>
-                    </div>
-                </div>
-
-                <div class="card-checkbox" onclick="toggleCardSection()">
-                    <input type="checkbox" id="saveCardCheckbox" checked>
-                    <label>
-                        <strong>Yes, save my card for faster checkout</strong><br>
-                        <span style="font-size: 13px; opacity: 0.8;">Recommended - Makes payment quick and easy after your move</span>
-                    </label>
-                </div>
+                <h2 id="paymentTitle">Payment Information Required</h2>
+                <p class="section-subtitle" id="paymentSubtitle">Enter your card details to secure your booking - Payment is processed after your move is complete</p>
 
                 <div class="card-section active" id="cardSection">
                     <div id="httpsWarning" class="https-warning" style="display: none;">
-                        💳 Card saving requires HTTPS. You can proceed without saving a card and pay after your move using another method.
+                        💳 Card entry requires HTTPS. Please ensure you're accessing this page securely.
                     </div>
 
                     <div class="card-container-wrapper" id="cardContainerWrapper">
@@ -1483,115 +1801,40 @@
                 <div class="alert alert-warning">
                     <div>
                         <strong>💡 Other payment options:</strong>
-                        <p>You can also pay with cash, check, or card on-site after your move. We'll discuss payment options when we confirm your booking.</p>
+                        <p>You can also pay with cash or card on-site after your move. We'll discuss payment options when we confirm your booking.</p>
                     </div>
                 </div>
 
                 <div class="buttons">
                     <button class="btn-secondary" onclick="prevStep()">← Back</button>
-                    <button class="btn-skip" onclick="skipCardAndReview()">Skip - I'll pay later</button>
+                    <button id="continue-to-scheduling-btn" class="btn-primary" onclick="goToAcuityScheduling()" style="display: none;">Continue to Scheduling →</button>
                 </div>
             </div>
 
-            <!-- Step 11: Review & Confirm -->
-            <div class="form-section" data-section="11">
-                <h2>Review your booking</h2>
-                <p class="section-subtitle">Please review the details before confirming</p>
-
-                <!-- Estimate Display -->
-                <div class="estimate-box">
-                    <div class="estimate-label">Estimated Total</div>
-                    <div class="estimate-amount" id="estimateAmount">$0</div>
-                    <div class="estimate-disclaimer">Final price may vary based on actual time and services required</div>
-                </div>
-
-                <!-- Service Summary -->
-                <div class="review-section">
-                    <h3>Service Details <button class="edit-btn" onclick="goToStep(1)">Edit</button></h3>
-                    <div class="review-item">
-                        <span class="review-label">Service Type:</span>
-                        <span class="review-value" id="reviewService">-</span>
-                    </div>
-                    <div class="review-item">
-                        <span class="review-label">Move Date:</span>
-                        <span class="review-value" id="reviewDate">-</span>
-                    </div>
-                </div>
-
-                <!-- Addresses Summary -->
-                <div class="review-section">
-                    <h3>Addresses <button class="edit-btn" onclick="goToStep(2)">Edit</button></h3>
-                    <div class="review-item">
-                        <span class="review-label">From:</span>
-                        <span class="review-value" id="reviewPickup">-</span>
-                    </div>
-                    <div class="review-item">
-                        <span class="review-label">To:</span>
-                        <span class="review-value" id="reviewDropoff">-</span>
-                    </div>
-                    <div class="review-item" id="reviewThirdItem" style="display: none;">
-                        <span class="review-label">Third Stop:</span>
-                        <span class="review-value" id="reviewThird">-</span>
-                    </div>
-                    <div class="review-item">
-                        <span class="review-label">Distance:</span>
-                        <span class="review-value" id="reviewDistance">-</span>
-                    </div>
-                </div>
-
-                <!-- Contact Summary -->
-                <div class="review-section">
-                    <h3>Contact Information <button class="edit-btn" onclick="goToStep(7)">Edit</button></h3>
-                    <div class="review-item">
-                        <span class="review-label">Name:</span>
-                        <span class="review-value" id="reviewName">-</span>
-                    </div>
-                    <div class="review-item">
-                        <span class="review-label">Email:</span>
-                        <span class="review-value" id="reviewEmail">-</span>
-                    </div>
-                    <div class="review-item">
-                        <span class="review-label">Phone:</span>
-                        <span class="review-value" id="reviewPhone">-</span>
-                    </div>
-                </div>
-
-                <!-- Payment Summary -->
-                <div class="review-section" id="reviewPaymentSection" style="display: none;">
-                    <h3>Payment Information <button class="edit-btn" onclick="goToStep(10)">Edit</button></h3>
-                    <div class="review-item">
-                        <span class="review-label">Card on File:</span>
-                        <span class="review-value" id="reviewCard">-</span>
-                    </div>
-                    <div style="font-size: 12px; color: #6c757d; margin-top: 10px;">
-                        Payment will be processed after your move is complete
-                    </div>
-                </div>
-
-                <!-- Terms & Conditions -->
-                <div class="terms-checkbox">
-                    <input type="checkbox" id="agreeTerms" onchange="updateTermsAgreement()">
-                    <label>
-                        I agree to the <span class="terms-link">terms and conditions</span> and understand that:
-                        <ul style="margin-top: 8px; padding-left: 20px;">
-                            <li>Final pricing is based on actual time and services</li>
-                            <li>A deposit may be required for moves over $500</li>
-                            <li>Cancellations require 24-hour notice</li>
-                            <li>We'll call to confirm 24 hours before the move</li>
-                        </ul>
-                    </label>
-                </div>
+            <!-- Step 10: Acuity Scheduling -->
+            <div class="form-section" data-section="10">
+                <h2>Schedule Your Move</h2>
+                <p class="section-subtitle">Select your preferred date and time using our scheduling system</p>
 
                 <div class="alert alert-info">
                     <div>
-                        <strong>What happens next?</strong>
-                        <p>After you confirm, we'll send you a detailed estimate and confirmation email. Our team will call you 24 hours before your move to confirm all details and answer any questions.</p>
+                        <strong>📅 Final Step!</strong>
+                        <p>Choose your preferred date and time slot below. Your booking will be confirmed immediately after you complete the scheduling.</p>
                     </div>
                 </div>
 
-                <div class="buttons">
-                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
-                    <button class="btn-success" id="confirmBtn" onclick="confirmBooking()" disabled>Confirm Booking</button>
+                <div id="acuity-iframe-container" style="min-height: 600px; border-radius: 12px; overflow: hidden; border: 2px solid #e9ecef;">
+                    <iframe id="acuity-iframe"
+                            src=""
+                            width="100%"
+                            height="800"
+                            frameborder="0"
+                            style="display: block;">
+                    </iframe>
+                </div>
+
+                <div class="buttons" style="margin-top: 20px;">
+                    <button class="btn-secondary" onclick="prevStep()">← Back to Payment</button>
                 </div>
             </div>
 
@@ -1645,6 +1888,7 @@
         const CONFIG = {
             phone: "330-435-8686",
             email: "service@worryfreemovers.com",
+            acuityUrl: "https://app.acuityscheduling.com/schedule.php?owner=26866067&ref=embedded_csp",
             square: {
                 applicationId: "sq0idp-7GJn4RN8zcdsw3S1kJaNOA",
                 locationId: "L6WP06SMJKJSB",
@@ -1785,6 +2029,24 @@
             const cardButton = document.getElementById('save-card-button');
             const statusContainer = document.getElementById('card-status-container');
 
+            // Validate customer info for cleanout/junk services before saving card
+            if (bookingData.serviceType === 'Cleanout Service' || bookingData.serviceType === 'Junk Removal') {
+                const firstName = document.getElementById('cleanoutFirstName')?.value;
+                const lastName = document.getElementById('cleanoutLastName')?.value;
+                const email = document.getElementById('cleanoutEmail')?.value;
+                const phone = document.getElementById('cleanoutPhone')?.value;
+
+                if (!firstName || !lastName || !email || !phone) {
+                    showCardStatus('❌ Please fill out all customer information fields above before saving your card.', 'error');
+                    return;
+                }
+
+                if (!email.includes('@')) {
+                    showCardStatus('❌ Please enter a valid email address.', 'error');
+                    return;
+                }
+            }
+
             try {
                 cardButton.disabled = true;
                 cardButton.textContent = '⏳ Processing...';
@@ -1857,16 +2119,43 @@
                 const data = JSON.parse(responseText);
 
                 if (data.success) {
-                    showCardStatus('✅ Card saved successfully! You can now continue to review.', 'success');
+                    showCardStatus('✅ Card saved successfully! Sending your quote...', 'success');
                     cardSaved = true;
                     bookingData.cardOnFile = true;
                     bookingData.squareCustomerId = data.customerId;
                     bookingData.cardLast4 = cardDetails.card?.last4 || 'XXXX';
 
-                    // Enable continue button or auto-proceed
-                    setTimeout(() => {
-                        proceedToReview();
-                    }, 2000);
+                    // Save customer info from step 9 for cleanout/junk before sending email
+                    if (bookingData.serviceType === 'Cleanout Service' || bookingData.serviceType === 'Junk Removal') {
+                        bookingData.customerInfo = {
+                            firstName: document.getElementById('cleanoutFirstName')?.value,
+                            lastName: document.getElementById('cleanoutLastName')?.value,
+                            email: document.getElementById('cleanoutEmail')?.value,
+                            phone: document.getElementById('cleanoutPhone')?.value
+                        };
+                    }
+
+                    // Send estimate emails immediately after card is saved
+                    try {
+                        await sendEstimateEmails();
+                        showCardStatus('✅ Card saved & quote sent! Check your email and continue to scheduling.', 'success');
+                    } catch (emailError) {
+                        console.error('Error sending estimate emails:', emailError);
+                        showCardStatus('✅ Card saved! (Email sending failed, but you can continue)', 'success');
+                    }
+
+                    // Show the Continue to Scheduling button
+                    const continueBtn = document.getElementById('continue-to-scheduling-btn');
+                    if (continueBtn) {
+                        continueBtn.style.display = 'block';
+                        continueBtn.classList.add('pulse-animation'); // Optional: add attention-grabbing animation
+                    }
+
+                    // Hide the save card button since it's already saved
+                    const cardButton = document.getElementById('save-card-button');
+                    if (cardButton) {
+                        cardButton.style.display = 'none';
+                    }
                 } else {
                     throw new Error(data.message || 'Failed to save card');
                 }
@@ -1893,10 +2182,574 @@
             `;
         }
 
+        // Send estimate emails to customer and company via FormSubmit
+        async function sendEstimateEmails() {
+            const customerName = bookingData.customerInfo?.firstName
+                ? `${bookingData.customerInfo.firstName} ${bookingData.customerInfo.lastName}`
+                : 'Customer';
+            const customerEmail = bookingData.customerInfo?.email;
+            const customerPhone = bookingData.customerInfo?.phone || 'Not provided';
+
+            if (!customerEmail || !bookingData.estimateBreakdown) {
+                console.log('Missing customer email or estimate breakdown, skipping email');
+                return;
+            }
+
+            // Format money
+            const formatMoney = (amount) => {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 2
+                }).format(amount);
+            };
+
+            // Get addresses based on service type
+            let pickupAddress = '';
+            let dropoffAddress = '';
+            if (bookingData.serviceType === 'Cleanout Service' || bookingData.serviceType === 'Junk Removal') {
+                pickupAddress = bookingData.cleanoutAddress;
+            } else if (bookingData.serviceType === 'Labor Only') {
+                pickupAddress = bookingData.laborAddress;
+            } else if (bookingData.serviceType === 'Single Item Move') {
+                pickupAddress = bookingData.singlePickupAddress;
+                dropoffAddress = bookingData.singleDropoffAddress;
+            } else {
+                pickupAddress = bookingData.pickupAddress;
+                dropoffAddress = bookingData.dropoffAddress;
+            }
+
+            // Format date
+            let formattedDate = '';
+            if (bookingData.moveDate) {
+                const [year, month, day] = bookingData.moveDate.split('-');
+                const localDate = new Date(year, month - 1, day);
+                formattedDate = localDate.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+
+            const estimate = bookingData.estimateBreakdown;
+
+            // Build packing materials table HTML
+            let materialsHTML = '';
+            if (estimate.packingMaterialsBreakdown && estimate.packingMaterialsBreakdown.length > 0) {
+                const materialsTotal = estimate.packingMaterialsBreakdown.reduce((sum, item) => sum + item.total, 0);
+                materialsHTML = `
+                    <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        <h2 style="color: #667eea; margin-top: 0;">📦 Packing Materials Breakdown</h2>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f8f9fa; border-bottom: 2px solid #e2e8f0;">
+                                    <th style="padding: 12px 8px; text-align: left; color: #667eea;">Item</th>
+                                    <th style="padding: 12px 8px; text-align: center; color: #667eea;">Qty</th>
+                                    <th style="padding: 12px 8px; text-align: right; color: #667eea;">Price</th>
+                                    <th style="padding: 12px 8px; text-align: right; color: #667eea;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${estimate.packingMaterialsBreakdown.map(item => `
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="padding: 10px 8px;">${item.name}</td>
+                                    <td style="padding: 10px 8px; text-align: center;">${item.quantity}</td>
+                                    <td style="padding: 10px 8px; text-align: right;">${formatMoney(item.unitPrice)}</td>
+                                    <td style="padding: 10px 8px; text-align: right; font-weight: 600;">${formatMoney(item.total)}</td>
+                                </tr>
+                                `).join('')}
+                                <tr style="background: #f8f9fa; font-weight: 700;">
+                                    <td colspan="3" style="padding: 12px 8px; text-align: right; color: #667eea;">Materials Total:</td>
+                                    <td style="padding: 12px 8px; text-align: right; color: #667eea;">${formatMoney(materialsTotal)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            // Create beautiful HTML email
+            const emailHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="color: white; margin: 0; font-size: 28px;">💰 Your Moving Estimate</h1>
+                            <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Worry Free Moving</p>
+                        </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 30px;">
+                            <p style="font-size: 16px; color: #333; margin: 0 0 20px 0;">Hi ${customerName},</p>
+                            <p style="font-size: 16px; color: #333; line-height: 1.6; margin: 0 0 20px 0;">
+                                Thank you for choosing Worry Free Moving! Here's your detailed estimate:
+                            </p>
+
+                            <!-- Service Details -->
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                                <h2 style="color: #667eea; margin-top: 0; font-size: 20px;">📋 Service Details</h2>
+                                <table width="100%" cellpadding="8" cellspacing="0">
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="font-weight: 600; color: #667eea;">Service Type:</td>
+                                        <td style="text-align: right; color: #333;">${bookingData.serviceType}</td>
+                                    </tr>
+
+                                    ${pickupAddress ? `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="font-weight: 600; color: #667eea;">${dropoffAddress ? 'Pickup Location:' : 'Service Location:'}</td>
+                                        <td style="text-align: right; color: #333;">${pickupAddress}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${dropoffAddress ? `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="font-weight: 600; color: #667eea;">Dropoff Location:</td>
+                                        <td style="text-align: right; color: #333;">${dropoffAddress}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${bookingData.thirdAddress ? `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="font-weight: 600; color: #667eea;">Additional Stop:</td>
+                                        <td style="text-align: right; color: #333;">${bookingData.thirdAddress}</td>
+                                    </tr>
+                                    ` : ''}
+
+                                    ${bookingData.distance ? `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="font-weight: 600; color: #667eea;">Distance:</td>
+                                        <td style="text-align: right; color: #333;">${bookingData.distance.toFixed(1)} miles</td>
+                                    </tr>
+                                    ` : ''}
+
+                                    <!-- Labor Only Details -->
+                                    ${bookingData.serviceType === 'Labor Only' ? `
+                                        ${bookingData.laborHomeType ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Home Type:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.laborHomeType}</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${bookingData.laborBedrooms ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Bedrooms:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.laborBedrooms}</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${bookingData.laborStairs ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Stairs:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.laborStairs} flight(s)</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${bookingData.laborCrewSize ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Crew Size:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.laborCrewSize} person crew</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${bookingData.laborHours ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Hours Needed:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.laborHours} hours</td>
+                                        </tr>
+                                        ` : ''}
+                                    ` : ''}
+
+                                    <!-- Single Item Details -->
+                                    ${bookingData.serviceType === 'Single Item Move' ? `
+                                        ${bookingData.singleItemName ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Item:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.singleItemName}</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${bookingData.singlePickupStairs ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Pickup Stairs:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.singlePickupStairs} flight(s)</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${bookingData.singleDropoffStairs ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Delivery Stairs:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.singleDropoffStairs} flight(s)</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${bookingData.singleItemCrew ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Crew Size:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.singleItemCrew} person crew</td>
+                                        </tr>
+                                        ` : ''}
+                                    ` : ''}
+
+                                    <!-- Cleanout/Junk Details -->
+                                    ${(bookingData.serviceType === 'Cleanout Service' || bookingData.serviceType === 'Junk Removal') ? `
+                                        ${bookingData.cleanoutServiceType ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Service Type:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.cleanoutServiceType === 'junk' ? 'Junk Removal (1 hour)' : 'Cleanout Service'}</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${bookingData.hazardousMaterials ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Hazardous Materials:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.hazardousMaterials === 'yes' ? '⚠️ Yes (requires special handling)' : '✓ No'}</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${bookingData.cleanoutHours ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Hours Needed:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.cleanoutHours} hours</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${bookingData.cleanoutCrew ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Crew Size:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.cleanoutCrew} person crew</td>
+                                        </tr>
+                                        ` : ''}
+                                    ` : ''}
+
+                                    <!-- Regular Moving Details -->
+                                    ${(bookingData.serviceType === '2 Person Crew' || bookingData.serviceType === '3 Person Crew' || bookingData.serviceType === '4 Person Crew') ? `
+                                        ${bookingData.pickupBedrooms ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Pickup Bedrooms:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.pickupBedrooms}</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${bookingData.dropoffBedrooms ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Dropoff Bedrooms:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.dropoffBedrooms}</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${bookingData.pickupDetails?.homeType ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Pickup Home Type:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.pickupDetails.homeType}</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${bookingData.dropoffDetails?.homeType ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Dropoff Home Type:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.dropoffDetails.homeType}</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${bookingData.pickupDetails?.stairs ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Pickup Stairs:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.pickupDetails.stairs} flight(s)</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${bookingData.dropoffDetails?.stairs ? `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="font-weight: 600; color: #667eea;">Dropoff Stairs:</td>
+                                            <td style="text-align: right; color: #333;">${bookingData.dropoffDetails.stairs} flight(s)</td>
+                                        </tr>
+                                        ` : ''}
+                                    ` : ''}
+
+                                    ${formattedDate ? `
+                                    <tr>
+                                        <td style="font-weight: 600; color: #667eea;">Preferred Date:</td>
+                                        <td style="text-align: right; color: #333;">${formattedDate}</td>
+                                    </tr>
+                                    ` : ''}
+                                </table>
+                            </div>
+
+                            <!-- Cost Breakdown -->
+                            <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0; border: 2px solid #667eea;">
+                                <h2 style="color: #667eea; margin-top: 0; font-size: 20px;">💵 Cost Breakdown</h2>
+                                <table width="100%" cellpadding="8" cellspacing="0">
+                                    ${estimate.laborCost > 0 ? `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="color: #333;">Labor ${estimate.estimatedTime ? `(${estimate.estimatedTime.toFixed(1)} hours)` : ''}</td>
+                                        <td style="text-align: right; font-weight: 600; color: #333;">${formatMoney(estimate.laborCost)}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${estimate.travelFee > 0 ? `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="color: #333;">Travel Fee</td>
+                                        <td style="text-align: right; font-weight: 600; color: #333;">${formatMoney(estimate.travelFee)}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${estimate.stairsFee > 0 ? `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="color: #333;">Stairs Fee</td>
+                                        <td style="text-align: right; font-weight: 600; color: #333;">${formatMoney(estimate.stairsFee)}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${estimate.heavyItems > 0 ? `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="color: #333;">Heavy Items</td>
+                                        <td style="text-align: right; font-weight: 600; color: #333;">${formatMoney(estimate.heavyItems)}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${estimate.additionalServices > 0 ? `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="color: #333;">Packing Service ${estimate.packingHours ? `(${estimate.packingHours.toFixed(1)} hrs)` : ''}</td>
+                                        <td style="text-align: right; font-weight: 600; color: #333;">${formatMoney(estimate.additionalServices)}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${estimate.packingMaterials > 0 ? `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="color: #333;">Packing Materials</td>
+                                        <td style="text-align: right; font-weight: 600; color: #333;">${formatMoney(estimate.packingMaterials)}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${estimate.fvpInsurance > 0 ? `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="color: #333;">Insurance</td>
+                                        <td style="text-align: right; font-weight: 600; color: #333;">${formatMoney(estimate.fvpInsurance)}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${estimate.serviceCharge > 0 ? `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="color: #333;">${estimate.serviceChargeLabel || 'Service Charge'}</td>
+                                        <td style="text-align: right; font-weight: 600; color: #333;">${formatMoney(estimate.serviceCharge)}</td>
+                                    </tr>
+                                    ` : ''}
+                                </table>
+
+                                <!-- Total -->
+                                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; margin-top: 15px; text-align: center;">
+                                    <div style="color: white; font-size: 16px; margin-bottom: 5px;">ESTIMATED TOTAL</div>
+                                    <div style="color: white; font-size: 32px; font-weight: 700;">${formatMoney(estimate.total)}</div>
+                                </div>
+                            </div>
+
+                            ${materialsHTML}
+
+                            <!-- Heavy/Special Items (for regular moves) -->
+                            ${(bookingData.serviceType === '2 Person Crew' || bookingData.serviceType === '3 Person Crew' || bookingData.serviceType === '4 Person Crew') && (bookingData.inventory?.piano || bookingData.inventory?.poolTable || bookingData.inventory?.hotTub || bookingData.inventory?.safe) ? `
+                            <div style="background: #fff7ed; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #f97316;">
+                                <h3 style="color: #ea580c; margin-top: 0; font-size: 18px;">🏋️ Heavy/Special Items</h3>
+                                <ul style="margin: 10px 0; padding-left: 20px; color: #7c2d12;">
+                                    ${bookingData.inventory.piano ? '<li>Piano - $200</li>' : ''}
+                                    ${bookingData.inventory.poolTable ? '<li>Pool Table - $300</li>' : ''}
+                                    ${bookingData.inventory.hotTub ? '<li>Hot Tub - $250</li>' : ''}
+                                    ${bookingData.inventory.safe ? '<li>Safe - $150</li>' : ''}
+                                </ul>
+                            </div>
+                            ` : ''}
+
+                            <!-- Additional Services Selected (for regular moves) -->
+                            ${(bookingData.serviceType === '2 Person Crew' || bookingData.serviceType === '3 Person Crew' || bookingData.serviceType === '4 Person Crew') && (bookingData.additionalServices?.packingService || bookingData.additionalServices?.packingMaterials || bookingData.additionalServices?.movingBlankets || bookingData.additionalServices?.disassembly) ? `
+                            <div style="background: #eff6ff; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+                                <h3 style="color: #1d4ed8; margin-top: 0; font-size: 18px;">✨ Additional Services</h3>
+                                <ul style="margin: 10px 0; padding-left: 20px; color: #1e3a8a;">
+                                    ${bookingData.additionalServices.packingService ? '<li>✓ Professional Packing Service</li>' : ''}
+                                    ${bookingData.additionalServices.packingMaterials ? '<li>✓ Packing Materials</li>' : ''}
+                                    ${bookingData.additionalServices.movingBlankets ? '<li>✓ Moving Blankets</li>' : ''}
+                                    ${bookingData.additionalServices.disassembly ? '<li>✓ Furniture Disassembly/Assembly</li>' : ''}
+                                </ul>
+                            </div>
+                            ` : ''}
+
+                            <!-- Important Info -->
+                            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                                <strong style="color: #856404;">💡 Important:</strong>
+                                <ul style="margin: 10px 0; padding-left: 20px; color: #856404;">
+                                    <li>This estimate is based on the information provided</li>
+                                    <li>Final cost may vary based on actual time and services</li>
+                                    <li>Payment is processed after your move is complete</li>
+                                    <li>Card on file - no payment today</li>
+                                </ul>
+                            </div>
+
+                            <!-- Contact Info -->
+                            <div style="text-align: center; margin: 30px 0;">
+                                <p style="font-size: 16px; color: #333; margin-bottom: 15px;"><strong>Questions? We're here to help!</strong></p>
+                                <a href="tel:3304358686" style="display: inline-block; background: #51cf66; color: white; padding: 14px 30px; text-decoration: none; border-radius: 25px; margin: 5px; font-weight: 600;">📞 Call 330-435-8686</a>
+                                <a href="mailto:service@worryfreemovers.com" style="display: inline-block; background: #667eea; color: white; padding: 14px 30px; text-decoration: none; border-radius: 25px; margin: 5px; font-weight: 600;">✉️ Email Us</a>
+                            </div>
+
+                            <!-- Footer -->
+                            <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #666; font-size: 14px;">
+                                <p style="margin: 5px 0;"><strong>Worry Free Moving</strong></p>
+                                <p style="margin: 5px 0;">330-435-8686</p>
+                                <p style="margin: 5px 0;">service@worryfreemovers.com</p>
+                                <p style="margin: 15px 0 5px 0; color: #999; font-size: 12px;">Customer: ${customerName} | ${customerEmail} | ${customerPhone}</p>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+            `;
+
+            // Send via server API endpoint
+            try {
+                console.log('📧 Sending estimate email via server API to:', customerEmail);
+
+                const response = await fetch(`${API_URL}/api/send-estimate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        to: customerEmail,
+                        customerName: customerName,
+                        estimate: {
+                            laborCost: estimate.laborCost || 0,
+                            travelFee: estimate.travelFee || 0,
+                            stairsFee: estimate.stairsFee || 0,
+                            heavyItems: estimate.heavyItems || 0,
+                            additionalServices: estimate.additionalServices || 0,
+                            packingMaterials: estimate.packingMaterials || 0,
+                            fvpInsurance: estimate.fvpInsurance || 0,
+                            serviceCharge: estimate.serviceCharge || 0,
+                            total: estimate.total || 0,
+                            estimatedTime: estimate.estimatedTime || 0
+                        },
+                        serviceType: bookingData.serviceType,
+                        pickupAddress: pickupAddress,
+                        dropoffAddress: dropoffAddress,
+                        date: bookingData.moveDate || '',
+                        time: bookingData.moveTime || '',
+                        distance: bookingData.distance || 0,
+                        company: 'Worry Free Moving',
+                        packingMaterialsBreakdown: estimate.packingMaterialsBreakdown || []
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || 'Failed to send email');
+                }
+
+                console.log('✅ Estimate email sent successfully!');
+                console.log('✅ Customer will receive estimate at:', customerEmail);
+                console.log('✅ Company will be CC\'d at: service@worryfreemovers.com');
+
+                return true;
+            } catch (error) {
+                console.error('❌ Error sending estimate:', error);
+                // Don't throw - email failing shouldn't break the flow
+                alert('Email sending failed: ' + error.message + '. Please contact us directly at 330-435-8686.');
+                return false;
+            }
+        }
+
         // Skip card and go to review
-        async function skipCardAndReview() {
-            bookingData.cardOnFile = false;
-            await proceedToReview();
+        // Navigate to Acuity scheduling
+        async function goToAcuityScheduling() {
+            // Check if card has been saved
+            if (!cardSaved && !bookingData.cardOnFile) {
+                alert('Please save your card information before continuing to scheduling.');
+                return;
+            }
+
+            // Save current step data
+            saveCurrentStepData();
+
+            // Email already sent after card save, so just proceed to scheduling
+
+            // Build Acuity URL with customer information
+            let acuityUrl = CONFIG.acuityUrl;
+            const params = new URLSearchParams();
+
+            // Add customer information to pre-fill Acuity form
+            // For cleanout/junk, use cleanout-specific fields
+            if (bookingData.serviceType === 'Cleanout Service' || bookingData.serviceType === 'Junk Removal') {
+                const firstName = document.getElementById('cleanoutFirstName')?.value;
+                const lastName = document.getElementById('cleanoutLastName')?.value;
+                const email = document.getElementById('cleanoutEmail')?.value;
+                const phone = document.getElementById('cleanoutPhone')?.value;
+
+                if (firstName) params.append('firstName', firstName);
+                if (lastName) params.append('lastName', lastName);
+                if (email) params.append('email', email);
+                if (phone) params.append('phone', phone);
+            } else {
+                // For regular moves, use customerInfo from step 7
+                if (bookingData.customerInfo?.firstName) {
+                    params.append('firstName', bookingData.customerInfo.firstName);
+                }
+                if (bookingData.customerInfo?.lastName) {
+                    params.append('lastName', bookingData.customerInfo.lastName);
+                }
+                if (bookingData.customerInfo?.email) {
+                    params.append('email', bookingData.customerInfo.email);
+                }
+                if (bookingData.customerInfo?.phone) {
+                    params.append('phone', bookingData.customerInfo.phone);
+                }
+            }
+
+            // Add service details
+            if (bookingData.serviceType) {
+                params.append('field:10550094', bookingData.serviceType); // Service type custom field
+            }
+
+            // Add address fields (different for cleanout/junk vs moving services)
+            if (bookingData.serviceType === 'Cleanout Service' || bookingData.serviceType === 'Junk Removal') {
+                if (bookingData.cleanoutAddress) {
+                    params.append('field:10550095', bookingData.cleanoutAddress); // Service location
+                }
+                if (bookingData.cleanoutCrew) {
+                    params.append('field:10550097', `${bookingData.cleanoutCrew} crew members`); // Crew size
+                }
+                if (bookingData.cleanoutHours) {
+                    params.append('field:10550098', `${bookingData.cleanoutHours} hours`); // Hours
+                }
+            } else {
+                if (bookingData.pickupAddress) {
+                    params.append('field:10550095', bookingData.pickupAddress); // Pickup address
+                }
+                if (bookingData.dropoffAddress) {
+                    params.append('field:10550096', bookingData.dropoffAddress); // Dropoff address
+                }
+            }
+
+            if (bookingData.estimate) {
+                params.append('field:10550099', `$${bookingData.estimate.toFixed(2)}`); // Estimate
+            }
+
+            // Add packing materials breakdown if available
+            if (bookingData.packingMaterialsBreakdown && bookingData.packingMaterialsBreakdown.length > 0) {
+                let materialsText = 'PACKING MATERIALS:\n';
+                bookingData.packingMaterialsBreakdown.forEach(item => {
+                    materialsText += `${item.name}: ${item.quantity} × $${item.unitPrice.toFixed(2)} = $${item.total.toFixed(2)}\n`;
+                });
+                const totalMaterials = bookingData.packingMaterialsBreakdown.reduce((sum, item) => sum + item.total, 0);
+                materialsText += `TOTAL MATERIALS: $${totalMaterials.toFixed(2)}`;
+                params.append('field:10550100', materialsText); // Materials breakdown custom field
+            }
+
+            // Build final URL
+            if (params.toString()) {
+                acuityUrl += (acuityUrl.includes('?') ? '&' : '?') + params.toString();
+            }
+
+            // Load Acuity iframe
+            const acuityIframe = document.getElementById('acuity-iframe');
+            acuityIframe.src = acuityUrl;
+
+            // Navigate to step 10
+            currentStep = 10;
+            showStep(10);
+            updateProgress();
+            scrollToTop();
         }
 
         // Go to estimate display (Step 8)
@@ -1906,18 +2759,39 @@
             saveCurrentStepData();
             showLoading();
             try {
-                // Calculate distance and drive time if not already done
-                if (!bookingData.distance) {
-                    await calculateDistance();
-                }
+                // CLEAR any cached data to force fresh calculation
+                bookingData.estimate = null;
+                bookingData.estimateBreakdown = null;
+                bookingData.distance = null;
+                bookingData.driveTime = null;
 
-                // Calculate estimate if not already done
-                if (!bookingData.estimate) {
-                    await calculateEstimate();
-                }
+                console.log('🔄 Clearing all cached data and recalculating with fresh data...');
+                console.log('📊 Current booking data:', {
+                    serviceType: bookingData.serviceType,
+                    pickupAddress: bookingData.pickupAddress,
+                    dropoffAddress: bookingData.dropoffAddress,
+                    pickupBedrooms: bookingData.pickupDetails?.bedrooms,
+                    dropoffBedrooms: bookingData.dropoffDetails?.bedrooms,
+                    pickupStairs: bookingData.pickupDetails?.stairs,
+                    dropoffStairs: bookingData.dropoffDetails?.stairs,
+                    additionalServices: bookingData.additionalServices,
+                    inventory: bookingData.inventory
+                });
+
+                // Calculate distance (always recalculate in case addresses changed)
+                await calculateDistance();
+                console.log('📍 Distance calculated:', bookingData.distance, 'miles');
+
+                // Calculate estimate with current data
+                await calculateEstimate();
 
                 // Update estimate display
                 document.getElementById('estimateAmount').textContent = '$' + bookingData.estimate.toFixed(2);
+
+                // Populate breakdown if available
+                if (bookingData.estimateBreakdown) {
+                    populateEstimateBreakdown(bookingData.estimateBreakdown);
+                }
 
                 // Show step 8
                 currentStep = 8;
@@ -1932,85 +2806,121 @@
             }
         }
 
-        // Load available time slots for selected date
-        async function loadAvailableTimeSlots() {
-            const selectedDate = bookingData.moveDate;
-            if (!selectedDate) {
-                alert('Please select a date first');
-                return;
-            }
+        // Populate estimate breakdown
+        function populateEstimateBreakdown(breakdown) {
+            console.log('📊 Populating breakdown:', breakdown);
 
-            // Display selected date
-            const dateObj = new Date(selectedDate + 'T00:00:00');
-            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const formattedDate = dateObj.toLocaleDateString('en-US', dateOptions);
-            document.getElementById('selectedDateDisplay').textContent = formattedDate;
+            // Hide all items first
+            document.querySelectorAll('.breakdown-item').forEach(item => {
+                item.style.display = 'none';
+            });
 
-            showLoading();
-            try {
-                const response = await fetch(`${API_URL}/api/available-slots?date=${selectedDate}`);
-                const data = await response.json();
+            let hasAdditionalFees = false;
 
-                const timeSlotsContainer = document.getElementById('timeSlotsContainer');
-                const noSlotsMessage = document.getElementById('noSlotsMessage');
-                const confirmTimeBtn = document.getElementById('confirmTimeBtn');
-
-                timeSlotsContainer.innerHTML = '';
-
-                if (data.success && data.slots && data.slots.length > 0) {
-                    noSlotsMessage.style.display = 'none';
-
-                    data.slots.forEach(slot => {
-                        const slotBtn = document.createElement('button');
-                        slotBtn.type = 'button';
-                        slotBtn.className = 'time-slot-btn';
-                        slotBtn.textContent = slot.time;
-                        slotBtn.onclick = function() {
-                            // Deselect all slots
-                            document.querySelectorAll('.time-slot-btn').forEach(btn => {
-                                btn.classList.remove('selected');
-                            });
-                            // Select this slot
-                            this.classList.add('selected');
-                            bookingData.moveTime = slot.time;
-                            confirmTimeBtn.style.display = 'block';
-                        };
-                        timeSlotsContainer.appendChild(slotBtn);
-                    });
-                } else {
-                    noSlotsMessage.style.display = 'block';
-                    confirmTimeBtn.style.display = 'none';
+            // Labor cost
+            if (breakdown.laborCost > 0) {
+                document.getElementById('breakdown-labor').style.display = 'flex';
+                document.getElementById('breakdown-hours').textContent = breakdown.estimatedTime?.toFixed(1) || '0';
+                document.getElementById('breakdown-labor-cost').textContent = breakdown.laborCost.toFixed(2);
+                // Update label if provided
+                if (breakdown.laborLabel) {
+                    document.getElementById('breakdown-labor-label').textContent = breakdown.laborLabel;
                 }
-            } catch (error) {
-                console.error('Error loading time slots:', error);
-                alert('Unable to load available time slots. Please try again or call us at 330-435-8686.');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Proceed to review after calculating estimate
-        async function proceedToReview() {
-            // Save current step data if not already saved
-            if (currentStep === 10) {
-                saveCurrentStepData();
             }
 
-            showLoading();
-            try {
-                // Show review page
-                populateReview();
-                currentStep = 11;
-                showStep(11);
-                updateProgress();
-                scrollToTop();
-            } catch (error) {
-                console.error('Error proceeding to review:', error);
-                alert('Unable to proceed to review. Please try again.');
-            } finally {
-                hideLoading();
+            // Travel fee
+            if (breakdown.travelFee > 0) {
+                document.getElementById('breakdown-travel').style.display = 'flex';
+                document.getElementById('breakdown-travel-cost').textContent = breakdown.travelFee.toFixed(2);
             }
+
+            // Service charge
+            if (breakdown.serviceCharge > 0) {
+                document.getElementById('breakdown-service').style.display = 'flex';
+                document.getElementById('breakdown-service-cost').textContent = breakdown.serviceCharge.toFixed(2);
+                // Update label if provided
+                if (breakdown.serviceChargeLabel) {
+                    document.getElementById('breakdown-service-label').textContent = breakdown.serviceChargeLabel;
+                }
+            }
+
+            // Stairs fee
+            if (breakdown.stairsFee > 0) {
+                document.getElementById('breakdown-stairs').style.display = 'flex';
+                document.getElementById('breakdown-stairs-cost').textContent = breakdown.stairsFee.toFixed(2);
+                hasAdditionalFees = true;
+            }
+
+            // Heavy items
+            if (breakdown.heavyItems > 0) {
+                document.getElementById('breakdown-heavy').style.display = 'flex';
+                document.getElementById('breakdown-heavy-cost').textContent = breakdown.heavyItems.toFixed(2);
+                hasAdditionalFees = true;
+            }
+
+            // Packing service
+            if (breakdown.additionalServices > 0) {
+                document.getElementById('breakdown-packing').style.display = 'flex';
+                document.getElementById('breakdown-packing-cost').textContent = breakdown.additionalServices.toFixed(2);
+                if (breakdown.packingHours > 0) {
+                    document.getElementById('breakdown-packing-hours').textContent = breakdown.packingHours.toFixed(1);
+                }
+                hasAdditionalFees = true;
+            }
+
+            // Packing materials
+            if (breakdown.packingMaterials > 0) {
+                document.getElementById('breakdown-materials').style.display = 'flex';
+                document.getElementById('breakdown-materials-cost').textContent = breakdown.packingMaterials.toFixed(2);
+                hasAdditionalFees = true;
+
+                // Show itemized breakdown if available
+                if (breakdown.packingMaterialsBreakdown && breakdown.packingMaterialsBreakdown.length > 0) {
+                    const detailSection = document.getElementById('materialsDetailSection');
+                    const detailList = document.getElementById('materialsDetailList');
+
+                    let materialsHTML = '<table style="width: 100%; border-collapse: collapse;">';
+                    materialsHTML += '<thead><tr style="border-bottom: 1px solid #e2e8f0; text-align: left;">';
+                    materialsHTML += '<th style="padding: 8px 4px; font-weight: 600; color: #64748b;">Item</th>';
+                    materialsHTML += '<th style="padding: 8px 4px; font-weight: 600; color: #64748b; text-align: center;">Qty</th>';
+                    materialsHTML += '<th style="padding: 8px 4px; font-weight: 600; color: #64748b; text-align: right;">Unit</th>';
+                    materialsHTML += '<th style="padding: 8px 4px; font-weight: 600; color: #64748b; text-align: right;">Total</th>';
+                    materialsHTML += '</tr></thead><tbody>';
+
+                    breakdown.packingMaterialsBreakdown.forEach(item => {
+                        materialsHTML += '<tr style="border-bottom: 1px solid #f1f5f9;">';
+                        materialsHTML += `<td style="padding: 8px 4px; color: #475569;">${item.name}</td>`;
+                        materialsHTML += `<td style="padding: 8px 4px; text-align: center; color: #475569;">${item.quantity}</td>`;
+                        materialsHTML += `<td style="padding: 8px 4px; text-align: right; color: #475569;">$${item.unitPrice.toFixed(2)}</td>`;
+                        materialsHTML += `<td style="padding: 8px 4px; text-align: right; font-weight: 600; color: #1e293b;">$${item.total.toFixed(2)}</td>`;
+                        materialsHTML += '</tr>';
+                    });
+
+                    materialsHTML += '</tbody></table>';
+                    detailList.innerHTML = materialsHTML;
+                    detailSection.style.display = 'block';
+
+                    // Store in bookingData for email
+                    bookingData.packingMaterialsBreakdown = breakdown.packingMaterialsBreakdown;
+                }
+            }
+
+            // Show/hide additional fees section
+            if (hasAdditionalFees) {
+                document.getElementById('feesSection').style.display = 'block';
+            } else {
+                document.getElementById('feesSection').style.display = 'none';
+            }
+
+            // Total
+            document.getElementById('breakdown-total').textContent = breakdown.total.toFixed(2);
         }
+
+        // [REMOVED] Old time slot loading function - replaced by Acuity scheduling
+        // async function loadAvailableTimeSlots() { ... }
+
+        // [REMOVED] Old review step function - no longer needed with Acuity integration
+        // async function proceedToReview() { ... }
 
         // Set minimum date to tomorrow
         function setMinDate() {
@@ -2112,6 +3022,16 @@
                     <div class="service-card-title">Single Item</div>
                     <div class="service-card-desc">One item delivery</div>
                 </div>
+                <div class="service-card" onclick="selectService('Junk Removal', this)">
+                    <div class="service-card-icon">🗑️</div>
+                    <div class="service-card-title">Junk Removal</div>
+                    <div class="service-card-desc">1 hour service with disposal</div>
+                </div>
+                <div class="service-card" onclick="selectService('Cleanout Service', this)">
+                    <div class="service-card-icon">🧹</div>
+                    <div class="service-card-title">Cleanout Service</div>
+                    <div class="service-card-desc">2+ hours with disposal</div>
+                </div>
             `;
         }
 
@@ -2125,19 +3045,7 @@
             // Add selection
             element.classList.add('selected');
             bookingData.serviceType = serviceName;
-
-            // Show/hide labor hours field based on service type
-            const laborHoursField = document.getElementById('laborHoursField');
-            const estimatedHoursSelect = document.getElementById('estimatedHours');
-
-            if (serviceName === 'Labor Only') {
-                laborHoursField.style.display = 'block';
-                estimatedHoursSelect.setAttribute('required', 'required');
-            } else {
-                laborHoursField.style.display = 'none';
-                estimatedHoursSelect.removeAttribute('required');
-                estimatedHoursSelect.value = ''; // Clear selection
-            }
+            // Cleanout/Junk fields now collected in Step 2
 
             saveToLocalStorage();
         }
@@ -2149,14 +3057,34 @@
                 return;
             }
 
-            const fields = ['pickupAddress', 'dropoffAddress', 'thirdAddress'];
+            const fields = ['pickupAddress', 'dropoffAddress', 'thirdAddress', 'cleanoutAddress', 'laborAddress', 'singlePickupAddress', 'singleDropoffAddress'];
             fields.forEach(fieldId => {
                 const input = document.getElementById(fieldId);
                 if (input) {
+                    // Disable browser autocomplete to avoid conflicts
+                    input.setAttribute('autocomplete', 'new-password'); // Trick to disable autocomplete
+                    input.setAttribute('autocorrect', 'off');
+                    input.setAttribute('autocapitalize', 'off');
+                    input.setAttribute('spellcheck', 'false');
+
                     const autocomplete = new google.maps.places.Autocomplete(input, {
                         componentRestrictions: { country: 'us' },
                         fields: ['formatted_address', 'geometry'],
                         types: ['address']
+                    });
+
+                    // Prevent form submission on Enter key (mobile issue)
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            // Give time for autocomplete to trigger
+                            setTimeout(() => {
+                                const firstOption = document.querySelector('.pac-item:first-child');
+                                if (firstOption) {
+                                    firstOption.click();
+                                }
+                            }, 100);
+                        }
                     });
 
                     autocomplete.addListener('place_changed', function() {
@@ -2169,8 +3097,52 @@
                     });
 
                     autocompleteInstances[fieldId] = autocomplete;
+
+                    // Mobile: Ensure pac-container appears correctly
+                    if (window.innerWidth <= 768) {
+                        input.addEventListener('focus', function() {
+                            // Wait for pac-container to be created
+                            setTimeout(() => {
+                                const pacContainer = document.querySelector('.pac-container');
+                                if (pacContainer) {
+                                    // Position it relative to the input
+                                    const inputRect = input.getBoundingClientRect();
+                                    pacContainer.style.width = inputRect.width + 'px';
+                                    pacContainer.style.left = inputRect.left + 'px';
+                                }
+                            }, 100);
+                        });
+                    }
                 }
             });
+
+            // Mobile: Reposition autocomplete on window resize/scroll
+            if (window.innerWidth <= 768) {
+                let resizeTimeout;
+                const repositionAutocomplete = () => {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(() => {
+                        const pacContainer = document.querySelector('.pac-container');
+                        if (pacContainer && pacContainer.style.display !== 'none') {
+                            const activeInput = document.activeElement;
+                            if (activeInput && (activeInput.id === 'pickupAddress' ||
+                                activeInput.id === 'dropoffAddress' ||
+                                activeInput.id === 'thirdAddress' ||
+                                activeInput.id === 'cleanoutAddress' ||
+                                activeInput.id === 'laborAddress' ||
+                                activeInput.id === 'laborLoadAddress' ||
+                                activeInput.id === 'laborUnloadAddress')) {
+                                const inputRect = activeInput.getBoundingClientRect();
+                                pacContainer.style.width = inputRect.width + 'px';
+                                pacContainer.style.left = inputRect.left + 'px';
+                            }
+                        }
+                    }, 100);
+                };
+
+                window.addEventListener('resize', repositionAutocomplete);
+                window.addEventListener('scroll', repositionAutocomplete);
+            }
         }
 
         // Toggle third location
@@ -2190,6 +3162,118 @@
             saveToLocalStorage();
         }
 
+        // Handle labor hours change (show/hide custom hours field)
+        function handleLaborHoursChange() {
+            const laborHours = document.getElementById('laborHours')?.value;
+            const customHoursField = document.getElementById('laborCustomHoursField');
+
+            if (laborHours === 'other') {
+                customHoursField.style.display = 'block';
+            } else {
+                customHoursField.style.display = 'none';
+                // Clear custom hours value when not needed
+                const customHoursInput = document.getElementById('laborCustomHours');
+                if (customHoursInput) {
+                    customHoursInput.value = '';
+                }
+            }
+
+            saveToLocalStorage();
+        }
+
+        // Single Item Categories (matching chatbot)
+        const SINGLE_ITEM_CATEGORIES = {
+            furniture: {
+                couch: { name: "Couch/Sofa", crew: 2, minTime: 60, fee: 0 },
+                loveseat: { name: "Loveseat", crew: 2, minTime: 60, fee: 0 },
+                chair: { name: "Recliner/Chair", crew: 2, minTime: 60, fee: 0 },
+                mattress: { name: "Mattress & Box Spring", crew: 2, minTime: 60, fee: 0 },
+                dresser: { name: "Dresser", crew: 2, minTime: 60, fee: 0 },
+                desk: { name: "Desk", crew: 2, minTime: 60, fee: 0 },
+                table: { name: "Dining Table", crew: 2, minTime: 60, fee: 0 }
+            },
+            appliance: {
+                washer: { name: "Washer", crew: 2, minTime: 60, fee: 0 },
+                dryer: { name: "Dryer", crew: 2, minTime: 60, fee: 0 },
+                refrigerator: { name: "Refrigerator", crew: 2, minTime: 60, fee: 0 },
+                stove: { name: "Stove/Range", crew: 2, minTime: 60, fee: 0 },
+                freezer: { name: "Deep Freezer", crew: 2, minTime: 60, fee: 0 },
+                dishwasher: { name: "Dishwasher", crew: 2, minTime: 60, fee: 0 }
+            },
+            set: {
+                bedroomSet: { name: "Bedroom Set", crew: 2, minTime: 90, fee: 50 },
+                diningSet: { name: "Dining Room Set", crew: 2, minTime: 90, fee: 50 },
+                livingSet: { name: "Living Room Set", crew: 2, minTime: 90, fee: 50 },
+                officeSet: { name: "Office Furniture Set", crew: 2, minTime: 90, fee: 50 }
+            },
+            heavy: {
+                piano: { name: "Piano", crew: 3, minTime: 90, fee: 200 },
+                gunSafe: { name: "Gun Safe", crew: 4, minTime: 120, fee: 100 },
+                treadmill: { name: "Treadmill", crew: 2, minTime: 60, fee: 0 },
+                elliptical: { name: "Elliptical", crew: 2, minTime: 60, fee: 0 },
+                gym: { name: "Home Gym Equipment", crew: 3, minTime: 90, fee: 100 },
+                poolTable: { name: "Pool Table", crew: 4, minTime: 120, fee: 200 },
+                hotTub: { name: "Hot Tub", crew: 4, minTime: 120, fee: 200 },
+                safe: { name: "Large Safe (500+ lbs)", crew: 4, minTime: 120, fee: 200 }
+            }
+        };
+
+        // Handle cleanout service type change (junk vs cleanout)
+        function handleCleanoutTypeChange() {
+            const serviceType = document.getElementById('cleanoutServiceType')?.value;
+            const hazardousField = document.getElementById('hazardousCheckField');
+            const hoursField = document.getElementById('cleanoutHoursField');
+            const crewField = document.getElementById('cleanoutCrewField');
+
+            // Hide all conditional fields first
+            if (hazardousField) hazardousField.style.display = 'none';
+            if (hoursField) hoursField.style.display = 'none';
+            if (crewField) crewField.style.display = 'none';
+
+            if (serviceType === 'junk') {
+                // Junk Removal: show hazardous check and crew size
+                if (hazardousField) hazardousField.style.display = 'block';
+                if (crewField) crewField.style.display = 'block';
+            } else if (serviceType === 'cleanout') {
+                // Cleanout: show hours and crew size
+                if (hoursField) hoursField.style.display = 'block';
+                if (crewField) crewField.style.display = 'block';
+            }
+
+            saveToLocalStorage();
+        }
+
+        // Handle item category change
+        function handleItemCategoryChange() {
+            const category = document.getElementById('singleItemCategory')?.value;
+            const specificItemField = document.getElementById('specificItemField');
+            const specificItemSelect = document.getElementById('specificItem');
+            const customItemField = document.getElementById('customItemField');
+
+            // Hide both fields first
+            specificItemField.style.display = 'none';
+            customItemField.style.display = 'none';
+            specificItemSelect.innerHTML = '<option value="">Select item...</option>';
+
+            if (category === 'other') {
+                // Show custom item description field
+                customItemField.style.display = 'block';
+            } else if (category && SINGLE_ITEM_CATEGORIES[category]) {
+                // Populate specific item dropdown
+                const items = SINGLE_ITEM_CATEGORIES[category];
+                Object.keys(items).forEach(itemKey => {
+                    const item = items[itemKey];
+                    const option = document.createElement('option');
+                    option.value = itemKey;
+                    option.textContent = item.name;
+                    specificItemSelect.appendChild(option);
+                });
+                specificItemField.style.display = 'block';
+            }
+
+            saveToLocalStorage();
+        }
+
         // Update checkbox parent styling
         function updateCheckbox(checkbox) {
             const parent = checkbox.closest('.checkbox-item');
@@ -2197,6 +3281,22 @@
                 parent.classList.add('checked');
             } else {
                 parent.classList.remove('checked');
+            }
+
+            // If this is a step 6 checkbox (additional services), save immediately
+            const step6Checkboxes = ['packingService', 'packingMaterials', 'movingBlankets', 'disassembly', 'storageService'];
+            if (step6Checkboxes.includes(checkbox.id)) {
+                // Save step 6 data immediately when checkboxes change
+                bookingData.additionalServices = {
+                    packingService: document.getElementById('packingService').checked,
+                    packingMaterials: document.getElementById('packingMaterials').checked,
+                    movingBlankets: document.getElementById('movingBlankets').checked,
+                    disassembly: document.getElementById('disassembly').checked,
+                    storageService: document.getElementById('storageService').checked,
+                    notes: document.getElementById('additionalNotes').value
+                };
+                console.log('📦 Additional Services Updated:', bookingData.additionalServices);
+                saveToLocalStorage();
             }
 
             // Check for special item warnings
@@ -2231,18 +3331,43 @@
             }
         }
 
-        // Update terms agreement
-        function updateTermsAgreement() {
-            const checkbox = document.getElementById('agreeTerms');
-            const confirmBtn = document.getElementById('confirmBtn');
-            confirmBtn.disabled = !checkbox.checked;
-        }
+        // [REMOVED] Old terms agreement function - no longer needed
+        // function updateTermsAgreement() { ... }
 
         // Navigation
         function nextStep() {
             if (validateCurrentStep()) {
                 saveCurrentStepData();
-                currentStep++;
+
+                // For cleanout/junk removal, skip location details and go straight to payment
+                if (currentStep === 2 && (bookingData.serviceType === 'Cleanout Service' || bookingData.serviceType === 'Junk Removal')) {
+                    // Calculate estimate for cleanout/junk
+                    calculateCleanoutEstimate();
+                    // Jump to step 9 (payment)
+                    currentStep = 9;
+                }
+                // For Labor Only, skip steps 3-6 (location details, property, heavy items, additional services)
+                else if (bookingData.serviceType === 'Labor Only') {
+                    if (currentStep === 2) {
+                        // All labor info collected in step 2, go straight to customer info
+                        currentStep = 7;
+                    } else {
+                        currentStep++;
+                    }
+                }
+                // For Single Item Move, skip steps 3-6 (location details, property, heavy items, additional services)
+                else if (bookingData.serviceType === 'Single Item Move') {
+                    if (currentStep === 2) {
+                        // All single item info collected in step 2, go straight to customer info
+                        currentStep = 7;
+                    } else {
+                        currentStep++;
+                    }
+                }
+                else {
+                    currentStep++;
+                }
+
                 showStep(currentStep);
                 updateProgress();
                 scrollToTop();
@@ -2251,7 +3376,31 @@
 
         function prevStep() {
             if (currentStep > 1) {
-                currentStep--;
+                // For cleanout/junk removal, jump back from step 9 to step 2
+                if (currentStep === 9 && (bookingData.serviceType === 'Cleanout Service' || bookingData.serviceType === 'Junk Removal')) {
+                    currentStep = 2;
+                }
+                // For Labor Only, reverse the skip logic
+                else if (bookingData.serviceType === 'Labor Only') {
+                    if (currentStep === 7) {
+                        // Jump back to labor details (step 2)
+                        currentStep = 2;
+                    } else {
+                        currentStep--;
+                    }
+                }
+                // For Single Item Move, reverse the skip logic
+                else if (bookingData.serviceType === 'Single Item Move') {
+                    if (currentStep === 7) {
+                        // Jump back to item details (step 2)
+                        currentStep = 2;
+                    } else {
+                        currentStep--;
+                    }
+                }
+                else {
+                    currentStep--;
+                }
                 showStep(currentStep);
                 updateProgress();
                 scrollToTop();
@@ -2287,19 +3436,75 @@
                 }
             });
 
-            // Load time slots when entering step 9 (schedule)
-            if (step === 9) {
-                loadAvailableTimeSlots();
+            // Show/hide address sections based on service type when entering step 2
+            if (step === 2) {
+                const isCleanout = bookingData.serviceType === 'Cleanout Service' || bookingData.serviceType === 'Junk Removal';
+                const isLaborOnly = bookingData.serviceType === 'Labor Only';
+                const isSingleItem = bookingData.serviceType === 'Single Item Move';
+                const cleanoutSection = document.getElementById('cleanoutAddressSection');
+                const laborOnlySection = document.getElementById('laborOnlySection');
+                const singleItemSection = document.getElementById('singleItemSection');
+                const movingSection = document.getElementById('movingAddressSection');
+                const addressTitle = document.getElementById('addressesTitle');
+                const addressSubtitle = document.getElementById('addressesSubtitle');
+                const nextBtn = document.getElementById('addressesNextBtn');
+
+                // Hide all sections first
+                if (cleanoutSection) cleanoutSection.style.display = 'none';
+                if (laborOnlySection) laborOnlySection.style.display = 'none';
+                if (singleItemSection) singleItemSection.style.display = 'none';
+                if (movingSection) movingSection.style.display = 'none';
+
+                if (isCleanout) {
+                    cleanoutSection.style.display = 'block';
+                    addressTitle.textContent = 'Where do you need service?';
+                    addressSubtitle.textContent = 'Enter the location for your cleanout/junk removal';
+                    nextBtn.textContent = 'Continue to Payment →';
+                } else if (isLaborOnly) {
+                    laborOnlySection.style.display = 'block';
+                    addressTitle.textContent = 'Tell us about your labor job';
+                    addressSubtitle.textContent = 'Location and job details';
+                    nextBtn.textContent = 'Next: Customer Info →';
+                } else if (isSingleItem) {
+                    singleItemSection.style.display = 'block';
+                    addressTitle.textContent = 'Single Item Move Details';
+                    addressSubtitle.textContent = 'Tell us about the item and where it needs to go';
+                    nextBtn.textContent = 'Next: Customer Info →';
+                } else {
+                    movingSection.style.display = 'block';
+                    addressTitle.textContent = 'Where are we moving from and to?';
+                    addressSubtitle.textContent = 'Enter your pickup and delivery addresses';
+                    nextBtn.textContent = 'Next: Location Details →';
+                }
             }
 
-            // Initialize Square Payments when entering step 10 (card step)
-            if (step === 10 && !squarePayments) {
-                initializeSquarePayments();
+            // Show/hide customer info and estimate for cleanout/junk at step 9
+            if (step === 9) {
+                const isCleanout = bookingData.serviceType === 'Cleanout Service' || bookingData.serviceType === 'Junk Removal';
+                const cleanoutInfoSection = document.getElementById('cleanoutCustomerInfo');
+                const paymentTitle = document.getElementById('paymentTitle');
+                const paymentSubtitle = document.getElementById('paymentSubtitle');
+
+                if (isCleanout) {
+                    cleanoutInfoSection.style.display = 'block';
+                    // Update estimate display
+                    document.getElementById('cleanoutEstimateAmount').textContent = '$' + (bookingData.estimate || 0);
+                } else {
+                    cleanoutInfoSection.style.display = 'none';
+                }
+
+                // Initialize Square Payments
+                if (!squarePayments) {
+                    initializeSquarePayments();
+                }
             }
+
+            // No special handling needed for step 10 (Acuity) - iframe is loaded by goToAcuityScheduling()
         }
 
         function updateProgress() {
-            const progress = ((currentStep - 1) / 10) * 100;
+            // Progress based on 10 steps (removed step 11 review)
+            const progress = ((currentStep - 1) / 9) * 100;
             document.getElementById('progressFill').style.width = progress + '%';
         }
 
@@ -2321,22 +3526,129 @@
                         return false;
                     }
                     bookingData.moveDate = moveDate;
-
-                    // Validate estimated hours for Labor Only service
-                    if (bookingData.serviceType === 'Labor Only') {
-                        const estimatedHours = document.getElementById('estimatedHours').value;
-                        if (!estimatedHours) {
-                            alert('Please select estimated hours for labor only service');
-                            return false;
-                        }
-                        bookingData.estimatedHours = parseInt(estimatedHours);
-                    } else {
-                        bookingData.estimatedHours = '';
-                    }
+                    // Cleanout/Junk details now validated in Step 2
 
                     return true;
 
                 case 2:
+                    // For cleanout/junk removal, validate all required fields
+                    if (bookingData.serviceType === 'Cleanout Service' || bookingData.serviceType === 'Junk Removal') {
+                        const cleanoutAddress = document.getElementById('cleanoutAddress')?.value.trim();
+                        const cleanoutServiceType = document.getElementById('cleanoutServiceType')?.value;
+                        const hazardousMaterials = document.getElementById('hazardousMaterials')?.value;
+                        const cleanoutHours = document.getElementById('cleanoutHoursSelect')?.value;
+                        const cleanoutCrew = document.getElementById('cleanoutCrewSelect')?.value;
+
+                        if (!cleanoutAddress) {
+                            alert('Please enter the service location');
+                            return false;
+                        }
+
+                        if (!cleanoutServiceType) {
+                            alert('Please select service type (Junk Removal or Cleanout)');
+                            return false;
+                        }
+
+                        // Check for hazardous materials (junk removal only)
+                        if (cleanoutServiceType === 'junk') {
+                            if (hazardousMaterials === 'yes') {
+                                alert('We cannot dispose of hazardous materials. Please contact your local waste management facility.');
+                                return false;
+                            }
+                        }
+
+                        // Validate hours (cleanout only)
+                        if (cleanoutServiceType === 'cleanout') {
+                            if (!cleanoutHours) {
+                                alert('Please select estimated hours needed');
+                                return false;
+                            }
+                        }
+
+                        // Validate crew size (both services)
+                        if (!cleanoutCrew) {
+                            alert('Please select crew size');
+                            return false;
+                        }
+
+                        return true;
+                    }
+
+                    // For Labor Only, validate all required fields
+                    if (bookingData.serviceType === 'Labor Only') {
+                        const laborAddress = document.getElementById('laborAddress')?.value.trim();
+                        const laborHomeType = document.getElementById('laborHomeType')?.value;
+                        const laborCrewSize = document.getElementById('laborCrewSize')?.value;
+                        const laborHours = document.getElementById('laborHours')?.value;
+
+                        if (!laborAddress) {
+                            alert('Please enter the service location');
+                            return false;
+                        }
+                        if (!laborHomeType) {
+                            alert('Please select the home type');
+                            return false;
+                        }
+                        if (!laborCrewSize) {
+                            alert('Please select crew size');
+                            return false;
+                        }
+                        if (!laborHours) {
+                            alert('Please select hours needed');
+                            return false;
+                        }
+
+                        // If custom hours selected, validate the custom hours input
+                        if (laborHours === 'other') {
+                            const customHours = document.getElementById('laborCustomHours')?.value;
+                            if (!customHours || customHours < 2 || customHours > 12) {
+                                alert('Please enter hours between 2 and 12');
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    }
+
+                    // For Single Item Move, validate all required fields
+                    if (bookingData.serviceType === 'Single Item Move') {
+                        const itemCategory = document.getElementById('singleItemCategory')?.value;
+                        const specificItem = document.getElementById('specificItem')?.value;
+                        const customDescription = document.getElementById('customItemDescription')?.value;
+                        const pickupAddress = document.getElementById('singlePickupAddress')?.value.trim();
+                        const dropoffAddress = document.getElementById('singleDropoffAddress')?.value.trim();
+
+                        if (!itemCategory) {
+                            alert('Please select an item category');
+                            return false;
+                        }
+
+                        if (itemCategory === 'other') {
+                            if (!customDescription || !customDescription.trim()) {
+                                alert('Please describe your item');
+                                return false;
+                            }
+                        } else {
+                            if (!specificItem) {
+                                alert('Please select a specific item');
+                                return false;
+                            }
+                        }
+
+                        if (!pickupAddress) {
+                            alert('Please enter the pickup address');
+                            return false;
+                        }
+
+                        if (!dropoffAddress) {
+                            alert('Please enter the delivery address');
+                            return false;
+                        }
+
+                        return true;
+                    }
+
+                    // For moving services, validate pickup and dropoff
                     const pickup = document.getElementById('pickupAddress').value;
                     const dropoff = document.getElementById('dropoffAddress').value;
 
@@ -2366,6 +3678,30 @@
                     return validateCustomerInfo();
 
                 case 8:
+                    // Card step is optional, always allow proceeding
+                    return true;
+
+                case 9:
+                    // For cleanout/junk, validate customer info
+                    if (bookingData.serviceType === 'Cleanout Service' || bookingData.serviceType === 'Junk Removal') {
+                        const firstName = document.getElementById('cleanoutFirstName')?.value.trim();
+                        const lastName = document.getElementById('cleanoutLastName')?.value.trim();
+                        const email = document.getElementById('cleanoutEmail')?.value.trim();
+                        const phone = document.getElementById('cleanoutPhone')?.value.trim();
+
+                        if (!firstName || !lastName) {
+                            alert('Please enter your full name');
+                            return false;
+                        }
+                        if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                            alert('Please enter a valid email address');
+                            return false;
+                        }
+                        if (!phone) {
+                            alert('Please enter your phone number');
+                            return false;
+                        }
+                    }
                     // Card step is optional, always allow proceeding
                     return true;
 
@@ -2447,11 +3783,78 @@
                     break;
 
                 case 2:
-                    bookingData.pickupAddress = document.getElementById('pickupAddress').value;
-                    bookingData.dropoffAddress = document.getElementById('dropoffAddress').value;
-                    bookingData.hasThirdLocation = document.getElementById('hasThirdLocation').checked;
-                    if (bookingData.hasThirdLocation) {
-                        bookingData.thirdAddress = document.getElementById('thirdAddress').value;
+                    // Save addresses based on service type
+                    if (bookingData.serviceType === 'Labor Only') {
+                        // Labor Only: Save all data from step 2
+                        bookingData.laborAddress = document.getElementById('laborAddress')?.value || '';
+                        bookingData.laborHomeType = document.getElementById('laborHomeType')?.value || '';
+                        bookingData.laborBedrooms = document.getElementById('laborBedrooms')?.value || '0';
+                        bookingData.laborStairs = document.getElementById('laborStairs')?.value || '0';
+                        bookingData.laborCrewSize = document.getElementById('laborCrewSize')?.value || '';
+
+                        const laborHours = document.getElementById('laborHours')?.value || '';
+                        if (laborHours === 'other') {
+                            bookingData.laborHours = document.getElementById('laborCustomHours')?.value || '';
+                        } else {
+                            bookingData.laborHours = laborHours;
+                        }
+
+                        // Set pickup address for distance calculation
+                        bookingData.pickupAddress = bookingData.laborAddress;
+                        bookingData.dropoffAddress = ''; // Labor only has one location
+                    } else if (bookingData.serviceType === 'Single Item Move') {
+                        // Single Item Move: Save all data from step 2
+                        bookingData.singleItemCategory = document.getElementById('singleItemCategory')?.value || '';
+                        bookingData.specificItem = document.getElementById('specificItem')?.value || '';
+                        bookingData.customItemDescription = document.getElementById('customItemDescription')?.value || '';
+                        bookingData.singlePickupAddress = document.getElementById('singlePickupAddress')?.value || '';
+                        bookingData.singlePickupStairs = document.getElementById('singlePickupStairs')?.value || '0';
+                        bookingData.singleDropoffAddress = document.getElementById('singleDropoffAddress')?.value || '';
+                        bookingData.singleDropoffStairs = document.getElementById('singleDropoffStairs')?.value || '0';
+
+                        // Get item details from configuration
+                        if (bookingData.singleItemCategory !== 'other' && bookingData.specificItem && SINGLE_ITEM_CATEGORIES[bookingData.singleItemCategory]) {
+                            const itemConfig = SINGLE_ITEM_CATEGORIES[bookingData.singleItemCategory][bookingData.specificItem];
+                            if (itemConfig) {
+                                bookingData.singleItemName = itemConfig.name;
+                                bookingData.singleItemCrew = itemConfig.crew;
+                                bookingData.singleItemMinTime = itemConfig.minTime;
+                                bookingData.singleItemFee = itemConfig.fee || 0;
+                            }
+                        } else if (bookingData.singleItemCategory === 'other') {
+                            bookingData.singleItemName = bookingData.customItemDescription || 'Custom Item';
+                            bookingData.singleItemCrew = 2; // Default
+                            bookingData.singleItemMinTime = 60; // Default
+                            bookingData.singleItemFee = 0;
+                        }
+
+                        // Set pickup and dropoff for distance calculation
+                        bookingData.pickupAddress = bookingData.singlePickupAddress;
+                        bookingData.dropoffAddress = bookingData.singleDropoffAddress;
+                    } else if (bookingData.serviceType === 'Cleanout Service' || bookingData.serviceType === 'Junk Removal') {
+                        // Cleanout/Junk Removal: Save all data from step 2
+                        bookingData.cleanoutAddress = document.getElementById('cleanoutAddress')?.value || '';
+                        bookingData.cleanoutServiceType = document.getElementById('cleanoutServiceType')?.value || '';
+                        bookingData.hazardousMaterials = document.getElementById('hazardousMaterials')?.value || 'no';
+                        bookingData.cleanoutCrew = parseInt(document.getElementById('cleanoutCrewSelect')?.value) || 2;
+
+                        if (bookingData.cleanoutServiceType === 'cleanout') {
+                            bookingData.cleanoutHours = parseInt(document.getElementById('cleanoutHoursSelect')?.value) || 2;
+                        } else {
+                            bookingData.cleanoutHours = 1; // Junk removal is always 1 hour
+                        }
+
+                        // Set pickup address for distance calculation
+                        bookingData.pickupAddress = bookingData.cleanoutAddress;
+                        bookingData.dropoffAddress = ''; // Cleanout/junk only has one location
+                    } else {
+                        // Regular moving service
+                        bookingData.pickupAddress = document.getElementById('pickupAddress').value;
+                        bookingData.dropoffAddress = document.getElementById('dropoffAddress').value;
+                        bookingData.hasThirdLocation = document.getElementById('hasThirdLocation').checked;
+                        if (bookingData.hasThirdLocation) {
+                            bookingData.thirdAddress = document.getElementById('thirdAddress').value;
+                        }
                     }
                     break;
 
@@ -2505,6 +3908,7 @@
                         storageService: document.getElementById('storageService').checked,
                         notes: document.getElementById('additionalNotes').value
                     };
+                    console.log('📦 Step 6 - Additional Services Saved:', bookingData.additionalServices);
                     break;
 
                 case 7:
@@ -2523,68 +3927,401 @@
                     const saveCardChecked = document.getElementById('saveCardCheckbox')?.checked;
                     bookingData.attemptedCardSave = saveCardChecked;
                     break;
+
+                case 9:
+                    // For cleanout/junk, save customer info from step 9
+                    if (bookingData.serviceType === 'Cleanout Service' || bookingData.serviceType === 'Junk Removal') {
+                        bookingData.customerInfo = {
+                            firstName: document.getElementById('cleanoutFirstName')?.value,
+                            lastName: document.getElementById('cleanoutLastName')?.value,
+                            email: document.getElementById('cleanoutEmail')?.value,
+                            phone: document.getElementById('cleanoutPhone')?.value
+                        };
+                    }
+                    break;
             }
 
             saveToLocalStorage();
         }
 
 
-        // Calculate distance using Google Maps
+        // Calculate distance using Google Maps (with fallback to straight-line estimation)
         async function calculateDistance() {
-            return new Promise((resolve, reject) => {
+            return new Promise(async (resolve, reject) => {
+                // Check if Google Maps and Geometry library are loaded
                 if (typeof google === 'undefined' || !google.maps) {
-                    // Fallback to API
+                    console.warn('⚠️ Google Maps not loaded, using estimated distance');
+                    bookingData.distance = 20; // Default fallback
+                    bookingData.driveTime = 30; // Default fallback
                     resolve();
                     return;
                 }
 
-                const service = new google.maps.DistanceMatrixService();
-                const origin = bookingData.pickupAddress;
-                const destination = bookingData.dropoffAddress;
+                if (!google.maps.geometry || !google.maps.geometry.spherical) {
+                    console.warn('⚠️ Google Maps Geometry library not loaded, using estimated distance');
+                    bookingData.distance = 20; // Default fallback
+                    bookingData.driveTime = 30; // Default fallback
+                    resolve();
+                    return;
+                }
 
-                service.getDistanceMatrix({
-                    origins: [origin],
-                    destinations: [destination],
-                    travelMode: 'DRIVING',
-                    unitSystem: google.maps.UnitSystem.IMPERIAL
-                }, (response, status) => {
-                    if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
-                        const element = response.rows[0].elements[0];
-                        bookingData.distance = element.distance.value / 1609.34; // Convert to miles
-                        bookingData.driveTime = element.duration.value / 60; // Convert to minutes
+                try {
+                    // Try to geocode addresses to get lat/lng
+                    const geocoder = new google.maps.Geocoder();
+                    const baseAddress = "11715 Mahoning Avenue, North Jackson, OH 44451"; // Company base
+                    let origin, destination;
+
+                    // Determine addresses based on service type
+                    if (bookingData.serviceType === 'Labor Only') {
+                        // Labor Only: distance from company base to work location
+                        origin = baseAddress;
+                        destination = bookingData.laborAddress;
+                    } else if (bookingData.serviceType === 'Single Item Move') {
+                        // Single Item: distance from pickup to delivery
+                        origin = bookingData.singlePickupAddress;
+                        destination = bookingData.singleDropoffAddress;
+                    } else if (bookingData.serviceType === 'Cleanout Service' || bookingData.serviceType === 'Junk Removal') {
+                        // Cleanout/Junk: distance from company base to service location
+                        origin = baseAddress;
+                        destination = bookingData.cleanoutAddress;
+                    } else {
+                        // Regular moving: distance from pickup to dropoff
+                        origin = bookingData.pickupAddress;
+                        destination = bookingData.dropoffAddress;
+                    }
+
+                    // Skip if no valid addresses
+                    if (!origin || !destination) {
+                        console.warn('⚠️ Missing addresses for distance calculation');
+                        bookingData.distance = 20;
+                        bookingData.driveTime = 30;
+                        resolve();
+                        return;
+                    }
+
+                    console.log('📍 Geocoding addresses:', {origin, destination});
+
+                    const originResult = await geocodeAddress(geocoder, origin);
+                    const destResult = await geocodeAddress(geocoder, destination);
+
+                    if (originResult && destResult) {
+                        // Calculate straight-line distance (crow flies)
+                        const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                            originResult,
+                            destResult
+                        );
+
+                        // Convert meters to miles and add 30% for actual driving routes
+                        const straightLineMiles = distance * 0.000621371;
+                        const estimatedDrivingMiles = straightLineMiles * 1.3;
+
+                        bookingData.distance = Math.round(estimatedDrivingMiles * 10) / 10;
+                        bookingData.driveTime = Math.round((bookingData.distance / 35) * 60); // 35mph avg
+
+                        console.log('✅ Distance calculated:', bookingData.distance, 'miles (estimated from coordinates)');
                         resolve();
                     } else {
-                        // Use fallback
-                        bookingData.distance = 10; // Default
-                        bookingData.driveTime = 20; // Default
-                        resolve();
+                        throw new Error('Geocoding failed');
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Distance calculation failed, using default:', error.message);
+                    bookingData.distance = 20; // Default fallback
+                    bookingData.driveTime = 30; // Default fallback
+                    resolve();
+                }
+            });
+        }
+
+        // Helper function to geocode an address
+        function geocodeAddress(geocoder, address) {
+            return new Promise((resolve, reject) => {
+                geocoder.geocode({ address: address }, (results, status) => {
+                    if (status === 'OK' && results[0]) {
+                        resolve(results[0].geometry.location);
+                    } else {
+                        resolve(null);
                     }
                 });
             });
         }
 
-        // Calculate estimate using pricing logic
+        // Calculate estimate using CHATBOT'S EXACT pricing logic (client-side)
         async function calculateEstimate() {
             try {
-                const response = await fetch(`${API_URL}/api/calculate-estimate`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
+                console.log('💰 Calculating estimate with chatbot logic...');
+                console.log('📊 Booking data:', bookingData);
+
+                // Use chatbot's pricing configuration
+                const PRICING_CONFIG = {
+                    packingRate: 125 * 1.08, // $135/hr
+                    stairFee: 25, // $25 per flight
+                    serviceCharge: 0.14, // 14% for truck, 8% for labor
+                    materials: {
+                        smallBox: 3.00,
+                        mediumBox: 4.00,
+                        largeBox: 5.00,
+                        wardrobeBox: 12.00,
+                        movingBlanket: 8.00,
+                        packingPaper: 18.00,
+                        packingTape: 6.00,
+                        furnitureCover: 4.00,
+                        dishpack: 8.00,
+                        smallBubbleWrap: 25.00,
+                        largeBubbleWrap: 35.00
                     },
-                    body: JSON.stringify(bookingData)
+                    singleItem: {
+                        base: 249, // Base rate for first hour
+                        distanceRate: 1.50, // Per mile
+                        crewRates: { 2: 167, 3: 222, 4: 277 } // Hourly rates by crew size
+                    }
+                };
+
+                // SINGLE ITEM MOVE CALCULATION (separate from moving/labor)
+                if (bookingData.serviceType === 'Single Item Move') {
+                    const distance = bookingData.distance || 10;
+                    const crewSize = parseInt(bookingData.singleItemCrew) || 2;
+                    const minimumMinutes = parseInt(bookingData.singleItemMinTime) || 60;
+                    const itemFee = parseFloat(bookingData.singleItemFee) || 0;
+                    const itemName = bookingData.singleItemName || 'Item';
+
+                    // Calculate drive time
+                    const driveMinutes = Math.round((distance / 35) * 60);
+
+                    // Total time needed (drive + 30 min loading/unloading, or minimum time)
+                    const totalMinutesNeeded = Math.max(driveMinutes + 30, minimumMinutes);
+
+                    // Get hourly rate based on crew size
+                    const hourlyRate = PRICING_CONFIG.singleItem.crewRates[crewSize] || PRICING_CONFIG.singleItem.crewRates[2];
+
+                    // Calculate base cost
+                    let baseCost;
+                    if (totalMinutesNeeded <= 60) {
+                        baseCost = PRICING_CONFIG.singleItem.base; // Flat rate for first hour
+                    } else {
+                        // First hour flat rate + additional time at hourly rate
+                        const additionalHours = (totalMinutesNeeded - 60) / 60;
+                        baseCost = PRICING_CONFIG.singleItem.base + (additionalHours * hourlyRate);
+                    }
+
+                    // Add distance cost
+                    const distanceCost = distance * PRICING_CONFIG.singleItem.distanceRate;
+
+                    // Stairs fee
+                    const pickupStairs = parseInt(bookingData.singlePickupStairs) || 0;
+                    const dropoffStairs = parseInt(bookingData.singleDropoffStairs) || 0;
+                    const totalStairs = pickupStairs + dropoffStairs;
+                    const stairsFee = totalStairs * PRICING_CONFIG.stairFee;
+
+                    // Total for single item
+                    const total = baseCost + distanceCost + itemFee + stairsFee;
+
+                    // Determine labor label
+                    const laborLabel = `Single Item (${crewSize}-person crew)`;
+
+                    // Build breakdown
+                    bookingData.estimateBreakdown = {
+                        laborCost: Math.round(baseCost * 100) / 100,
+                        laborLabel: laborLabel,
+                        travelFee: Math.round(distanceCost * 100) / 100,
+                        serviceCharge: 0, // No service charge for single item
+                        serviceChargeLabel: '',
+                        stairsFee: Math.round(stairsFee * 100) / 100,
+                        heavyItems: Math.round(itemFee * 100) / 100,
+                        additionalServices: 0,
+                        packingHours: 0,
+                        packingMaterials: 0,
+                        packingMaterialsBreakdown: [],
+                        fvpInsurance: 0,
+                        total: Math.round(total * 100) / 100,
+                        estimatedTime: Math.round((totalMinutesNeeded / 60) * 10) / 10,
+                        itemName: itemName,
+                        crew: crewSize,
+                        minimumTime: minimumMinutes
+                    };
+
+                    bookingData.estimate = bookingData.estimateBreakdown.total;
+
+                    console.log('✅ Single Item estimate calculated:', {
+                        item: itemName,
+                        crew: crewSize,
+                        baseCost,
+                        distanceCost,
+                        itemFee,
+                        stairsFee,
+                        total
+                    });
+
+                    return; // Exit early for single item
+                }
+
+                // Get bedroom count
+                const bedrooms = Math.max(
+                    parseInt(bookingData.pickupDetails?.bedrooms) || 2,
+                    parseInt(bookingData.dropoffDetails?.bedrooms) || 2
+                );
+
+                // Calculate loading hours (default 3 hours for moving)
+                let loadingHours = 3;
+                if (bookingData.serviceType === 'Labor Only') {
+                    loadingHours = parseFloat(bookingData.laborHours) || 2;
+                }
+
+                // Calculate drive hours
+                const distance = bookingData.distance || 10;
+                const driveHours = (distance / 35) * 2; // Round trip at 35mph avg
+
+                // Total hours
+                const totalHours = loadingHours + driveHours;
+
+                // Calculate hourly rate (base rate varies by crew size)
+                let hourlyRate = 200; // Base for 2-person
+                if (bookingData.serviceType === '3 Person Crew') {
+                    hourlyRate = 255; // 200 + 55
+                } else if (bookingData.serviceType === '4 Person Crew') {
+                    hourlyRate = 310; // 200 + 55 + 55
+                } else if (bookingData.serviceType === 'Labor Only') {
+                    const crewSize = parseInt(bookingData.laborCrewSize) || 2;
+                    hourlyRate = 115 + (distance * 0.50); // Base rate + distance adjustment
+                    // Add crew member rate for 3rd and 4th person
+                    if (crewSize >= 3) hourlyRate += 55;
+                    if (crewSize >= 4) hourlyRate += 55;
+                }
+
+                // Base labor cost
+                const laborCost = totalHours * hourlyRate;
+
+                // Travel fee (for labor only)
+                let travelFee = 0;
+                if (bookingData.serviceType === 'Labor Only') {
+                    travelFee = distance * 1.60;
+                }
+
+                // Subtotal before service charge
+                let subtotal = laborCost + travelFee;
+
+                // Service charge
+                const serviceChargeRate = bookingData.serviceType === 'Labor Only' ? 0.08 : 0.14;
+                const serviceCharge = subtotal * serviceChargeRate;
+                const serviceChargeLabel = serviceChargeRate === 0.14 ? 'Service Charge (14%)' : 'Service Charge (8%)';
+
+                // Stairs fee
+                let totalStairs = 0;
+                if (bookingData.serviceType === 'Labor Only') {
+                    totalStairs = parseInt(bookingData.laborStairs) || 0;
+                } else {
+                    const pickupStairs = parseInt(bookingData.pickupDetails?.stairs) || 0;
+                    const dropoffStairs = parseInt(bookingData.dropoffDetails?.stairs) || 0;
+                    totalStairs = pickupStairs + dropoffStairs;
+                }
+                const stairsFee = totalStairs * PRICING_CONFIG.stairFee;
+
+                // Heavy items
+                let heavyItemsFee = 0;
+                if (bookingData.inventory?.piano) heavyItemsFee += 200;
+                if (bookingData.inventory?.poolTable) heavyItemsFee += 300;
+                if (bookingData.inventory?.hotTub) heavyItemsFee += 250;
+                if (bookingData.inventory?.safe) heavyItemsFee += 150;
+
+                // Packing service (CHATBOT LOGIC)
+                let packingCost = 0;
+                let packingHours = 0;
+                if (bookingData.additionalServices?.packingService) {
+                    // Use 1.75x for full packing (default), 0.75x for partial
+                    const packingMultiplier = 1.75; // Assume full packing
+                    packingHours = loadingHours * packingMultiplier;
+                    packingCost = packingHours * PRICING_CONFIG.packingRate;
+                    console.log('🎁 Packing service:', {loadingHours, packingHours, rate: PRICING_CONFIG.packingRate, cost: packingCost});
+                }
+
+                // Packing materials (CHATBOT LOGIC)
+                let packingMaterialsCost = 0;
+                let packingMaterialsBreakdown = [];
+                if (bookingData.additionalServices?.packingMaterials) {
+                    const materialQuantities = {
+                        smallBox: 6 + (bedrooms * 8),
+                        mediumBox: 6 + (bedrooms * 6),
+                        largeBox: 2 + (bedrooms * 4),
+                        wardrobeBox: bedrooms * 2,
+                        movingBlanket: 12 + (bedrooms * 6),
+                        packingPaper: Math.ceil(bedrooms * 0.5),
+                        packingTape: Math.ceil(bedrooms * 0.50),
+                        furnitureCover: Math.ceil(bedrooms * 2),
+                        dishpack: Math.ceil(bedrooms * 0.75),
+                        smallBubbleWrap: Math.ceil(bedrooms * 0.50),
+                        largeBubbleWrap: Math.ceil(bedrooms * 0.50)
+                    };
+
+                    const materialNames = {
+                        smallBox: 'Small Boxes',
+                        mediumBox: 'Medium Boxes',
+                        largeBox: 'Large Boxes',
+                        wardrobeBox: 'Wardrobe Boxes',
+                        movingBlanket: 'Moving Blankets',
+                        packingPaper: 'Packing Paper (bundles)',
+                        packingTape: 'Packing Tape (rolls)',
+                        furnitureCover: 'Furniture Covers',
+                        dishpack: 'Dish Pack Boxes',
+                        smallBubbleWrap: 'Small Bubble Wrap (rolls)',
+                        largeBubbleWrap: 'Large Bubble Wrap (rolls)'
+                    };
+
+                    for (const [material, quantity] of Object.entries(materialQuantities)) {
+                        const price = PRICING_CONFIG.materials[material];
+                        const itemTotal = quantity * price;
+                        packingMaterialsCost += itemTotal;
+                        packingMaterialsBreakdown.push({
+                            name: materialNames[material],
+                            quantity: quantity,
+                            unitPrice: price,
+                            total: itemTotal
+                        });
+                    }
+                    console.log('📦 Packing materials:', {bedrooms, cost: packingMaterialsCost});
+                }
+
+                // Total
+                const total = laborCost + travelFee + serviceCharge + stairsFee + heavyItemsFee + packingCost + packingMaterialsCost;
+
+                // Determine labor label based on service type
+                let laborLabel = 'Labor & Truck';
+                if (bookingData.serviceType === 'Labor Only') {
+                    const crewSize = parseInt(bookingData.laborCrewSize) || 2;
+                    laborLabel = `Labor Only (${crewSize}-person crew)`;
+                } else if (bookingData.serviceType === '2 Person Crew') {
+                    laborLabel = 'Movers & Truck (2-person crew)';
+                } else if (bookingData.serviceType === '3 Person Crew') {
+                    laborLabel = 'Movers & Truck (3-person crew)';
+                } else if (bookingData.serviceType === '4 Person Crew') {
+                    laborLabel = 'Movers & Truck (4-person crew)';
+                }
+
+                // Build estimate breakdown
+                bookingData.estimateBreakdown = {
+                    laborCost: Math.round(laborCost * 100) / 100,
+                    laborLabel: laborLabel,
+                    travelFee: Math.round(travelFee * 100) / 100,
+                    serviceCharge: Math.round(serviceCharge * 100) / 100,
+                    serviceChargeLabel: serviceChargeLabel,
+                    stairsFee: Math.round(stairsFee * 100) / 100,
+                    heavyItems: Math.round(heavyItemsFee * 100) / 100,
+                    additionalServices: Math.round(packingCost * 100) / 100,
+                    packingHours: Math.round(packingHours * 10) / 10,
+                    packingMaterials: Math.round(packingMaterialsCost * 100) / 100,
+                    packingMaterialsBreakdown: packingMaterialsBreakdown,
+                    fvpInsurance: 0,
+                    total: Math.round(total * 100) / 100,
+                    estimatedTime: Math.round(totalHours * 10) / 10
+                };
+
+                bookingData.estimate = bookingData.estimateBreakdown.total;
+
+                console.log('✅ Estimate calculated:', {
+                    laborCost,
+                    packingService: packingCost,
+                    packingMaterials: packingMaterialsCost,
+                    total
                 });
 
-                const data = await response.json();
-
-                if (data.success && data.estimate) {
-                    // Store full estimate breakdown
-                    bookingData.estimateBreakdown = data.estimate;
-                    bookingData.estimate = data.estimate.total;
-                } else {
-                    // Fallback calculation
-                    bookingData.estimate = calculateFallbackEstimate();
-                    bookingData.estimateBreakdown = null;
-                }
             } catch (error) {
                 console.error('Error calculating estimate:', error);
                 bookingData.estimate = calculateFallbackEstimate();
@@ -2613,92 +4350,222 @@
             return Math.round(estimate);
         }
 
-        // Populate review page
-        function populateReview() {
-            // Estimate
-            document.getElementById('estimateAmount').textContent =
-                '$' + bookingData.estimate.toLocaleString();
+        // Calculate estimate for cleanout/junk removal services (matches chatbot exactly)
+        async function calculateCleanoutEstimate() {
+            const baseAddress = "11715 Mahoning Avenue, North Jackson, OH 44451";
+            const cleanoutAddress = bookingData.cleanoutAddress;
+            const crew = bookingData.cleanoutCrew || 2;
+            const isJunk = bookingData.cleanoutServiceType === 'junk';
+            const hours = bookingData.cleanoutHours || (isJunk ? 1 : 2);
 
-            // Service details
-            document.getElementById('reviewService').textContent = bookingData.serviceType;
+            // Calculate distance from base to cleanout location
+            if (typeof google !== 'undefined' && google.maps) {
+                const service = new google.maps.DistanceMatrixService();
 
-            const dateObj = new Date(bookingData.moveDate + 'T00:00:00');
-            document.getElementById('reviewDate').textContent =
-                dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                return new Promise((resolve, reject) => {
+                    service.getDistanceMatrix({
+                        origins: [baseAddress],
+                        destinations: [cleanoutAddress],
+                        travelMode: 'DRIVING',
+                        unitSystem: google.maps.UnitSystem.IMPERIAL
+                    }, (response, status) => {
+                        if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
+                            const distanceInMeters = response.rows[0].elements[0].distance.value;
+                            const distance = distanceInMeters * 0.000621371; // Convert to miles
 
-            // Addresses
-            document.getElementById('reviewPickup').textContent = bookingData.pickupAddress;
-            document.getElementById('reviewDropoff').textContent = bookingData.dropoffAddress;
+                            let estimate = 0;
+                            let breakdown = {
+                                laborCost: 0,
+                                travelFee: 0,
+                                serviceCharge: 0,
+                                serviceChargeLabel: 'Service Charge (14%)',
+                                stairsFee: 0,
+                                heavyItems: 0,
+                                additionalServices: 0,
+                                packingHours: 0,
+                                packingMaterials: 0,
+                                packingMaterialsBreakdown: null,
+                                fvpInsurance: 0,
+                                total: 0,
+                                estimatedTime: 0
+                            };
 
-            if (bookingData.hasThirdLocation) {
-                document.getElementById('reviewThirdItem').style.display = 'flex';
-                document.getElementById('reviewThird').textContent = bookingData.thirdAddress;
-            } else {
-                document.getElementById('reviewThirdItem').style.display = 'none';
-            }
+                            if (isJunk) {
+                                // Junk Removal: 1 hour service (chatbot pricing)
+                                const baseCost = 250; // Base for 2-person, 1 hour
+                                const crewUpcharge = (crew - 2) * 100; // +$100 per extra person
+                                const totalBase = baseCost + crewUpcharge;
+                                const distanceCost = distance * 0.50; // $0.50/mile
+                                const disposalFee = 75; // Junk removal disposal fee
+                                const subtotal = totalBase + distanceCost + disposalFee;
+                                const serviceCharge = subtotal * 0.14; // 14% service charge
+                                estimate = subtotal + serviceCharge;
 
-            document.getElementById('reviewDistance').textContent =
-                bookingData.distance.toFixed(1) + ' miles';
+                                // Create breakdown
+                                breakdown.laborCost = totalBase;
+                                breakdown.laborLabel = `Junk Removal (${crew}-person crew, 1 hour)`;
+                                breakdown.travelFee = distanceCost + disposalFee;
+                                breakdown.serviceCharge = serviceCharge;
+                                breakdown.total = estimate;
+                                breakdown.estimatedTime = 1;
+                            } else {
+                                // Cleanout: 2+ hours service (chatbot pricing)
+                                const baseHourlyRate = 219.99; // Base hourly rate
+                                const distanceAdjustment = distance * 0.50; // Add $0.50/mile to hourly rate
+                                const adjustedHourlyRate = baseHourlyRate + distanceAdjustment;
+                                const laborCost = hours * adjustedHourlyRate;
+                                const crewUpcharge = (crew - 2) * 50 * hours; // +$50/hr per extra person
+                                const totalLabor = laborCost + crewUpcharge;
+                                const disposalFee = 200; // Cleanout disposal fee
+                                const subtotal = totalLabor + disposalFee;
+                                const serviceCharge = subtotal * 0.14; // 14% service charge
+                                estimate = subtotal + serviceCharge;
 
-            // Contact info
-            document.getElementById('reviewName').textContent =
-                bookingData.customerInfo.firstName + ' ' + bookingData.customerInfo.lastName;
-            document.getElementById('reviewEmail').textContent = bookingData.customerInfo.email;
-            document.getElementById('reviewPhone').textContent = bookingData.customerInfo.phone;
+                                // Create breakdown
+                                breakdown.laborCost = totalLabor;
+                                breakdown.laborLabel = `Cleanout Service (${crew}-person crew, ${hours} hours)`;
+                                breakdown.travelFee = disposalFee;
+                                breakdown.serviceCharge = serviceCharge;
+                                breakdown.total = estimate;
+                                breakdown.estimatedTime = hours;
+                            }
 
-            // Payment info (if card was saved)
-            const paymentSection = document.getElementById('reviewPaymentSection');
-            const reviewCard = document.getElementById('reviewCard');
-            if (bookingData.cardOnFile && bookingData.cardLast4) {
-                paymentSection.style.display = 'block';
-                reviewCard.innerHTML = `✅ Card ending in ${bookingData.cardLast4}`;
-            } else {
-                paymentSection.style.display = 'none';
-            }
-        }
+                            bookingData.estimate = Math.round(estimate);
+                            bookingData.estimateBreakdown = breakdown;
+                            bookingData.distance = distance;
+                            resolve();
+                        } else {
+                            // Fallback if geocoding fails
+                            let estimate = 0;
+                            const defaultDistance = 30; // Default distance
+                            let breakdown = {
+                                laborCost: 0,
+                                travelFee: 0,
+                                serviceCharge: 0,
+                                serviceChargeLabel: 'Service Charge (14%)',
+                                stairsFee: 0,
+                                heavyItems: 0,
+                                additionalServices: 0,
+                                packingHours: 0,
+                                packingMaterials: 0,
+                                packingMaterialsBreakdown: null,
+                                fvpInsurance: 0,
+                                total: 0,
+                                estimatedTime: 0
+                            };
 
-        // Confirm booking
-        async function confirmBooking() {
-            if (!document.getElementById('agreeTerms').checked) {
-                alert('Please agree to the terms and conditions');
-                return;
-            }
+                            if (isJunk) {
+                                const baseCost = 250;
+                                const crewUpcharge = (crew - 2) * 100;
+                                const totalBase = baseCost + crewUpcharge;
+                                const distanceCost = defaultDistance * 0.50;
+                                const disposalFee = 75;
+                                const subtotal = totalBase + distanceCost + disposalFee;
+                                const serviceCharge = subtotal * 0.14;
+                                estimate = subtotal + serviceCharge;
 
-            showLoading();
+                                breakdown.laborCost = totalBase;
+                                breakdown.laborLabel = `Junk Removal (${crew}-person crew, 1 hour)`;
+                                breakdown.travelFee = distanceCost + disposalFee;
+                                breakdown.serviceCharge = serviceCharge;
+                                breakdown.total = estimate;
+                                breakdown.estimatedTime = 1;
+                            } else {
+                                // Cleanout fallback
+                                const baseHourlyRate = 219.99;
+                                const distanceAdjustment = defaultDistance * 0.50;
+                                const adjustedHourlyRate = baseHourlyRate + distanceAdjustment;
+                                const laborCost = hours * adjustedHourlyRate;
+                                const crewUpcharge = (crew - 2) * 50 * hours;
+                                const totalLabor = laborCost + crewUpcharge;
+                                const disposalFee = 200;
+                                const subtotal = totalLabor + disposalFee;
+                                const serviceCharge = subtotal * 0.14;
+                                estimate = subtotal + serviceCharge;
 
-            try {
-                const response = await fetch(`${API_URL}/api/book-appointment`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(bookingData)
+                                breakdown.laborCost = totalLabor;
+                                breakdown.laborLabel = `Cleanout Service (${crew}-person crew, ${hours} hours)`;
+                                breakdown.travelFee = disposalFee;
+                                breakdown.serviceCharge = serviceCharge;
+                                breakdown.total = estimate;
+                                breakdown.estimatedTime = hours;
+                            }
+
+                            bookingData.estimate = Math.round(estimate);
+                            bookingData.estimateBreakdown = breakdown;
+                            bookingData.distance = defaultDistance;
+                            resolve();
+                        }
+                    });
                 });
+            } else {
+                // Fallback if Google Maps not available
+                let estimate = 0;
+                const defaultDistance = 30;
+                let breakdown = {
+                    laborCost: 0,
+                    travelFee: 0,
+                    serviceCharge: 0,
+                    serviceChargeLabel: 'Service Charge (14%)',
+                    stairsFee: 0,
+                    heavyItems: 0,
+                    additionalServices: 0,
+                    packingHours: 0,
+                    packingMaterials: 0,
+                    packingMaterialsBreakdown: null,
+                    fvpInsurance: 0,
+                    total: 0,
+                    estimatedTime: 0
+                };
 
-                const data = await response.json();
+                if (serviceType === 'Junk Removal') {
+                    const baseCost = 250;
+                    const crewUpcharge = (crew - 2) * 100;
+                    const totalBase = baseCost + crewUpcharge;
+                    const distanceCost = defaultDistance * 0.50;
+                    const disposalFee = 75;
+                    const subtotal = totalBase + distanceCost + disposalFee;
+                    const serviceCharge = subtotal * 0.14;
+                    estimate = subtotal + serviceCharge;
 
-                if (data.success && data.bookingId) {
-                    // Show success page with booking ID
-                    document.getElementById('bookingIdDisplay').textContent =
-                        'Booking ID: ' + data.bookingId;
-
-                    currentStep = 'success';
-                    showStep('success');
-                    updateProgress();
-                    scrollToTop();
-
-                    // Clear local storage
-                    localStorage.removeItem('bookingData');
+                    breakdown.laborCost = totalBase;
+                    breakdown.laborLabel = `Junk Removal (${crew}-person crew, 1 hour)`;
+                    breakdown.travelFee = distanceCost + disposalFee;
+                    breakdown.serviceCharge = serviceCharge;
+                    breakdown.total = estimate;
+                    breakdown.estimatedTime = 1;
                 } else {
-                    alert('Booking failed: ' + (data.message || data.error || 'Unknown error. Please call us at (330) 435-8686'));
+                    // Cleanout no Google Maps fallback
+                    const baseHourlyRate = 219.99;
+                    const distanceAdjustment = defaultDistance * 0.50;
+                    const adjustedHourlyRate = baseHourlyRate + distanceAdjustment;
+                    const laborCost = hours * adjustedHourlyRate;
+                    const crewUpcharge = (crew - 2) * 50 * hours;
+                    const totalLabor = laborCost + crewUpcharge;
+                    const disposalFee = 200;
+                    const subtotal = totalLabor + disposalFee;
+                    const serviceCharge = subtotal * 0.14;
+                    estimate = subtotal + serviceCharge;
+
+                    breakdown.laborCost = totalLabor;
+                    breakdown.laborLabel = `Cleanout Service (${crew}-person crew, ${hours} hours)`;
+                    breakdown.travelFee = disposalFee;
+                    breakdown.serviceCharge = serviceCharge;
+                    breakdown.total = estimate;
+                    breakdown.estimatedTime = hours;
                 }
-            } catch (error) {
-                console.error('Error confirming booking:', error);
-                alert('Unable to confirm booking. Please try again or call us at (330) 435-8686');
-            } finally {
-                hideLoading();
+
+                bookingData.estimate = Math.round(estimate);
+                bookingData.estimateBreakdown = breakdown;
+                bookingData.distance = defaultDistance;
+                return Promise.resolve();
             }
         }
+
+        // [REMOVED] Old review and booking confirmation functions - no longer needed with Acuity integration
+        // Acuity handles the final scheduling and confirmation
+        // function populateReview() { ... }
+        // async function confirmBooking() { ... }
 
         // Local storage functions
         function saveToLocalStorage() {

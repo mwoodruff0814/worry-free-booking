@@ -1365,7 +1365,11 @@ app.post('/api/calculate-estimate', async (req, res) => {
                 // Hourly rate = base + (distance × adjustment) + ((crew - 2) × crew add rate)
                 const hourlyRate = baseRate + (distance * distanceAdj) + ((crewSize - 2) * crewAdd);
 
-                estimatedTime = 3 + (driveTime / 60); // 3 hours base + drive time
+                // Calculate loading time and drive time separately
+                const loadingHours = 3; // Base loading/unloading time
+                const driveHours = driveTime / 60; // Drive time in hours
+                estimatedTime = loadingHours + driveHours;
+
                 laborCost = hourlyRate * estimatedTime;
                 subtotal = laborCost;
 
@@ -1441,26 +1445,117 @@ app.post('/api/calculate-estimate', async (req, res) => {
             }
         }
 
-        // Add packing materials
-        if (bookingData.additionalServices && bookingData.additionalServices.packingMaterials && services.packingMaterials) {
-            const materials = bookingData.additionalServices.packingMaterials;
-            for (const [key, quantity] of Object.entries(materials)) {
-                if (quantity > 0 && services.packingMaterials[key]) {
-                    packingMaterialsCost += services.packingMaterials[key].price * quantity;
-                }
+        // Add packing service costs (MATCHES CHATBOT LOGIC)
+        let packingServiceCost = 0;
+        let packingHours = 0;
+        console.log('🎁 Checking packing service:', {
+            hasAdditionalServices: !!bookingData.additionalServices,
+            packingService: bookingData.additionalServices?.packingService,
+            packingMaterials: bookingData.additionalServices?.packingMaterials
+        });
+        if (bookingData.additionalServices && bookingData.additionalServices.packingService) {
+            // Calculate packing hours based on LOADING hours only (not including drive time)
+            // Estimate loading hours based on service type
+            let loadingHours = 3; // Default for moving services
+
+            if (bookingData.serviceType === 'Labor Only') {
+                loadingHours = bookingData.estimatedHours || 2;
+            } else if (bookingData.serviceType.includes('Person Crew')) {
+                loadingHours = 3; // Base loading time for truck moves
             }
+
+            // Full packing: 1.75x the loading hours, Partial: 0.75x
+            // Check if user specified full or partial (default to full)
+            const packingType = bookingData.additionalServices.packingType || 'full';
+            const packingMultiplier = packingType === 'full' ? 1.75 : 0.75;
+            packingHours = loadingHours * packingMultiplier;
+
+            const packingRate = 125 * 1.08; // $125/hr + 8% service fee = $135
+            packingServiceCost = packingHours * packingRate;
+
+            // Add packing hours to total estimated time
+            estimatedTime += packingHours;
+
+            console.log('🎁 Packing Service:', { loadingHours, packingMultiplier, packingHours, packingRate, packingServiceCost });
         }
 
-        // Add additional services (packing, blankets)
-        if (bookingData.additionalServices) {
-            if (bookingData.additionalServices.packing) {
-                additionalServicesCost += 50; // Example packing fee
+        // Add packing materials (MATCHES CHATBOT LOGIC)
+        let packingMaterialsBreakdown = null;
+        if (bookingData.additionalServices && bookingData.additionalServices.packingMaterials) {
+            // Calculate based on bedroom count
+            const bedrooms = Math.max(
+                bookingData.pickupDetails?.bedrooms || 2,
+                bookingData.dropoffDetails?.bedrooms || 2
+            );
+
+            // Material quantities based on bedrooms
+            const materialQuantities = {
+                smallBox: 6 + (bedrooms * 8),
+                mediumBox: 6 + (bedrooms * 6),
+                largeBox: 2 + (bedrooms * 4),
+                wardrobeBox: bedrooms * 2,
+                movingBlanket: 12 + (bedrooms * 6),
+                packingPaper: Math.ceil(bedrooms * 0.5),
+                packingTape: Math.ceil(bedrooms * 0.50),
+                furnitureCover: Math.ceil(bedrooms * 2),
+                dishpack: Math.ceil(bedrooms * 0.75),
+                smallBubbleWrap: Math.ceil(bedrooms * 0.50),
+                largeBubbleWrap: Math.ceil(bedrooms * 0.50)
+            };
+
+            // Material prices (from services config or defaults)
+            const materialPrices = {
+                smallBox: 3.00,
+                mediumBox: 4.00,
+                largeBox: 5.00,
+                wardrobeBox: 12.00,
+                movingBlanket: 8.00,
+                packingPaper: 18.00,
+                packingTape: 6.00,
+                furnitureCover: 4.00,
+                dishpack: 8.00,
+                smallBubbleWrap: 25.00,
+                largeBubbleWrap: 35.00
+            };
+
+            // Material names for display
+            const materialNames = {
+                smallBox: 'Small Boxes',
+                mediumBox: 'Medium Boxes',
+                largeBox: 'Large Boxes',
+                wardrobeBox: 'Wardrobe Boxes',
+                movingBlanket: 'Moving Blankets',
+                packingPaper: 'Packing Paper (bundles)',
+                packingTape: 'Packing Tape (rolls)',
+                furnitureCover: 'Furniture Covers',
+                dishpack: 'Dish Pack Boxes',
+                smallBubbleWrap: 'Small Bubble Wrap (rolls)',
+                largeBubbleWrap: 'Large Bubble Wrap (rolls)'
+            };
+
+            // Build itemized breakdown
+            packingMaterialsBreakdown = [];
+            for (const [material, quantity] of Object.entries(materialQuantities)) {
+                const price = materialPrices[material] || 0;
+                const itemTotal = quantity * price;
+                packingMaterialsCost += itemTotal;
+
+                packingMaterialsBreakdown.push({
+                    name: materialNames[material] || material,
+                    quantity: quantity,
+                    unitPrice: price,
+                    total: itemTotal
+                });
             }
-            if (bookingData.additionalServices.movingBlankets) {
-                const blanketsNeeded = bookingData.additionalServices.blanketsQuantity || 10;
-                additionalServicesCost += blanketsNeeded * 2; // $2 per blanket
-            }
+
+            console.log('📦 Packing Materials:', { bedrooms, packingMaterialsCost, materialQuantities });
         }
+
+        // Add moving blankets/padding (included in materials, no separate fee)
+        // Blankets are already calculated in packingMaterials if selected
+
+        // Add all packing costs to additional services
+        additionalServicesCost += packingServiceCost;
 
         // Calculate FVP insurance (if selected)
         if (bookingData.additionalServices && bookingData.additionalServices.fvp) {
@@ -1471,6 +1566,12 @@ app.post('/api/calculate-estimate', async (req, res) => {
         // Calculate total
         const total = subtotal + serviceCharge + stairsFee + heavyItemsFee + additionalServicesCost + packingMaterialsCost + fvpCost;
 
+        // Determine service charge label
+        let serviceChargeLabel = 'Service Charge (14%)';
+        if (bookingData.serviceType === 'Labor Only') {
+            serviceChargeLabel = 'Service Charge (8%)';
+        }
+
         const response = {
             success: true,
             estimate: {
@@ -1478,17 +1579,33 @@ app.post('/api/calculate-estimate', async (req, res) => {
                 laborCost: Math.round(laborCost * 100) / 100,
                 travelFee: Math.round(travelFee * 100) / 100,
                 serviceCharge: Math.round(serviceCharge * 100) / 100,
+                serviceChargeLabel: serviceChargeLabel,
                 stairsFee: Math.round(stairsFee * 100) / 100,
                 heavyItems: Math.round(heavyItemsFee * 100) / 100,
                 additionalServices: Math.round(additionalServicesCost * 100) / 100,
+                packingHours: Math.round(packingHours * 10) / 10,
                 packingMaterials: Math.round(packingMaterialsCost * 100) / 100,
+                packingMaterialsBreakdown: packingMaterialsBreakdown,
                 fvpInsurance: Math.round(fvpCost * 100) / 100,
                 total: Math.round(total * 100) / 100,
                 estimatedTime: Math.round(estimatedTime * 10) / 10
             }
         };
 
-        console.log('💰 Estimate Response:', JSON.stringify(response, null, 2));
+        console.log('💰 FINAL ESTIMATE CALCULATION:');
+        console.log('   Labor Cost: $' + laborCost.toFixed(2));
+        console.log('   Travel Fee: $' + travelFee.toFixed(2));
+        console.log('   Subtotal: $' + subtotal.toFixed(2));
+        console.log('   Service Charge: $' + serviceCharge.toFixed(2));
+        console.log('   Stairs Fee: $' + stairsFee.toFixed(2));
+        console.log('   Heavy Items: $' + heavyItemsFee.toFixed(2));
+        console.log('   Packing Service: $' + packingServiceCost.toFixed(2) + ' (included in additionalServices)');
+        console.log('   Additional Services Total: $' + additionalServicesCost.toFixed(2));
+        console.log('   Packing Materials: $' + packingMaterialsCost.toFixed(2));
+        console.log('   FVP Insurance: $' + fvpCost.toFixed(2));
+        console.log('   ════════════════════════════════');
+        console.log('   TOTAL: $' + total.toFixed(2));
+        console.log('   ════════════════════════════════');
 
         res.json(response);
 
@@ -1556,6 +1673,91 @@ app.post('/api/send-estimate', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to send estimate email',
+            details: error.message
+        });
+    }
+});
+
+// Send custom email (for Sarah AI chatbot and other custom templates)
+app.post('/api/send-custom-email', async (req, res) => {
+    try {
+        const {
+            to,
+            subject,
+            htmlContent,
+            textContent,
+            cc,
+            bcc
+        } = req.body;
+
+        // Validate required fields
+        if (!to || !subject || !htmlContent) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: to, subject, htmlContent'
+            });
+        }
+
+        // Initialize email transporter
+        const nodemailer = require('nodemailer');
+        let transporter;
+
+        if (process.env.EMAIL_SERVICE === 'gmail') {
+            transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASSWORD
+                }
+            });
+        } else {
+            console.warn('Email service not configured');
+            return res.status(500).json({
+                success: false,
+                error: 'Email service not configured on server'
+            });
+        }
+
+        // Build email options
+        const mailOptions = {
+            from: `"Worry Free Moving" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+            to,
+            subject,
+            html: htmlContent,
+            text: textContent || 'Please view this email in an HTML-capable email client.'
+        };
+
+        // Add CC if provided
+        if (cc) {
+            mailOptions.cc = cc;
+        }
+
+        // Add BCC (always include company email)
+        const bccList = [process.env.COMPANY_EMAIL || 'service@worryfreemovers.com'];
+        if (bcc) {
+            bccList.push(bcc);
+        }
+        if (process.env.EMAIL_CC_LIST) {
+            bccList.push(...process.env.EMAIL_CC_LIST.split(',').map(e => e.trim()));
+        }
+        mailOptions.bcc = [...new Set(bccList)].join(','); // Remove duplicates
+
+        // Send email
+        const info = await transporter.sendMail(mailOptions);
+
+        console.log(`📧 Custom email sent to ${to} - Subject: ${subject}`);
+
+        res.json({
+            success: true,
+            message: 'Email sent successfully',
+            messageId: info.messageId
+        });
+
+    } catch (error) {
+        console.error('Error sending custom email:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to send email',
             details: error.message
         });
     }
