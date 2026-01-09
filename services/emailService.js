@@ -1832,6 +1832,65 @@ async function sendEmployeeWelcomeEmail({ email, username, password, firstName, 
     }
 }
 
+/**
+ * Send contact form submission email
+ */
+async function sendContactFormEmail(data) {
+    try {
+        const { name, email, phone, service, location, movedate, message, urgent } = data;
+
+        const transporter = getTransporter('Worry Free Moving');
+        if (!transporter) {
+            console.error('❌ No email transporter configured for contact form');
+            return false;
+        }
+
+        const companySettings = await loadCompanySettings('Worry Free Moving');
+
+        const htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #1e40af; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
+                    ${urgent ? '🔴 URGENT: ' : '📬 '}New Contact Form Submission
+                </h2>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc; width: 140px;">Name:</td><td style="padding: 10px;">${name}</td></tr>
+                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Email:</td><td style="padding: 10px;"><a href="mailto:${email}">${email}</a></td></tr>
+                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Phone:</td><td style="padding: 10px;"><a href="tel:${phone}">${phone}</a></td></tr>
+                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Service:</td><td style="padding: 10px;">${service}</td></tr>
+                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Location:</td><td style="padding: 10px;">${location}</td></tr>
+                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Move Date:</td><td style="padding: 10px;">${movedate}</td></tr>
+                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Urgent:</td><td style="padding: 10px;">${urgent ? '⚠️ YES - Within 7 days' : 'No'}</td></tr>
+                </table>
+                <div style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                    <strong>Message:</strong><br><br>
+                    ${message.replace(/\n/g, '<br>')}
+                </div>
+                <div style="margin-top: 20px; padding: 10px; background: #e8f4e8; border-radius: 8px; font-size: 12px; color: #666;">
+                    ✅ This message passed server-side spam verification
+                </div>
+            </div>
+        `;
+
+        const mailOptions = {
+            from: `"Worry Free Moving" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+            to: 'service@worryfreemovers.com',
+            cc: getCCList() || '',
+            replyTo: email,
+            subject: `${urgent ? '🔴 URGENT: ' : ''}Contact Form - ${name} - ${service}`,
+            html: htmlContent,
+            text: `New contact from ${name} (${email}, ${phone})\nService: ${service}\nLocation: ${location}\nMove Date: ${movedate}\nUrgent: ${urgent ? 'Yes' : 'No'}\n\nMessage:\n${message}`
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ Contact form email sent to service@worryfreemovers.com for ${name}`);
+        return true;
+
+    } catch (error) {
+        console.error('❌ Error sending contact form email:', error);
+        return false;
+    }
+}
+
 module.exports = {
     sendConfirmationEmail,
     sendCancellationEmail,
@@ -1844,5 +1903,6 @@ module.exports = {
     sendCrewTimeOffResponse,
     sendEmployeePasswordResetEmail,
     sendAdminUserWelcomeEmail,
-    sendEmployeeWelcomeEmail
+    sendEmployeeWelcomeEmail,
+    sendContactFormEmail
 };

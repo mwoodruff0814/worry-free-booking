@@ -299,7 +299,7 @@ app.post('/api/contact-form', async (req, res) => {
             }
         }
 
-        // 8. Format the email
+        // 8. Map service/location labels
         const serviceLabels = {
             residential: 'Residential Moving',
             commercial: 'Commercial Moving',
@@ -320,51 +320,23 @@ app.post('/api/contact-form', async (req, res) => {
             other: 'Other'
         };
 
-        const htmlContent = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #1e40af; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
-                    ${urgent ? '🔴 URGENT: ' : '📬 '}New Contact Form Submission
-                </h2>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc; width: 140px;">Name:</td><td style="padding: 10px;">${name}</td></tr>
-                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Email:</td><td style="padding: 10px;"><a href="mailto:${email}">${email}</a></td></tr>
-                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Phone:</td><td style="padding: 10px;"><a href="tel:${phone}">${phone}</a></td></tr>
-                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Service:</td><td style="padding: 10px;">${serviceLabels[service] || service}</td></tr>
-                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Location:</td><td style="padding: 10px;">${locationLabels[location] || location}</td></tr>
-                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Move Date:</td><td style="padding: 10px;">${movedate}</td></tr>
-                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Urgent:</td><td style="padding: 10px;">${urgent ? '⚠️ YES - Within 7 days' : 'No'}</td></tr>
-                </table>
-                <div style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #3b82f6;">
-                    <strong>Message:</strong><br><br>
-                    ${message.replace(/\n/g, '<br>')}
-                </div>
-                <div style="margin-top: 20px; padding: 10px; background: #e8f4e8; border-radius: 8px; font-size: 12px; color: #666;">
-                    ✅ This message passed server-side spam verification (honeypot, challenge question, reCAPTCHA)
-                </div>
-            </div>
-        `;
-
-        // 9. Send email using existing email service pattern
-        const nodemailer = require('nodemailer');
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASSWORD
-            }
+        // 9. Send email using the existing email service
+        const { sendContactFormEmail } = require('./services/emailService');
+        const emailResult = await sendContactFormEmail({
+            name,
+            email,
+            phone,
+            service: serviceLabels[service] || service,
+            location: locationLabels[location] || location,
+            movedate,
+            message,
+            urgent
         });
 
-        const mailOptions = {
-            from: `"Worry Free Moving" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
-            to: 'service@worryfreemovers.com',
-            cc: process.env.EMAIL_CC || '',
-            replyTo: email,
-            subject: `${urgent ? '🔴 URGENT: ' : ''}Contact Form - ${name} - ${serviceLabels[service] || service}`,
-            html: htmlContent,
-            text: `New contact from ${name} (${email}, ${phone})\nService: ${service}\nLocation: ${location}\nMove Date: ${movedate}\nUrgent: ${urgent ? 'Yes' : 'No'}\n\nMessage:\n${message}`
-        };
-
-        await transporter.sendMail(mailOptions);
+        if (!emailResult) {
+            console.log('❌ Email service returned false');
+            return res.status(500).json({ success: false, error: 'Failed to send message. Please try again or call us directly.' });
+        }
 
         console.log(`✅ Contact form email sent: ${name} <${email}>`);
         return res.status(200).json({ success: true });
