@@ -1839,13 +1839,13 @@ async function sendContactFormEmail(data) {
     try {
         const { name, email, phone, service, location, movedate, message, urgent } = data;
 
-        const transporter = getTransporter('Worry Free Moving');
+        const companySettings = await loadCompanySettings('Worry Free Moving');
+
+        const transporter = initializeTransporter('Worry Free Moving');
         if (!transporter) {
             console.error('❌ No email transporter configured for contact form');
             return false;
         }
-
-        const companySettings = await loadCompanySettings('Worry Free Moving');
 
         const htmlContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
