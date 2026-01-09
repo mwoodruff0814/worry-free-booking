@@ -205,6 +205,176 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Booking system is running' });
 });
 
+// ==================== CONTACT FORM ENDPOINT ====================
+// Server-side spam protection - bots CANNOT bypass this
+
+// reCAPTCHA secret key for contact form
+const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY || '6LfMo0UsAAAAAER-PCfhWtpFuPtyjnUuzIbmWkA8';
+
+// Rate limiting for contact form (in-memory)
+const contactRateLimitMap = new Map();
+const CONTACT_RATE_LIMIT_WINDOW = 5 * 60 * 1000; // 5 minutes
+const CONTACT_MAX_REQUESTS = 3;
+
+function checkContactRateLimit(ip) {
+    const now = Date.now();
+    const record = contactRateLimitMap.get(ip);
+    if (!record) {
+        contactRateLimitMap.set(ip, { count: 1, firstRequest: now });
+        return true;
+    }
+    if (now - record.firstRequest > CONTACT_RATE_LIMIT_WINDOW) {
+        contactRateLimitMap.set(ip, { count: 1, firstRequest: now });
+        return true;
+    }
+    if (record.count >= CONTACT_MAX_REQUESTS) {
+        return false;
+    }
+    record.count++;
+    return true;
+}
+
+app.post('/api/contact-form', async (req, res) => {
+    try {
+        const clientIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const { name, email, phone, service, location, movedate, message, urgent, verify, honeypot, recaptchaToken } = req.body;
+
+        console.log(`📥 Contact form submission from ${clientIP}`);
+
+        // 1. Rate limiting
+        if (!checkContactRateLimit(clientIP)) {
+            console.log(`🚫 Rate limited: ${clientIP}`);
+            return res.status(429).json({ success: false, error: 'Too many requests. Please wait a few minutes.' });
+        }
+
+        // 2. Honeypot check - reject if filled (bots fill all fields)
+        if (honeypot && honeypot.trim() !== '') {
+            console.log(`🚫 Spam blocked (honeypot): ${clientIP}`);
+            return res.status(200).json({ success: true }); // Fake success for bots
+        }
+
+        // 3. Challenge question validation - MUST contain "moving"
+        const validAnswers = ['moving', 'moving services', 'movers', 'move'];
+        const normalizedVerify = (verify || '').toLowerCase().trim();
+        if (!validAnswers.some(v => normalizedVerify.includes(v))) {
+            console.log(`🚫 Spam blocked (challenge failed): ${clientIP} - answered: "${verify}"`);
+            return res.status(400).json({ success: false, error: 'Please answer the security question correctly.' });
+        }
+
+        // 4. Required fields validation
+        if (!name || !email || !phone || !location || !movedate || !message) {
+            return res.status(400).json({ success: false, error: 'Please fill in all required fields.' });
+        }
+
+        // 5. Phone number validation (10 digits US, not starting with 0 or 1)
+        const phoneDigits = phone.replace(/\D/g, '');
+        if (phoneDigits.length !== 10 || phoneDigits[0] === '0' || phoneDigits[0] === '1') {
+            return res.status(400).json({ success: false, error: 'Please enter a valid 10-digit US phone number.' });
+        }
+
+        // 6. Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ success: false, error: 'Please enter a valid email address.' });
+        }
+
+        // 7. reCAPTCHA verification (if token provided)
+        if (recaptchaToken && RECAPTCHA_SECRET_KEY) {
+            try {
+                const recaptchaResponse = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `secret=${RECAPTCHA_SECRET_KEY}&response=${recaptchaToken}`
+                });
+                const recaptchaResult = await recaptchaResponse.json();
+
+                if (!recaptchaResult.success || recaptchaResult.score < 0.3) {
+                    console.log(`🚫 Spam blocked (reCAPTCHA failed): ${clientIP}`, recaptchaResult);
+                    return res.status(400).json({ success: false, error: 'Security verification failed. Please try again.' });
+                }
+                console.log(`✅ reCAPTCHA passed - score: ${recaptchaResult.score}`);
+            } catch (err) {
+                console.error('reCAPTCHA verification error:', err);
+                // Continue without reCAPTCHA if verification fails
+            }
+        }
+
+        // 8. Format the email
+        const serviceLabels = {
+            residential: 'Residential Moving',
+            commercial: 'Commercial Moving',
+            packing: 'Packing Services',
+            storage: 'Storage Solutions',
+            specialty: 'Specialty Item Moving',
+            other: 'Other'
+        };
+
+        const locationLabels = {
+            youngstown: 'Youngstown, OH',
+            cleveland: 'Cleveland, OH',
+            akron: 'Akron-Canton, OH',
+            warren: 'Warren, OH',
+            pittsburgh: 'Pittsburgh, PA',
+            butler: 'Butler, PA',
+            'north-jackson': 'North Jackson, OH',
+            other: 'Other'
+        };
+
+        const htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #1e40af; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
+                    ${urgent ? '🔴 URGENT: ' : '📬 '}New Contact Form Submission
+                </h2>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc; width: 140px;">Name:</td><td style="padding: 10px;">${name}</td></tr>
+                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Email:</td><td style="padding: 10px;"><a href="mailto:${email}">${email}</a></td></tr>
+                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Phone:</td><td style="padding: 10px;"><a href="tel:${phone}">${phone}</a></td></tr>
+                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Service:</td><td style="padding: 10px;">${serviceLabels[service] || service}</td></tr>
+                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Location:</td><td style="padding: 10px;">${locationLabels[location] || location}</td></tr>
+                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Move Date:</td><td style="padding: 10px;">${movedate}</td></tr>
+                    <tr><td style="padding: 10px; font-weight: bold; background: #f8fafc;">Urgent:</td><td style="padding: 10px;">${urgent ? '⚠️ YES - Within 7 days' : 'No'}</td></tr>
+                </table>
+                <div style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                    <strong>Message:</strong><br><br>
+                    ${message.replace(/\n/g, '<br>')}
+                </div>
+                <div style="margin-top: 20px; padding: 10px; background: #e8f4e8; border-radius: 8px; font-size: 12px; color: #666;">
+                    ✅ This message passed server-side spam verification (honeypot, challenge question, reCAPTCHA)
+                </div>
+            </div>
+        `;
+
+        // 9. Send email using nodemailer
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+
+        const mailOptions = {
+            from: `"Worry Free Moving" <${process.env.EMAIL_USER}>`,
+            to: 'service@worryfreemovers.com',
+            cc: process.env.EMAIL_CC || '',
+            replyTo: email,
+            subject: `${urgent ? '🔴 URGENT: ' : ''}Contact Form - ${name} - ${serviceLabels[service] || service}`,
+            html: htmlContent,
+            text: `New contact from ${name} (${email}, ${phone})\nService: ${service}\nLocation: ${location}\nMove Date: ${movedate}\nUrgent: ${urgent ? 'Yes' : 'No'}\n\nMessage:\n${message}`
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        console.log(`✅ Contact form email sent: ${name} <${email}>`);
+        return res.status(200).json({ success: true });
+
+    } catch (error) {
+        console.error('❌ Contact form error:', error);
+        return res.status(500).json({ success: false, error: 'Failed to send message. Please try again or call us directly.' });
+    }
+});
+
 // Get available time slots
 app.get('/api/available-slots', async (req, res) => {
     try {
