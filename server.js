@@ -208,8 +208,8 @@ app.get('/api/health', (req, res) => {
 // ==================== CONTACT FORM ENDPOINT ====================
 // Server-side spam protection - bots CANNOT bypass this
 
-// reCAPTCHA secret key for contact form
-const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY || '6LfMo0UsAAAAAER-PCfhWtpFuPtyjnUuzIbmWkA8';
+// reCAPTCHA secret key for contact form (set in Render environment variables)
+const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
 
 // Rate limiting for contact form (in-memory)
 const contactRateLimitMap = new Map();
