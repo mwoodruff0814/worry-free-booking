@@ -344,18 +344,18 @@ app.post('/api/contact-form', async (req, res) => {
             </div>
         `;
 
-        // 9. Send email using nodemailer
+        // 9. Send email using existing email service pattern
         const nodemailer = require('nodemailer');
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
                 user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
+                pass: process.env.EMAIL_PASSWORD
             }
         });
 
         const mailOptions = {
-            from: `"Worry Free Moving" <${process.env.EMAIL_USER}>`,
+            from: `"Worry Free Moving" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
             to: 'service@worryfreemovers.com',
             cc: process.env.EMAIL_CC || '',
             replyTo: email,
